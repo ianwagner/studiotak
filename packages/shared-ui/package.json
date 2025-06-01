@@ -5,5 +5,8 @@
   "types": "index.ts",
   "scripts": {
     "build": "echo nothing to build"
+  },
+  "dependencies": {
+    "firebase": "^11.7.3"
   }
 }
