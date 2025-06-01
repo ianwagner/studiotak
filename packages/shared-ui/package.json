@@ -2,5 +2,8 @@
   "name": "@studio-tak/shared-ui",
   "version": "1.0.0",
   "main": "index.ts",
-  "types": "index.ts"
+  "types": "index.ts",
+  "scripts": {
+    "build": "echo nothing to build"
+  }
 }
