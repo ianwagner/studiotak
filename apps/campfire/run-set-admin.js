@@ -5,7 +5,12 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-const uid = 'NG2Z0cPlICNpi1HTB0Hv9DKIte03'; // ← get from Firebase Auth user list
+const uid = process.argv[2];
+
+if (!uid) {
+  console.error('Usage: node run-set-admin.js <uid>');
+  process.exit(1);
+}
 
 admin.auth().setCustomUserClaims(uid, { admin: true })
   .then(() => {
