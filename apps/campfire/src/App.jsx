@@ -2,10 +2,11 @@
 // This file is part of a proprietary software project. Do not distribute.
 import React from "react";
 import {
-  BrowserRouter as Router,
+  BrowserRouter,
   Routes,
   Route,
   Navigate,
+  HashRouter,
 } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase/config";
@@ -46,6 +47,12 @@ import useSiteSettings from "./useSiteSettings";
 import useAgencyTheme from "./useAgencyTheme";
 import FullScreenSpinner from "./FullScreenSpinner";
 import { DEFAULT_LOGO_URL } from "./constants";
+
+// Use HashRouter when the app is opened from the filesystem so routes work
+const RouterImpl =
+  typeof window !== 'undefined' && window.location.protocol === 'file:'
+    ? HashRouter
+    : BrowserRouter;
 
 const ThemeWatcher = () => {
   useTheme();
@@ -128,7 +135,7 @@ const App = () => {
   }
 
   return (
-    <Router>
+    <RouterImpl>
       <ThemeWatcher />
       <RequireMfa user={user} role={role}>
         <div className="min-h-screen flex">
@@ -552,7 +559,7 @@ const App = () => {
           </div>
         </div>
       </RequireMfa>
-      </Router>
+      </RouterImpl>
   );
 };
 
