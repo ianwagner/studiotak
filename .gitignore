@@ -1,0 +1,2 @@
+# Ignore service account credentials
+apps/campfire/tak-campfire-firebase-adminsdk-*.json
