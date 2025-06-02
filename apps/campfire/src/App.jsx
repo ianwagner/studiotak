@@ -177,19 +177,36 @@ const App = () => {
   }
 
 return (
-  <BrowserRouter basename="/">
-    <Routes>
-      <Route
-        path="*"
-        element={
-          <div style={{ padding: "2rem", background: "black", color: "lime" }}>
-            <h1>✅ Router Works!</h1>
-            <p>Path: {window.location.pathname}</p>
+  <RouterImpl basename={import.meta.env.BASE_URL}>
+    <ThemeWatcher />
+    <RequireMfa user={user} role={role}>
+      <div className="min-h-screen flex">
+        {signedIn && (
+          <RoleSidebar role={role} isAdmin={isAdmin} agencyId={agencyId} />
+        )}
+        <div
+          className={`flex flex-col flex-grow box-border min-w-0 max-w-full ${
+            signedIn ? 'md:pl-[250px]' : ''
+          }`}
+        >
+          <div className="flex-grow">
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <div style={{ padding: '2rem', color: 'white', background: '#222' }}>
+                    <h1>🔐 Login page route</h1>
+                    <p>This means routing to /login works and the router is matching correctly.</p>
+                  </div>
+                }
+              />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
           </div>
-        }
-      />
-    </Routes>
-  </BrowserRouter>
+        </div>
+      </div>
+    </RequireMfa>
+  </RouterImpl>
 );
 };
 
