@@ -59,6 +59,11 @@ const ThemeWatcher = () => {
   return null;
 };
 
+const RouteLogger = ({ name, children }) => {
+  debugLog('Render route', name);
+  return children;
+};
+
 const App = () => {
   const [user, setUser] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -108,6 +113,16 @@ const App = () => {
     !agencyLoading &&
     logoLoaded;
 
+  debugLog('App state', {
+    loading,
+    roleLoading,
+    adminLoading,
+    settingsLoading,
+    agencyLoading,
+    logoLoaded,
+    ready,
+  });
+
   React.useEffect(() => {
     if (ready) {
       document.body.classList.remove('pre-theme');
@@ -126,6 +141,8 @@ const App = () => {
       ? `/agency/dashboard?agencyId=${agencyId}`
       : `/dashboard/${role}`
     : '/login';
+
+  debugLog('Routing info', { signedIn, role, defaultPath });
   if (signedIn && !role) {
     return (
       <div className="flex items-center justify-center min-h-screen text-center">
@@ -152,79 +169,91 @@ const App = () => {
             <Route
               path="/login"
               element={
-                user ? (
-                  <Navigate to={defaultPath} replace />
-                ) : (
-                  <Login onLogin={() => setUser(auth.currentUser)} />
-                )
+                <RouteLogger name="/login">
+                  {user ? (
+                    <Navigate to={defaultPath} replace />
+                  ) : (
+                    <Login onLogin={() => setUser(auth.currentUser)} />
+                  )}
+                </RouteLogger>
               }
             />
             <Route
               path="/signup"
               element={
-                user ? (
-                  <Navigate to={defaultPath} replace />
-                ) : (
-                  <SignUpStepper />
-                )
+                <RouteLogger name="/signup">
+                  {user ? (
+                    <Navigate to={defaultPath} replace />
+                  ) : (
+                    <SignUpStepper />
+                  )}
+                </RouteLogger>
               }
             />
             <Route
               path="/"
               element={
-                user ? (
-                  <Navigate to={defaultPath} replace />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
+                <RouteLogger name="/">
+                  {user ? (
+                    <Navigate to={defaultPath} replace />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )}
+                </RouteLogger>
               }
             />
             <Route
               path="/dashboard/designer"
               element={
-                user ? (
-                  <RoleGuard
-                    requiredRole="designer"
-                    userRole={role} isAdmin={isAdmin}
-                    loading={roleLoading}
-                  >
-                    <DesignerDashboard />
-                  </RoleGuard>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
+                <RouteLogger name="/dashboard/designer">
+                  {user ? (
+                    <RoleGuard
+                      requiredRole="designer"
+                      userRole={role} isAdmin={isAdmin}
+                      loading={roleLoading}
+                    >
+                      <DesignerDashboard />
+                    </RoleGuard>
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )}
+                </RouteLogger>
               }
             />
             <Route
               path="/designer/notifications"
               element={
-                user ? (
-                  <RoleGuard
-                    requiredRole="designer"
-                    userRole={role} isAdmin={isAdmin}
-                    loading={roleLoading}
-                  >
-                    <DesignerNotifications />
-                  </RoleGuard>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
+                <RouteLogger name="/designer/notifications">
+                  {user ? (
+                    <RoleGuard
+                      requiredRole="designer"
+                      userRole={role} isAdmin={isAdmin}
+                      loading={roleLoading}
+                    >
+                      <DesignerNotifications />
+                    </RoleGuard>
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )}
+                </RouteLogger>
               }
             />
             <Route
               path="/designer/account-settings"
               element={
-                user ? (
-                  <RoleGuard
-                    requiredRole="designer"
-                    userRole={role} isAdmin={isAdmin}
-                    loading={roleLoading}
-                  >
-                    <DesignerAccountSettings />
-                  </RoleGuard>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
+                <RouteLogger name="/designer/account-settings">
+                  {user ? (
+                    <RoleGuard
+                      requiredRole="designer"
+                      userRole={role} isAdmin={isAdmin}
+                      loading={roleLoading}
+                    >
+                      <DesignerAccountSettings />
+                    </RoleGuard>
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )}
+                </RouteLogger>
               }
             />
             <Route
