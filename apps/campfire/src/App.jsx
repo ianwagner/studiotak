@@ -148,8 +148,11 @@ const App = () => {
     );
   }
 
+  if (!ready) {
+    return <LoadingOverlay visible />;
+  }
+
   return (
-    <LoadingOverlay visible={!ready}>
       <RouterImpl basename={import.meta.env.BASE_URL}>
         <ThemeWatcher />
       <RequireMfa user={user} role={role}>
@@ -587,7 +590,6 @@ const App = () => {
         </div>
       </RequireMfa>
       </RouterImpl>
-    </LoadingOverlay>
   );
 };
 
