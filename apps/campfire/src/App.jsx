@@ -177,36 +177,20 @@ const App = () => {
   }
 
 return (
-  <RouterImpl basename={import.meta.env.BASE_URL}>
-    <ThemeWatcher />
-    <RequireMfa user={user} role={role}>
-      <div className="min-h-screen flex">
-        {signedIn && (
-          <RoleSidebar role={role} isAdmin={isAdmin} agencyId={agencyId} />
-        )}
-        <div
-          className={`flex flex-col flex-grow box-border min-w-0 max-w-full ${
-            signedIn ? 'md:pl-[250px]' : ''
-          }`}
-        >
-          <div className="flex-grow">
-            <Routes>
-              <Route
-                path="/login"
-                element={
-                  <div style={{ padding: '2rem', color: 'white', background: '#222' }}>
-                    <h1>🔐 Login page route</h1>
-                    <p>This means routing to /login works and the router is matching correctly.</p>
-                  </div>
-                }
-              />
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+  <BrowserRouter>
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          <div style={{ padding: '2rem', color: 'white', background: '#222' }}>
+            <h1>🔐 Login Route Active</h1>
+            <p>If you see this, routing is working correctly in production.</p>
           </div>
-        </div>
-      </div>
-    </RequireMfa>
-  </RouterImpl>
+        }
+      />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  </BrowserRouter>
 );
 };
 
