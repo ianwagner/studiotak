@@ -181,12 +181,7 @@ return (
     <Routes>
       <Route
         path="/login"
-        element={
-          <div style={{ padding: '2rem', color: 'white', background: '#222' }}>
-            <h1>🔐 Login Route Active</h1>
-            <p>If you see this, routing is working correctly in production.</p>
-          </div>
-        }
+        element={<Login onLogin={() => console.log('✅ Logged in')} />}
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
