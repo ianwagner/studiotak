@@ -91,7 +91,11 @@ importers:
         specifier: ^5.2.0
         version: 5.4.19(@types/node@22.15.29)
 
-  packages/shared-ui: {}
+  packages/shared-ui:
+    dependencies:
+      firebase:
+        specifier: ^11.7.3
+        version: 11.8.1
 
 packages:
 
