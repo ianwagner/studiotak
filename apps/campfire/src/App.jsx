@@ -176,8 +176,6 @@ const App = () => {
     return <LoadingOverlay visible />;
   }
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 return (
   <BrowserRouter basename="/">
     <Routes>
