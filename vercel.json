@@ -1,6 +1,5 @@
 {
-  "rootDirectory": "apps/campfire",
-  "buildCommand": "pnpm build",
-  "outputDirectory": "dist",
-  "installCommand": "pnpm install"
+  "buildCommand": "pnpm --filter campfire... build",
+  "installCommand": "pnpm install",
+  "outputDirectory": "apps/campfire/dist"
 }
