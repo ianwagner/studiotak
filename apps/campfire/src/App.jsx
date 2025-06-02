@@ -100,17 +100,34 @@ const App = () => {
   const [logoLoaded, setLogoLoaded] = React.useState(false);
 
   React.useEffect(() => {
-    const url = agencyId ? agency.logoUrl || DEFAULT_LOGO_URL : settings.logoUrl || DEFAULT_LOGO_URL;
-    if (!url) {
-      setLogoLoaded(true);
-      return;
-    }
-    setLogoLoaded(false);
-    const img = new Image();
-    img.onload = () => setLogoLoaded(true);
-    img.onerror = () => setLogoLoaded(true);
-    img.src = url;
-  }, [agency.logoUrl, settings.logoUrl, agencyId]);
+  const url = agencyId ? agency.logoUrl || DEFAULT_LOGO_URL : settings.logoUrl || DEFAULT_LOGO_URL;
+  console.log("🎨 Logo URL being loaded:", url);
+
+  if (!url) {
+    setLogoLoaded(true);
+    return;
+  }
+
+  const img = new Image();
+
+  const fallback = () => {
+    console.warn("⚠️ Logo failed to load, falling back.");
+    setLogoLoaded(true);
+  };
+
+  img.onload = () => {
+    console.log("✅ Logo loaded");
+    setLogoLoaded(true);
+  };
+
+  img.onerror = fallback;
+
+  // Timeout fallback just in case the request stalls
+  setTimeout(fallback, 3000);
+
+  img.src = url;
+}, [agency.logoUrl, settings.logoUrl, agencyId]);
+
 
   const ready =
     !loading &&
