@@ -176,15 +176,18 @@ const App = () => {
     return <LoadingOverlay visible />;
   }
 
-  return (
+return (
   <BrowserRouter>
-    <div style={{ padding: '2rem', color: 'white', background: '#111' }}>
-      <h1>🔥 Minimal Campfire Render</h1>
-      <p>If you see this, BrowserRouter is working and it's not the root.</p>
-    </div>
+    <Routes>
+      <Route path="/login" element={
+        <div style={{ padding: '2rem', color: 'limegreen' }}>
+          <h1>✅ Route Rendered</h1>
+          <p>This confirms routing works. Logged in state doesn’t block rendering.</p>
+        </div>
+      } />
+    </Routes>
   </BrowserRouter>
 );
-
 };
 
 export default App;
