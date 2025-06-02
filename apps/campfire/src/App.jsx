@@ -45,7 +45,7 @@ import useTheme from "./useTheme";
 import debugLog from "./utils/debugLog";
 import useSiteSettings from "./useSiteSettings";
 import useAgencyTheme from "./useAgencyTheme";
-import FullScreenSpinner from "./FullScreenSpinner";
+import LoadingOverlay from "./LoadingOverlay";
 import { DEFAULT_LOGO_URL } from "./constants";
 
 // Use HashRouter when the app is opened from the filesystem so routes work
@@ -130,9 +130,6 @@ const App = () => {
   }, [ready]);
 
 
-  if (!ready) {
-    return <FullScreenSpinner />;
-  }
 
   const signedIn = user && !user.isAnonymous;
   const role = isAdmin ? 'admin' : dbRole;
@@ -152,8 +149,9 @@ const App = () => {
   }
 
   return (
-    <RouterImpl basename={import.meta.env.BASE_URL}>
-      <ThemeWatcher />
+    <LoadingOverlay visible={!ready}>
+      <RouterImpl basename={import.meta.env.BASE_URL}>
+        <ThemeWatcher />
       <RequireMfa user={user} role={role}>
         <div className="min-h-screen flex">
           {signedIn && (
@@ -589,6 +587,7 @@ const App = () => {
         </div>
       </RequireMfa>
       </RouterImpl>
+    </LoadingOverlay>
   );
 };
 
