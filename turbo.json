@@ -8,10 +8,13 @@
     "VITE_FIREBASE_MESSAGING_SENDER_ID",
     "VITE_FIREBASE_APP_ID"
   ],
-  "tasks": {
+  "pipeline": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": {
+        "apps/campfire": ["dist/**"],
+        "packages/shared-ui": []
+      }
     },
     "dev": {
       "cache": false
