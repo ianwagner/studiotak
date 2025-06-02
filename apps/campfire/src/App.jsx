@@ -100,34 +100,33 @@ const App = () => {
   const [logoLoaded, setLogoLoaded] = React.useState(false);
 
   React.useEffect(() => {
-  const url = agencyId ? agency.logoUrl || DEFAULT_LOGO_URL : settings.logoUrl || DEFAULT_LOGO_URL;
-  console.log("🎨 Logo URL being loaded:", url);
+    const url = agencyId ? agency.logoUrl || DEFAULT_LOGO_URL : settings.logoUrl || DEFAULT_LOGO_URL;
+    console.log("🎨 Logo URL being loaded:", url);
 
-  if (!url) {
-    setLogoLoaded(true);
-    return;
-  }
+    if (!url) {
+      setLogoLoaded(true);
+      return;
+    }
 
-  const img = new Image();
+    const img = new Image();
 
-  const fallback = () => {
-    console.warn("⚠️ Logo failed to load, falling back.");
-    setLogoLoaded(true);
-  };
+    const fallback = () => {
+      console.warn("⚠️ Logo failed to load, falling back.");
+      setLogoLoaded(true);
+    };
 
-  img.onload = () => {
-    console.log("✅ Logo loaded");
-    setLogoLoaded(true);
-  };
+    img.onload = () => {
+      console.log("✅ Logo loaded");
+      setLogoLoaded(true);
+    };
 
-  img.onerror = fallback;
+    img.onerror = fallback;
 
-  // Timeout fallback just in case the request stalls
-  setTimeout(fallback, 3000);
+    // Timeout fallback just in case the request stalls
+    setTimeout(fallback, 3000);
 
-  img.src = url;
-}, [agency.logoUrl, settings.logoUrl, agencyId]);
-
+    img.src = url;
+  }, [agency.logoUrl, settings.logoUrl, agencyId]);
 
   const ready =
     !loading &&
@@ -176,17 +175,445 @@ const App = () => {
     return <LoadingOverlay visible />;
   }
 
-return (
-  <BrowserRouter>
-    <Routes>
-      <Route
-        path="/login"
-        element={<Login onLogin={() => console.log('✅ Logged in')} />}
-      />
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
-  </BrowserRouter>
-);
+  return (
+      <RouterImpl basename={import.meta.env.BASE_URL}>
+        <ThemeWatcher />
+      <RequireMfa user={user} role={role}>
+        <div className="min-h-screen flex">
+          {signedIn && (
+            <RoleSidebar role={role} isAdmin={isAdmin} agencyId={agencyId} />
+          )}
+          <div
+            className={`flex flex-col flex-grow box-border min-w-0 max-w-full ${
+              signedIn ? 'md:pl-[250px]' : ''
+            }`}
+          >
+            <div className="flex-grow">
+              <Routes>
+            <Route
+              path="/login"
+              element={
+                <RouteLogger name="/login">
+                  {user ? (
+                    <Navigate to={defaultPath} replace />
+                  ) : (
+                    <Login onLogin={() => console.log('✅ Logged in')} />
+                  )}
+                </RouteLogger>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <RouteLogger name="/signup">
+                  {user ? (
+                    <Navigate to={defaultPath} replace />
+                  ) : (
+                    <SignUpStepper />
+                  )}
+                </RouteLogger>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <RouteLogger name="/">
+                  {user ? (
+                    <Navigate to={defaultPath} replace />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )}
+                </RouteLogger>
+              }
+            />
+            <Route
+              path="/dashboard/designer"
+              element={
+                <RouteLogger name="/dashboard/designer">
+                  {user ? (
+                    <RoleGuard
+                      requiredRole="designer"
+                      userRole={role} isAdmin={isAdmin}
+                      loading={roleLoading}
+                    >
+                      <DesignerDashboard />
+                    </RoleGuard>
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )}
+                </RouteLogger>
+              }
+            />
+            <Route
+              path="/designer/notifications"
+              element={
+                <RouteLogger name="/designer/notifications">
+                  {user ? (
+                    <RoleGuard
+                      requiredRole="designer"
+                      userRole={role} isAdmin={isAdmin}
+                      loading={roleLoading}
+                    >
+                      <DesignerNotifications />
+                    </RoleGuard>
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )}
+                </RouteLogger>
+              }
+            />
+            <Route
+              path="/designer/account-settings"
+              element={
+                <RouteLogger name="/designer/account-settings">
+                  {user ? (
+                    <RoleGuard
+                      requiredRole="designer"
+                      userRole={role} isAdmin={isAdmin}
+                      loading={roleLoading}
+                    >
+                      <DesignerAccountSettings />
+                    </RoleGuard>
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )}
+                </RouteLogger>
+              }
+            />
+            <Route
+              path="/admin/accounts"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="admin"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AdminAccounts />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/admin/accounts/new"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="admin"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AdminAccountForm />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/dashboard/client"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="client"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <ClientDashboard user={user} brandCodes={brandCodes} />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/dashboard/admin"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="admin"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AdminDashboard />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/admin/ad-groups"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="admin"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AdminAdGroups />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/agency/dashboard"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="agency"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AgencyDashboard />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/agency/theme"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="agency"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AgencyThemeSettings />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/agency/brands"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="agency"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AgencyBrands />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/agency/account-settings"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="agency"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AgencyAccountSettings />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/agency/ad-groups"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="agency"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AgencyAdGroups />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/review/:groupId"
+              element={
+                <ReviewRoute />
+              }
+            />
+            <Route
+              path="/request"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="client"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <Request />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/brand-setup"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="client"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <BrandSetup />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/account-settings"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="client"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AccountSettings />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/mfa-settings"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole={["admin", "client", "agency"]}
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <ManageMfa user={user} role={role} />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/create-group"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="designer"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <CreateAdGroup />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/ad-group/:id"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole={["designer", "admin", "agency", "client"]}
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AdGroupDetail />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/admin/brands"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="admin"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AdminBrands />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/admin/site-settings"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="admin"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <SiteSettings />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/admin/account-settings"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="admin"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AdminAccountSettings />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/admin/brands/new"
+              element={
+                user ? (
+                  <RoleGuard
+                    requiredRole="admin"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <AdminBrandForm />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </div>
+        </div>
+      </RequireMfa>
+      </RouterImpl>
+  );
 };
 
 export default App;
