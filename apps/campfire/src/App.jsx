@@ -1,13 +1,11 @@
 // © 2025 Studio Tak. All rights reserved.
 // This file is part of a proprietary software project. Do not distribute.
 import React from "react";
-import { useEffect } from "react";
 import {
-  BrowserRouter,
+  BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  HashRouter,
 } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase/config";
@@ -46,32 +44,15 @@ import useTheme from "./useTheme";
 import debugLog from "./utils/debugLog";
 import useSiteSettings from "./useSiteSettings";
 import useAgencyTheme from "./useAgencyTheme";
-import LoadingOverlay from "./LoadingOverlay";
+import FullScreenSpinner from "./FullScreenSpinner";
 import { DEFAULT_LOGO_URL } from "./constants";
-
-// Use HashRouter when the app is opened from the filesystem so routes work
-const RouterImpl =
-  typeof window !== 'undefined' && window.location.protocol === 'file:'
-    ? HashRouter
-    : BrowserRouter;
 
 const ThemeWatcher = () => {
   useTheme();
   return null;
 };
 
-const RouteLogger = ({ name, children }) => {
-  debugLog('Render route', name);
-  return children;
-};
-
 const App = () => {
-    useEffect(() => {
-    // ✅ Unhide app by removing theme-related classes
-    document.body.classList.remove("pre-theme");
-    document.documentElement.classList.remove("loading");
-  }, []);
-
   const [user, setUser] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -101,30 +82,14 @@ const App = () => {
 
   React.useEffect(() => {
     const url = agencyId ? agency.logoUrl || DEFAULT_LOGO_URL : settings.logoUrl || DEFAULT_LOGO_URL;
-    console.log("🎨 Logo URL being loaded:", url);
-
     if (!url) {
       setLogoLoaded(true);
       return;
     }
-
+    setLogoLoaded(false);
     const img = new Image();
-
-    const fallback = () => {
-      console.warn("⚠️ Logo failed to load, falling back.");
-      setLogoLoaded(true);
-    };
-
-    img.onload = () => {
-      console.log("✅ Logo loaded");
-      setLogoLoaded(true);
-    };
-
-    img.onerror = fallback;
-
-    // Timeout fallback just in case the request stalls
-    setTimeout(fallback, 3000);
-
+    img.onload = () => setLogoLoaded(true);
+    img.onerror = () => setLogoLoaded(true);
     img.src = url;
   }, [agency.logoUrl, settings.logoUrl, agencyId]);
 
@@ -136,16 +101,6 @@ const App = () => {
     !agencyLoading &&
     logoLoaded;
 
-  debugLog('App state', {
-    loading,
-    roleLoading,
-    adminLoading,
-    settingsLoading,
-    agencyLoading,
-    logoLoaded,
-    ready,
-  });
-
   React.useEffect(() => {
     if (ready) {
       document.body.classList.remove('pre-theme');
@@ -153,6 +108,9 @@ const App = () => {
   }, [ready]);
 
 
+  if (!ready) {
+    return <FullScreenSpinner />;
+  }
 
   const signedIn = user && !user.isAnonymous;
   const role = isAdmin ? 'admin' : dbRole;
@@ -161,8 +119,6 @@ const App = () => {
       ? `/agency/dashboard?agencyId=${agencyId}`
       : `/dashboard/${role}`
     : '/login';
-
-  debugLog('Routing info', { signedIn, role, defaultPath });
   if (signedIn && !role) {
     return (
       <div className="flex items-center justify-center min-h-screen text-center">
@@ -171,13 +127,9 @@ const App = () => {
     );
   }
 
-  if (!ready) {
-    return <LoadingOverlay visible />;
-  }
-
   return (
-      <RouterImpl basename={import.meta.env.BASE_URL}>
-        <ThemeWatcher />
+    <Router>
+      <ThemeWatcher />
       <RequireMfa user={user} role={role}>
         <div className="min-h-screen flex">
           {signedIn && (
@@ -193,91 +145,79 @@ const App = () => {
             <Route
               path="/login"
               element={
-                <RouteLogger name="/login">
-                  {user ? (
-                    <Navigate to={defaultPath} replace />
-                  ) : (
-                    <Login onLogin={() => console.log('✅ Logged in')} />
-                  )}
-                </RouteLogger>
+                user ? (
+                  <Navigate to={defaultPath} replace />
+                ) : (
+                  <Login onLogin={() => setUser(auth.currentUser)} />
+                )
               }
             />
             <Route
               path="/signup"
               element={
-                <RouteLogger name="/signup">
-                  {user ? (
-                    <Navigate to={defaultPath} replace />
-                  ) : (
-                    <SignUpStepper />
-                  )}
-                </RouteLogger>
+                user ? (
+                  <Navigate to={defaultPath} replace />
+                ) : (
+                  <SignUpStepper />
+                )
               }
             />
             <Route
               path="/"
               element={
-                <RouteLogger name="/">
-                  {user ? (
-                    <Navigate to={defaultPath} replace />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )}
-                </RouteLogger>
+                user ? (
+                  <Navigate to={defaultPath} replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }
             />
             <Route
               path="/dashboard/designer"
               element={
-                <RouteLogger name="/dashboard/designer">
-                  {user ? (
-                    <RoleGuard
-                      requiredRole="designer"
-                      userRole={role} isAdmin={isAdmin}
-                      loading={roleLoading}
-                    >
-                      <DesignerDashboard />
-                    </RoleGuard>
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )}
-                </RouteLogger>
+                user ? (
+                  <RoleGuard
+                    requiredRole="designer"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <DesignerDashboard />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }
             />
             <Route
               path="/designer/notifications"
               element={
-                <RouteLogger name="/designer/notifications">
-                  {user ? (
-                    <RoleGuard
-                      requiredRole="designer"
-                      userRole={role} isAdmin={isAdmin}
-                      loading={roleLoading}
-                    >
-                      <DesignerNotifications />
-                    </RoleGuard>
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )}
-                </RouteLogger>
+                user ? (
+                  <RoleGuard
+                    requiredRole="designer"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <DesignerNotifications />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }
             />
             <Route
               path="/designer/account-settings"
               element={
-                <RouteLogger name="/designer/account-settings">
-                  {user ? (
-                    <RoleGuard
-                      requiredRole="designer"
-                      userRole={role} isAdmin={isAdmin}
-                      loading={roleLoading}
-                    >
-                      <DesignerAccountSettings />
-                    </RoleGuard>
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )}
-                </RouteLogger>
+                user ? (
+                  <RoleGuard
+                    requiredRole="designer"
+                    userRole={role} isAdmin={isAdmin}
+                    loading={roleLoading}
+                  >
+                    <DesignerAccountSettings />
+                  </RoleGuard>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }
             />
             <Route
@@ -612,7 +552,7 @@ const App = () => {
           </div>
         </div>
       </RequireMfa>
-      </RouterImpl>
+      </Router>
   );
 };
 

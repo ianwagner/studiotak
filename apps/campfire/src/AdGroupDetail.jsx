@@ -38,11 +38,11 @@ import { deleteObject, ref } from "firebase/storage";
 import { auth, db, storage } from "./firebase/config";
 import useUserRole from "./useUserRole";
 import { uploadFile } from "./uploadFile";
-import { ShareLinkModal } from "@studio-tak/shared-ui";
+import ShareLinkModal from "./components/ShareLinkModal.jsx";
 import parseAdFilename from "./utils/parseAdFilename";
 import StatusBadge from "./components/StatusBadge.jsx";
 import LoadingOverlay from "./LoadingOverlay";
-import { OptimizedImage } from "@studio-tak/shared-ui";
+import OptimizedImage from "./components/OptimizedImage.jsx";
 import pickHeroAsset from "./utils/pickHeroAsset";
 import computeGroupStatus from "./utils/computeGroupStatus";
 

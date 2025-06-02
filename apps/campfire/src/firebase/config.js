@@ -2,7 +2,6 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import debugLog from "../utils/debugLog";
 
 // ✅ Fixed: Correct Firebase config
 // Configuration is read from the Vite environment so that sensitive values can
@@ -17,9 +16,6 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
-
-// Log loaded Firebase configuration to verify environment variables
-debugLog('Firebase config', firebaseConfig);
 
 // ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);

@@ -12,9 +12,8 @@ Google Sheet into Firestore.
    npm install
    ```
 2. Provide a Firebase service account key and set the environment variable
-   `GOOGLE_APPLICATION_CREDENTIALS` to its path. Scripts such as `sync.js` and
-   `run-set-admin.js` read this variable when initializing the Firebase Admin
-   SDK. The storage bucket can be overridden with `FIREBASE_STORAGE_BUCKET`.
+   `GOOGLE_APPLICATION_CREDENTIALS` to its path. The storage bucket can be
+   overridden with `FIREBASE_STORAGE_BUCKET`.
 3. Run the script:
    ```bash
    npm run sync

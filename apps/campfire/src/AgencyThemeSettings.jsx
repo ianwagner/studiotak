@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import useAgencyTheme from './useAgencyTheme';
 import { uploadLogo } from './uploadLogo';
 import { DEFAULT_ACCENT_COLOR } from './themeColors';
-import { OptimizedImage } from '@studio-tak/shared-ui';
+import OptimizedImage from './components/OptimizedImage.jsx';
 
 const AgencyThemeSettings = () => {
   const agencyId = new URLSearchParams(useLocation().search).get('agencyId');

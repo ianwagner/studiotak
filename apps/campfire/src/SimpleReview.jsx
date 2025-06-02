@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { OptimizedImage } from '@studio-tak/shared-ui';
+import OptimizedImage from './components/OptimizedImage.jsx';
 
 const PRELOAD_AHEAD = 5;
 
