@@ -1,15 +1,6 @@
 {
-  "projects": {
-    "default": {
-      "root": "apps/campfire"
-    }
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  },
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter ./apps/campfire... build",
-  "outputDirectory": "apps/campfire/dist"
+  "rootDirectory": "apps/campfire",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
+  "installCommand": "pnpm install"
 }
