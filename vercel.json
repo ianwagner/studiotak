@@ -1,0 +1,17 @@
+{
+  "builds": [
+    {
+      "src": "apps/campfire/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "apps/campfire/dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
