@@ -1,40 +1,188 @@
-import React, { useEffect, useState } from "react";
+// © 2025 Studio Tak. All rights reserved.
+// This file is part of a proprietary software project. Do not distribute.
+import React from "react";
+import { useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  HashRouter,
+} from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase/config";
+import Login from "./Login";
+import SignUpStepper from "./SignUpStepper.tsx";
+import ReviewRoute from "./ReviewRoute";
+import CreateAdGroup from "./CreateAdGroup";
+import AdGroupDetail from "./AdGroupDetail";
+import DesignerDashboard from "./DesignerDashboard";
+import ClientDashboard from "./ClientDashboard";
+import AdminDashboard from "./AdminDashboard";
+import AdminAdGroups from "./AdminAdGroups";
+import AgencyDashboard from "./AgencyDashboard";
+import Request from "./Request";
+import BrandSetup from "./BrandSetup";
+import AccountSettings from "./AccountSettings";
+import DesignerNotifications from "./DesignerNotifications";
+import DesignerAccountSettings from "./DesignerAccountSettings";
+import AdminAccountSettings from "./AdminAccountSettings";
+import AgencyAccountSettings from "./AgencyAccountSettings";
+import AdminAccountForm from "./AdminAccountForm";
+import AdminAccounts from "./AdminAccounts";
+import RoleGuard from "./RoleGuard";
+import useUserRole from "./useUserRole";
+import useAdminClaim from "./useAdminClaim";
+import AdminBrandForm from "./AdminBrandForm";
+import AdminBrands from "./AdminBrands";
+import ManageMfa from "./ManageMfa";
+import RequireMfa from "./RequireMfa";
+import SiteSettings from "./SiteSettings";
+import RoleSidebar from "./RoleSidebar";
+import AgencyThemeSettings from "./AgencyThemeSettings";
+import AgencyBrands from "./AgencyBrands";
+import AgencyAdGroups from "./AgencyAdGroups";
+import useTheme from "./useTheme";
+import debugLog from "./utils/debugLog";
+import useSiteSettings from "./useSiteSettings";
+import useAgencyTheme from "./useAgencyTheme";
+import LoadingOverlay from "./LoadingOverlay";
+import { DEFAULT_LOGO_URL } from "./constants";
+
+// Use HashRouter when the app is opened from the filesystem so routes work
+const RouterImpl =
+  typeof window !== 'undefined' && window.location.protocol === 'file:'
+    ? HashRouter
+    : BrowserRouter;
+
+const ThemeWatcher = () => {
+  useTheme();
+  return null;
+};
+
+const RouteLogger = ({ name, children }) => {
+  debugLog('Render route', name);
+  return children;
+};
 
 const App = () => {
-  const [ready, setReady] = useState(false);
-  const [user, setUser] = useState(null); // placeholder
-  const [role, setRole] = useState(null); // placeholder
-  const defaultPath = "/dashboard/admin"; // placeholder
-
   useEffect(() => {
     document.body.classList.remove("pre-theme");
     document.documentElement.classList.remove("loading");
-
-    // Simulate a "ready" state after 500ms
-    setTimeout(() => {
-      setReady(true);
-    }, 500);
   }, []);
 
-  if (!ready) {
-    return <div style={{ padding: "2rem" }}>⏳ Loading...</div>;
+  const [user, setUser] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    debugLog('Auth listener mounted');
+    const unsub = onAuthStateChanged(auth, (u) => {
+      debugLog('Auth state changed', u);
+      setUser(u);
+      setLoading(false);
+    });
+    return () => {
+      debugLog('Auth listener removed');
+      unsub();
+    };
+  }, []);
+
+  const {
+    role: dbRole,
+    brandCodes,
+    agencyId,
+    loading: roleLoading,
+  } = useUserRole(user?.uid);
+  const { isAdmin, loading: adminLoading } = useAdminClaim();
+  const { settings, loading: settingsLoading } = useSiteSettings(!agencyId);
+  const { agency, loading: agencyLoading } = useAgencyTheme(agencyId);
+  const [logoLoaded, setLogoLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    const url = agencyId ? agency.logoUrl || DEFAULT_LOGO_URL : settings.logoUrl || DEFAULT_LOGO_URL;
+    if (!url) return setLogoLoaded(true);
+    setLogoLoaded(false);
+    const img = new Image();
+    img.onload = () => setLogoLoaded(true);
+    img.onerror = () => setLogoLoaded(true);
+    img.src = url;
+  }, [agency.logoUrl, settings.logoUrl, agencyId]);
+
+  const ready =
+    !loading &&
+    !roleLoading &&
+    !adminLoading &&
+    !settingsLoading &&
+    !agencyLoading &&
+    logoLoaded;
+
+  debugLog('App state', {
+    loading,
+    roleLoading,
+    adminLoading,
+    settingsLoading,
+    agencyLoading,
+    logoLoaded,
+    ready,
+  });
+
+  useEffect(() => {
+    if (ready) {
+      document.body.classList.remove('pre-theme');
+    }
+  }, [ready]);
+
+  const signedIn = user && !user.isAnonymous;
+  const role = isAdmin ? 'admin' : dbRole || '';
+  const defaultPath = signedIn
+    ? role === 'agency'
+      ? `/agency/dashboard?agencyId=${agencyId}`
+      : role
+        ? `/dashboard/${role}`
+        : '/no-role'
+    : '/login';
+
+  debugLog('Routing info', { signedIn, role, defaultPath });
+
+  if (signedIn && !role) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-center">
+        No role assigned to this account. Please contact support.
+      </div>
+    );
   }
 
-  console.log("✅ Ready is true");
-  console.log("👤 user:", user);
-  console.log("🔑 role:", role);
-  console.log("📍 defaultPath:", defaultPath);
-  console.log("📍 pathname:", window.location.pathname);
+  if (!ready) {
+    return <LoadingOverlay visible />;
+  }
 
   return (
-    <div style={{ padding: "2rem", color: "limegreen", background: "#111" }}>
-      <h1>Campfire Render Check</h1>
-      <p>React is mounted and working correctly.</p>
-      <p><strong>user:</strong> {JSON.stringify(user)}</p>
-      <p><strong>role:</strong> {role}</p>
-      <p><strong>defaultPath:</strong> {defaultPath}</p>
-      <p><strong>path:</strong> {window.location.pathname}</p>
-    </div>
+    <RouterImpl basename={import.meta.env.BASE_URL}>
+      <ThemeWatcher />
+      <RequireMfa user={user} role={role}>
+        <div className="min-h-screen flex">
+          {signedIn && (
+            <RoleSidebar role={role} isAdmin={isAdmin} agencyId={agencyId} />
+          )}
+          <div
+            className={`flex flex-col flex-grow box-border min-w-0 max-w-full ${
+              signedIn ? 'md:pl-[250px]' : ''
+            }`}
+          >
+            <div className="flex-grow">
+              <Routes>
+                <Route path="/" element={<Navigate to={defaultPath} replace />} />
+                <Route path="/login" element={<Login onLogin={() => setUser(auth.currentUser)} />} />
+                <Route path="/signup" element={<SignUpStepper />} />
+                <Route path="/review/:groupId" element={<ReviewRoute />} />
+                {/* Add remaining routes with RoleGuard as needed */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </div>
+        </div>
+      </RequireMfa>
+    </RouterImpl>
   );
 };
 
