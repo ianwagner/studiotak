@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "buildCommand": "pnpm turbo run build",
+  "installCommand": "pnpm install",
   "outputDirectory": "dist"
 }
