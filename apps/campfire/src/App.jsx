@@ -198,7 +198,10 @@ const App = () => {
                   {user ? (
                     <Navigate to={defaultPath} replace />
                   ) : (
-                    <Login onLogin={() => setUser(auth.currentUser)} />
+                    <div style={{ padding: '2rem', color: 'white', background: '#111' }}>
+  <h1>Login screen test</h1>
+  <p>If you see this, Login is not the issue.</p>
+</div>
                   )}
                 </RouteLogger>
               }
