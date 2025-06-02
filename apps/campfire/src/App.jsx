@@ -152,7 +152,7 @@ const App = () => {
   }
 
   return (
-    <RouterImpl>
+    <RouterImpl basename={import.meta.env.BASE_URL}>
       <ThemeWatcher />
       <RequireMfa user={user} role={role}>
         <div className="min-h-screen flex">
