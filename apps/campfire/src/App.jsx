@@ -176,15 +176,20 @@ const App = () => {
     return <LoadingOverlay visible />;
   }
 
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 return (
-  <BrowserRouter>
+  <BrowserRouter basename="/">
     <Routes>
-      <Route path="/login" element={
-        <div style={{ padding: '2rem', color: 'limegreen' }}>
-          <h1>✅ Route Rendered</h1>
-          <p>This confirms routing works. Logged in state doesn’t block rendering.</p>
-        </div>
-      } />
+      <Route
+        path="*"
+        element={
+          <div style={{ padding: "2rem", background: "black", color: "lime" }}>
+            <h1>✅ Router Works!</h1>
+            <p>Path: {window.location.pathname}</p>
+          </div>
+        }
+      />
     </Routes>
   </BrowserRouter>
 );
