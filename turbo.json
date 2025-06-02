@@ -11,10 +11,7 @@
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": {
-        "apps/campfire": ["dist/**"],
-        "packages/shared-ui": []
-      }
+      "outputs": ["dist/**", "!packages/shared-ui/**"]
     },
     "dev": {
       "cache": false
