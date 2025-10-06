@@ -1,7 +1,9 @@
 import groq from "groq";
+import { unstable_cache } from "next/cache";
+import { draftMode } from "next/headers";
 
 import { hasSanityClient, requireSanityClient } from "@/lib/sanity/config";
-import type { BlockTheme, SanityBlock } from "@/lib/sanity/types";
+import type { BlockDensity, BlockLayoutSettings, BlockTheme, SanityBlock } from "@/lib/sanity/types";
 
 type SortOrder = "newestFirst" | "oldestFirst" | "alphabeticalAsc" | "random";
 type FallbackMode = "strict" | "pinsOnly" | "anyApproved";
@@ -14,7 +16,7 @@ export type TaxonomySummary = {
   icon?: string;
 };
 
-export type HeroContent = {
+type HeroContent = {
   headline: string;
   tagline?: string;
   body?: SanityBlock[];
@@ -30,6 +32,9 @@ export type ContentItem = {
   industries: TaxonomySummary[];
   personas: TaxonomySummary[];
   imageUrl?: string | null;
+  imageAlt?: string | null;
+  mediaDisplay?: "image" | "icon" | null;
+  body?: SanityBlock[] | null;
 };
 
 export type PaginationInfo = {
@@ -45,6 +50,8 @@ export type SetBlockView = SanityBlock & {
   _type: "setBlock";
   title: string;
   description?: string;
+  anchor?: string;
+  layout?: BlockLayoutSettings | null;
   setId?: string;
   setTitle?: string;
   setType: "dynamicSet" | "curatedSet" | "generated";
@@ -52,6 +59,7 @@ export type SetBlockView = SanityBlock & {
   pagination?: PaginationInfo;
   resolvedFromFallback?: boolean;
   theme: BlockTheme;
+  density: BlockDensity;
 };
 
 type PageContext = {
@@ -62,9 +70,37 @@ type PageContext = {
 };
 
 export type PageViewData = {
-  hero: HeroContent;
-  blocks: SetBlockView[];
+  blocks: SanityBlock[];
   context: PageContext;
+};
+
+export type HomepageSharedTokens = {
+  theme: BlockTheme;
+  density: BlockDensity;
+  typographyToken: string;
+  spacingToken: string;
+};
+
+export type HomepageSeo = {
+  description: string | null;
+  socialImageUrl: string | null;
+  socialImageAlt: string | null;
+};
+
+export type FeaturedSetSummary = {
+  id: string;
+  type: "curatedSet" | "dynamicSet";
+  title?: string;
+  description?: string;
+};
+
+export type HomepageData = {
+  title: string;
+  slug: string;
+  sharedTokens: HomepageSharedTokens;
+  blocks: SanityBlock[];
+  featuredSets: FeaturedSetSummary[];
+  seo: HomepageSeo | null;
 };
 
 type ContentDocument = {
@@ -77,6 +113,9 @@ type ContentDocument = {
   personas?: TaxonomySummary[];
   contentType?: TaxonomySummary | null;
   imageUrl?: string | null;
+  imageAlt?: string | null;
+  mediaDisplay?: "image" | "icon" | null;
+  body?: SanityBlock[] | null;
 };
 
 type CuratedSetDoc = {
@@ -105,32 +144,62 @@ type DynamicSetDoc = {
   revision?: string;
 };
 
+type FeaturedSetDoc = {
+  _id?: string;
+  _type?: string;
+  title?: string;
+  description?: string;
+};
+
+type HomepageDoc = {
+  title?: string;
+  slug?: { current?: string } | null;
+  sharedTokens?: Partial<HomepageSharedTokens> | null;
+  seo?: {
+    description?: string;
+    socialImage?: {
+      asset?: {
+        url?: string | null;
+      } | null;
+      alt?: string | null;
+    } | null;
+  } | null;
+  blocks?: ThemedBlockDoc[] | null;
+  featuredSets?: (FeaturedSetDoc | null)[] | null;
+};
+
 type ResolvedFilterSet = {
   industryIds?: string[];
   personaIds?: string[];
   contentTypeIds?: string[];
 };
 
-type SetBlockDoc = {
-  _key?: string;
+type ThemedBlockDoc = SanityBlock & {
+  theme?: BlockTheme | null;
+  layout?: BlockLayoutSettings | null;
+  anchor?: string;
+  density?: BlockDensity | null;
+};
+
+type SetBlockDoc = ThemedBlockDoc & {
+  _type: 'setBlock';
   title?: string;
   description?: string;
   set?: CuratedSetDoc | DynamicSetDoc | null;
   fallbackSet?: CuratedSetDoc | DynamicSetDoc | null;
-  theme?: BlockTheme | null;
 };
 
 type IndustryPageDoc = {
   title?: string;
   hero?: HeroContent | null;
-  blocks?: SetBlockDoc[];
+  blocks?: ThemedBlockDoc[];
   industry?: TaxonomySummary | null;
 };
 
 type PersonaPageDoc = {
   title?: string;
   hero?: HeroContent | null;
-  blocks?: SetBlockDoc[];
+  blocks?: ThemedBlockDoc[];
   persona?: TaxonomySummary | null;
 };
 
@@ -141,6 +210,198 @@ type TaxonomyDoc = {
   icon?: string;
   slug?: { current?: string };
 };
+
+const DEFAULT_BLOCK_THEME: BlockTheme = 'light';
+
+const DEFAULT_LAYOUT: BlockLayoutSettings = {
+  container: 'gm-layout-shell',
+  maxWidth: 'gm-layout-shell-max',
+  inlinePadding: 'gm-spacing-shell-inline',
+  blockPadding: 'gm-spacing-shell-block',
+  stackSpacing: 'gm-spacing-shell-stack',
+};
+
+const DEFAULT_DENSITY: BlockDensity = 'default';
+
+const DEFAULT_HOMEPAGE_SHARED_TOKENS: HomepageSharedTokens = {
+  theme: DEFAULT_BLOCK_THEME,
+  density: DEFAULT_DENSITY,
+  typographyToken: 'gm-typography-section-heading',
+  spacingToken: 'gm-spacing-shell-stack',
+};
+
+const HOMEPAGE_CACHE_TAG = 'homepage';
+const HOMEPAGE_REVALIDATE_SECONDS = 120;
+
+const HOMEPAGE_FALLBACK: HomepageData = {
+  title: 'Homepage',
+  slug: '/',
+  sharedTokens: DEFAULT_HOMEPAGE_SHARED_TOKENS,
+  blocks: [],
+  featuredSets: [],
+  seo: null,
+};
+
+const isSetBlockDoc = (block: ThemedBlockDoc): block is SetBlockDoc => block._type === 'setBlock';
+
+const normalizeBlockMeta = <T extends ThemedBlockDoc>(block: T): T & {
+  theme: BlockTheme;
+  layout: BlockLayoutSettings;
+} => ({
+  ...block,
+  theme: (block.theme ?? DEFAULT_BLOCK_THEME) as BlockTheme,
+  layout: {
+    ...DEFAULT_LAYOUT,
+    ...(block.layout ?? {}),
+  },
+  density: (block.density ?? DEFAULT_DENSITY) as BlockDensity,
+});
+
+const normalizeHomepageSharedTokens = (
+  tokens: Partial<HomepageSharedTokens> | null | undefined,
+): HomepageSharedTokens => ({
+  theme: (tokens?.theme ?? DEFAULT_HOMEPAGE_SHARED_TOKENS.theme) as BlockTheme,
+  density: (tokens?.density ?? DEFAULT_HOMEPAGE_SHARED_TOKENS.density) as BlockDensity,
+  typographyToken: tokens?.typographyToken ?? DEFAULT_HOMEPAGE_SHARED_TOKENS.typographyToken,
+  spacingToken: tokens?.spacingToken ?? DEFAULT_HOMEPAGE_SHARED_TOKENS.spacingToken,
+});
+
+const normalizeHomepageSeo = (seo: HomepageDoc['seo']): HomepageSeo | null => {
+  if (!seo) {
+    return null;
+  }
+
+  const description = seo.description?.trim() ?? null;
+  const socialImageUrl = seo.socialImage?.asset?.url ?? null;
+  const socialImageAlt = seo.socialImage?.alt?.trim() ?? null;
+
+  if (!description && !socialImageUrl && !socialImageAlt) {
+    return null;
+  }
+
+  return {
+    description,
+    socialImageUrl,
+    socialImageAlt,
+  } satisfies HomepageSeo;
+};
+
+const normalizeFeaturedSets = (
+  sets: (FeaturedSetDoc | null)[] | null | undefined,
+): FeaturedSetSummary[] => {
+  if (!sets) {
+    return [];
+  }
+
+  return sets
+    .map((set) => {
+      if (!set?._id) {
+        return null;
+      }
+
+      if (set._type !== 'curatedSet' && set._type !== 'dynamicSet') {
+        return null;
+      }
+
+      return {
+        id: set._id,
+        type: set._type,
+        title: set.title ?? undefined,
+        description: set.description ?? undefined,
+      } satisfies FeaturedSetSummary;
+    })
+    .filter((value): value is FeaturedSetSummary => Boolean(value));
+};
+
+type Perspective = 'published' | 'previewDrafts';
+
+async function normalizeHomepageDoc(
+  doc: HomepageDoc | null,
+  options?: { pageOverrides?: Record<string, number> },
+): Promise<HomepageData | null> {
+  if (!doc) {
+    return null;
+  }
+
+  const resolvedBlocks = doc.blocks
+    ? await Promise.all(
+        doc.blocks.map((block) => {
+          if (isSetBlockDoc(block)) {
+            return resolveSetBlock({
+              block,
+              pageOverrides: options?.pageOverrides,
+            });
+          }
+
+          return normalizeBlockMeta(block);
+        }),
+      )
+    : [];
+
+  return {
+    title: doc.title ?? HOMEPAGE_FALLBACK.title,
+    slug: doc.slug?.current ?? HOMEPAGE_FALLBACK.slug,
+    sharedTokens: normalizeHomepageSharedTokens(doc.sharedTokens ?? null),
+    blocks: resolvedBlocks.filter(Boolean) as SanityBlock[],
+    featuredSets: normalizeFeaturedSets(doc.featuredSets ?? null),
+    seo: normalizeHomepageSeo(doc.seo ?? null),
+  } satisfies HomepageData;
+}
+
+async function fetchHomepageFromSanity(
+  perspective: Perspective,
+  options?: { pageOverrides?: Record<string, number> },
+): Promise<HomepageData | null> {
+  if (!hasSanityClient()) {
+    return null;
+  }
+
+  const client = requireSanityClient();
+  const configured =
+    perspective === 'previewDrafts'
+      ? client.withConfig({perspective: 'previewDrafts', useCdn: false})
+      : client;
+
+  const doc = await configured.fetch<HomepageDoc | null>(homepageQuery);
+  return await normalizeHomepageDoc(doc, options);
+}
+
+const cachedHomepageFetcher = unstable_cache(
+  async () => fetchHomepageFromSanity('published'),
+  ['homepage'],
+  {revalidate: HOMEPAGE_REVALIDATE_SECONDS, tags: [HOMEPAGE_CACHE_TAG]},
+);
+
+export async function getHomepage(options?: {page?: number}): Promise<HomepageData> {
+  if (!hasSanityClient()) {
+    return HOMEPAGE_FALLBACK;
+  }
+
+  const {isEnabled} = draftMode();
+  const pageOverrides =
+    typeof options?.page === 'number'
+      ? {[GLOBAL_PAGE_KEY]: normalizePageNumber(options.page)}
+      : undefined;
+
+  if (isEnabled) {
+    const preview = await fetchHomepageFromSanity('previewDrafts', {pageOverrides});
+    return preview ?? HOMEPAGE_FALLBACK;
+  }
+
+  if (pageOverrides) {
+    const result = await fetchHomepageFromSanity('published', {pageOverrides});
+    return result ?? HOMEPAGE_FALLBACK;
+  }
+
+  const useCache = process.env.NODE_ENV === 'production';
+  if (!useCache) {
+    const latest = await fetchHomepageFromSanity('published');
+    return latest ?? HOMEPAGE_FALLBACK;
+  }
+
+  const published = await cachedHomepageFetcher();
+  return published ?? HOMEPAGE_FALLBACK;
+}
 
 const taxonomyProjection = groq`
   _id,
@@ -159,10 +420,19 @@ const contentProjection = groq`
   "personas": personas[]->{${taxonomyProjection}},
   "contentType": contentType->{${taxonomyProjection}},
   "imageUrl": select(
-    _type == "example" && defined(media.asset) => media.asset->url,
+    defined(media.asset) => media.asset->url,
     null
   ),
+  "imageAlt": select(
+    defined(media.alt) => media.alt,
+    null
+  ),
+  "mediaDisplay": coalesce(mediaDisplay, "image"),
   _createdAt,
+  "body": select(
+    _type == "feature" => body,
+    null
+  ),
 `;
 
 const setProjection = groq`
@@ -190,17 +460,47 @@ const setProjection = groq`
   "revision": select(_type == "dynamicSet" => _rev),
 `;
 
+const homepageQuery = groq`
+  *[_type == "homepage"][0]{
+    title,
+    slug,
+    sharedTokens,
+    seo{
+      description,
+      socialImage{
+        asset->{
+          url
+        },
+        alt
+      }
+    },
+    featuredSets[]->{
+      _id,
+      _type,
+      title,
+      description
+    },
+    blocks[]{
+      ...,
+      _type == "setBlock" => {
+        set->{${setProjection}},
+        "fallbackSet": fallbackSet->{${setProjection}}
+      }
+    }
+  }
+`;
+
 const industryPageBySlugQuery = groq`
   *[_type == "industryPage" && slug.current == $slug][0]{
     title,
     hero,
     blocks[]{
-      _key,
-      title,
-      description,
+      ...,
       "theme": coalesce(theme, "light"),
-      set->{${setProjection}},
-      "fallbackSet": fallbackSet->{${setProjection}}
+      _type == "setBlock" => {
+        set->{${setProjection}},
+        "fallbackSet": fallbackSet->{${setProjection}}
+      }
     },
     industry->{${taxonomyProjection}}
   }
@@ -211,12 +511,12 @@ const personaPageBySlugQuery = groq`
     title,
     hero,
     blocks[]{
-      _key,
-      title,
-      description,
+      ...,
       "theme": coalesce(theme, "light"),
-      set->{${setProjection}},
-      "fallbackSet": fallbackSet->{${setProjection}}
+      _type == "setBlock" => {
+        set->{${setProjection}},
+        "fallbackSet": fallbackSet->{${setProjection}}
+      }
     },
     persona->{${taxonomyProjection}}
   }
@@ -340,6 +640,9 @@ function mapContentItem(doc: ContentDocument | null | undefined): ContentItem | 
       .map((item) => toTaxonomySummary(item))
       .filter((value): value is TaxonomySummary => Boolean(value)),
     imageUrl: doc.imageUrl,
+    imageAlt: doc.imageAlt,
+    mediaDisplay: doc.mediaDisplay === "icon" ? "icon" : "image",
+    body: doc.body ?? null,
   };
 }
 
@@ -437,13 +740,15 @@ async function resolveSetDoc({ set, sortOverride, filtersOverride, visited, page
 }
 
 async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverrides }: ResolveSetArgs): Promise<SetBlockView | null> {
-  if (!block.set) {
+  const normalizedBlock = normalizeBlockMeta(block);
+
+  if (!normalizedBlock.set) {
     return null;
   }
 
   const visited = new Set<string>();
   const primaryResolution = await resolveSetDoc({
-    set: block.set,
+    set: normalizedBlock.set,
     sortOverride,
     filtersOverride,
     visited,
@@ -455,9 +760,9 @@ async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverr
 
   const needsFallback = !resolution || resolution.items.length === 0;
 
-  if (needsFallback && block.fallbackSet?._id && !visited.has(block.fallbackSet._id)) {
+  if (needsFallback && normalizedBlock.fallbackSet?._id && !visited.has(normalizedBlock.fallbackSet._id)) {
     const fallbackResolution = await resolveSetDoc({
-      set: block.fallbackSet,
+      set: normalizedBlock.fallbackSet,
       sortOverride,
       filtersOverride,
       visited,
@@ -474,24 +779,28 @@ async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverr
     return null;
   }
 
-  const resolvedSetDoc = resolvedFromFallback ? block.fallbackSet : block.set;
-  const title = block.title ?? resolvedSetDoc?.title ?? "Untitled";
-  const description = block.description ?? resolvedSetDoc?.description ?? undefined;
+  const resolvedSetDoc = resolvedFromFallback ? normalizedBlock.fallbackSet : normalizedBlock.set;
+  const title = normalizedBlock.title ?? resolvedSetDoc?.title ?? 'Untitled';
+  const description = normalizedBlock.description ?? resolvedSetDoc?.description ?? undefined;
 
   return {
-    _type: "setBlock",
-    _key: block._key ?? `${resolution.setId}`,
+    _type: 'setBlock',
+    _key: normalizedBlock._key ?? `${resolution.setId}`,
     title,
     description,
+    anchor: normalizedBlock.anchor ?? undefined,
+    layout: normalizedBlock.layout,
     setId: resolution.setId,
     setTitle: resolvedSetDoc?.title ?? undefined,
     setType: resolution.setType,
     items: resolution.items,
     pagination: resolution.pagination,
     resolvedFromFallback: resolvedFromFallback || undefined,
-    theme: block.theme ?? "light",
+    theme: normalizedBlock.theme,
+    density: normalizedBlock.density,
   };
 }
+
 
 
 type ResolveDynamicSetArgs = {
@@ -505,15 +814,16 @@ type ResolveDynamicSetArgs = {
 };
 
 async function resolveDynamicSet({ set, sortOverride, filtersOverride, pageOverrides }: ResolveDynamicSetArgs): Promise<DynamicSetResult> {
-  const pageSize = Math.max(set.limit ?? 0, 0) || DEFAULT_PAGE_SIZE;
+  const limit = Math.max(set.limit ?? 0, 0) || DEFAULT_PAGE_SIZE;
   const requestedPage = getRequestedPage(pageOverrides, set._id);
+  const effectivePage = Math.min(requestedPage, 1); // Limits act as an absolute cap, so only a single page should resolve.
 
   if (!hasSanityClient()) {
     return {
       items: [],
       pagination: {
-        page: 1,
-        pageSize,
+        page: effectivePage,
+        pageSize: limit,
         totalItems: 0,
         totalPages: 1,
         hasPrevious: false,
@@ -540,8 +850,8 @@ async function resolveDynamicSet({ set, sortOverride, filtersOverride, pageOverr
     set,
     filters,
     sortOrder,
-    page: requestedPage,
-    pageSize,
+    page: effectivePage,
+    pageSize: limit,
     pinIds,
   });
 
@@ -554,7 +864,7 @@ async function resolveDynamicSet({ set, sortOverride, filtersOverride, pageOverr
     return cached.result;
   }
 
-  const targetCount = Math.max(requestedPage * pageSize, pageSize);
+  const targetCount = limit;
   const dynamicSeed = sortOrder === "random" ? createDailySeed(`${set._id}:dynamic`) : undefined;
 
   const dynamicResult = await fetchApprovedContent({
@@ -570,8 +880,6 @@ async function resolveDynamicSet({ set, sortOverride, filtersOverride, pageOverr
 
   let combined = [...pins, ...dynamicResult.items].slice(0, targetCount);
   const combinedIds = new Set([...pinIdSet, ...dynamicResult.items.map((item) => item.id)]);
-
-  let fallbackTotal = 0;
 
   if (combined.length < targetCount) {
     const slots = targetCount - combined.length;
@@ -590,34 +898,24 @@ async function resolveDynamicSet({ set, sortOverride, filtersOverride, pageOverr
       const fallbackFiltered = fallbackResult.items.filter((item) => !combinedIds.has(item.id));
       fallbackFiltered.forEach((item) => combinedIds.add(item.id));
       combined = [...combined, ...fallbackFiltered].slice(0, targetCount);
-      fallbackTotal = fallbackResult.total;
     } else if (set.fallbackMode === "pinsOnly") {
       combined = pins.slice(0, targetCount);
     }
   }
 
-  let totalDynamic = dynamicResult.total;
-  if (set.fallbackMode === "pinsOnly" && combined.length < targetCount) {
-    totalDynamic = 0;
-  }
+  const trimmedItems = combined.slice(0, limit);
+  const totalItemsAvailable = trimmedItems.length;
 
-  const totalPins = pins.length;
-  const totalFallback = set.fallbackMode === "anyApproved" ? fallbackTotal : 0;
-  const totalItemsAvailable = totalPins + totalDynamic + totalFallback;
-  const totalPages = totalItemsAvailable > 0 ? Math.ceil(totalItemsAvailable / pageSize) : 1;
-  const maxFetchedPages = Math.max(1, Math.ceil(combined.length / pageSize));
-  const safePage = Math.min(Math.max(requestedPage, 1), Math.max(totalPages, 1), maxFetchedPages);
-  const start = (safePage - 1) * pageSize;
-  const end = start + pageSize;
-  const pageItems = combined.slice(start, end);
+  const safePage = effectivePage;
+  const pageItems = trimmedItems;
 
   const pagination: PaginationInfo = {
     page: safePage,
-    pageSize,
+    pageSize: limit,
     totalItems: totalItemsAvailable,
-    totalPages,
-    hasPrevious: safePage > 1,
-    hasNext: safePage < totalPages,
+    totalPages: 1,
+    hasPrevious: false,
+    hasNext: false,
   };
 
   const result: DynamicSetResult = {
@@ -949,6 +1247,30 @@ function heroFromTaxonomies({
   };
 }
 
+function createHeroBlock(hero: HeroContent, key: string): SanityBlock {
+  return normalizeBlockMeta({
+    _type: "heroBlock",
+    _key: key,
+    headline: hero.headline,
+    tagline: hero.tagline,
+    body: hero.body,
+  });
+}
+
+function addHeroBlockIfMissing(blocks: SanityBlock[], heroBlock: SanityBlock | null): SanityBlock[] {
+  if (!heroBlock) {
+    return blocks;
+  }
+
+  const hasHeroBlock = blocks.some((block) => block?._type === "heroBlock");
+
+  if (hasHeroBlock) {
+    return blocks;
+  }
+
+  return [heroBlock, ...blocks];
+}
+
 type GeneratedBlockDefinition = {
   key: string;
   title: string;
@@ -1017,8 +1339,12 @@ async function buildGeneratedBlocks({
         _key: `generated-${definition.key}`,
         title: definition.title,
         description: definition.description,
+        anchor: undefined,
+        layout: {...DEFAULT_LAYOUT},
         setType: "generated" as const,
         items: result.items,
+        theme: DEFAULT_BLOCK_THEME,
+        density: DEFAULT_DENSITY,
       } satisfies SetBlockView;
     }),
   );
@@ -1054,21 +1380,26 @@ export async function fetchIndustryPageView({
     const industry = toTaxonomySummary(pageDoc.industry ?? null);
     const hero = buildHeroFromDoc(pageDoc.hero ?? null, pageDoc.title ?? industry?.label ?? slug);
 
-    const blocks = pageDoc.blocks ? await Promise.all(
-      pageDoc.blocks.map((block) =>
-        resolveSetBlock({
-          block,
-          filtersOverride: persona ? { personaIds: [persona.id] } : undefined,
-          pageOverrides,
-        }),
-      ),
-    ) : [];
+    const blocks = pageDoc.blocks
+      ? await Promise.all(
+          pageDoc.blocks.map((block) => {
+            if (isSetBlockDoc(block)) {
+              return resolveSetBlock({
+                block,
+                filtersOverride: persona ? { personaIds: [persona.id] } : undefined,
+                pageOverrides,
+              });
+            }
+
+            return normalizeBlockMeta(block);
+          }),
+        )
+      : [];
 
     return {
-      hero,
-      blocks: blocks.filter(Boolean) as SetBlockView[],
+      blocks: blocks.filter(Boolean) as SanityBlock[],
       context: {
-        source: "document",
+        source: 'document',
         industry,
         persona,
         pageTitle: pageDoc.title ?? hero.headline,
@@ -1084,10 +1415,11 @@ export async function fetchIndustryPageView({
 
   const industry = taxonomyDocToSummary(industryDoc);
   const hero = heroFromTaxonomies({ industry, persona });
-  const blocks = await buildGeneratedBlocks({ industry, persona });
+  const heroBlock = createHeroBlock(hero, `hero-generated-${slug}${persona ? `-${persona.slug}` : ''}`);
+  const generatedBlocks = await buildGeneratedBlocks({ industry, persona });
+  const blocks = addHeroBlockIfMissing(generatedBlocks, heroBlock);
 
   return {
-    hero,
     blocks,
     context: {
       source: "generated",
@@ -1126,21 +1458,26 @@ export async function fetchPersonaPageView({
     const persona = toTaxonomySummary(pageDoc.persona ?? null);
     const hero = buildHeroFromDoc(pageDoc.hero ?? null, pageDoc.title ?? persona?.label ?? slug);
 
-    const blocks = pageDoc.blocks ? await Promise.all(
-      pageDoc.blocks.map((block) =>
-        resolveSetBlock({
-          block,
-          filtersOverride: industry ? { industryIds: [industry.id] } : undefined,
-          pageOverrides,
-        }),
-      ),
-    ) : [];
+    const blocks = pageDoc.blocks
+      ? await Promise.all(
+          pageDoc.blocks.map((block) => {
+            if (isSetBlockDoc(block)) {
+              return resolveSetBlock({
+                block,
+                filtersOverride: industry ? { industryIds: [industry.id] } : undefined,
+                pageOverrides,
+              });
+            }
+
+            return normalizeBlockMeta(block);
+          }),
+        )
+      : [];
 
     return {
-      hero,
-      blocks: blocks.filter(Boolean) as SetBlockView[],
+      blocks: blocks.filter(Boolean) as SanityBlock[],
       context: {
-        source: "document",
+        source: 'document',
         industry,
         persona,
         pageTitle: pageDoc.title ?? hero.headline,
@@ -1156,10 +1493,14 @@ export async function fetchPersonaPageView({
 
   const persona = taxonomyDocToSummary(personaDoc);
   const hero = heroFromTaxonomies({ industry, persona });
-  const blocks = await buildGeneratedBlocks({ industry, persona });
+  const heroBlock = createHeroBlock(
+    hero,
+    `hero-generated-${slug}${industry ? `-${industry.slug}` : ''}`,
+  );
+  const generatedBlocks = await buildGeneratedBlocks({ industry, persona });
+  const blocks = addHeroBlockIfMissing(generatedBlocks, heroBlock);
 
   return {
-    hero,
     blocks,
     context: {
       source: "generated",

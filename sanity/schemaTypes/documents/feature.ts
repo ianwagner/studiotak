@@ -2,6 +2,7 @@ import {defineArrayMember, defineField, defineType} from 'sanity'
 
 import {statusField} from '../fields/status'
 import {ADVANCED_GROUP, ESSENTIALS_GROUP, editorialGroups} from '../utils/editorialGroups'
+import {portableTextBlock} from '../utils/portableText'
 
 export const featureType = defineType({
   name: 'feature',
@@ -21,11 +22,43 @@ export const featureType = defineType({
     }),
     statusField,
     defineField({
+      name: 'media',
+      title: 'Media',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt Text',
+          type: 'string',
+          description: 'Brief description of the media for accessibility.',
+        }),
+      ],
+      group: ESSENTIALS_GROUP,
+    }),
+    defineField({
+      name: 'mediaDisplay',
+      title: 'Media Display',
+      type: 'string',
+      description: 'Choose how the feature media should be rendered.',
+      options: {
+        list: [
+          {title: 'Image', value: 'image'},
+          {title: 'Icon', value: 'icon'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'image',
+      group: ESSENTIALS_GROUP,
+    }),
+    defineField({
       name: 'body',
       title: 'Body',
       type: 'array',
       of: [
-        defineArrayMember({type: 'block'}),
+        portableTextBlock,
       ],
       group: ESSENTIALS_GROUP,
     }),
@@ -72,6 +105,7 @@ export const featureType = defineType({
   preview: {
     select: {
       title: 'title',
+      media: 'media',
     },
   },
 })

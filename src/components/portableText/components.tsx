@@ -1,10 +1,16 @@
 import Link from "next/link";
 import type { PortableTextComponents } from "@portabletext/react";
 
+import { resolveRouteHref } from "@/lib/routes";
 import { gmColors, gmSpacing } from "@/styles/designTokens";
 import { typographyMap } from "@/styles/typography";
 
 type LinkMarkValue = {
+  route?: {
+    _id?: string;
+    product?: string | null;
+    path?: string | null;
+  } | null;
   href?: string;
   blank?: boolean;
   slug?: string | { current?: string };
@@ -15,6 +21,12 @@ type LinkMarkValue = {
 
 const getHrefFromValue = (value: LinkMarkValue | undefined): string | null => {
   if (!value) return null;
+
+  const internalHref = resolveRouteHref(value.route ?? null);
+  if (internalHref) {
+    return internalHref;
+  }
+
   if (value.href) return value.href;
 
   const slugSource = value.slug ?? value.reference?.slug;

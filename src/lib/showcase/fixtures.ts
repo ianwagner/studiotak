@@ -4,6 +4,11 @@ import type {
   SetBlockView,
   TaxonomySummary,
 } from "@/lib/sanity/pageViews";
+import type {
+  ContentTypePreset,
+  ContentTypePresetKey,
+} from "@/styles/contentTypePresets";
+import { contentTypePresetList } from "@/styles/contentTypePresets";
 
 const industries = {
   beauty: {
@@ -47,6 +52,11 @@ const contentTypes = {
     label: "Case Study",
     slug: "case-study",
   },
+  example: {
+    id: "content-type-example",
+    label: "Example",
+    slug: "example",
+  },
   article: {
     id: "content-type-article",
     label: "Article",
@@ -59,6 +69,30 @@ const contentTypes = {
   },
 } satisfies Record<string, TaxonomySummary>;
 
+type PlaceholderColors = {
+  background: string;
+  foreground: string;
+};
+
+const createPlaceholderMedia = (label: string, colors: PlaceholderColors): string => {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="${label}">
+      <rect width="400" height="300" rx="24" fill="${colors.background}" />
+      <text x="50%" y="52%" text-anchor="middle" fill="${colors.foreground}" font-family="'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="600">${label}</text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
+const mediaPlaceholders = {
+  default: createPlaceholderMedia("Content", { background: "#f4f4f5", foreground: "#27272a" }),
+  caseStudy: createPlaceholderMedia("Case Study", { background: "#f5f3ff", foreground: "#4c1d95" }),
+  article: createPlaceholderMedia("Article", { background: "#e0f2fe", foreground: "#0f172a" }),
+  feature: createPlaceholderMedia("Feature", { background: "#fef3c7", foreground: "#92400e" }),
+  example: createPlaceholderMedia("Example", { background: "#ecfdf5", foreground: "#047857" }),
+};
+
 type ContentItemConfig = {
   id: string;
   type: ContentItem["type"];
@@ -67,6 +101,8 @@ type ContentItemConfig = {
   personas?: TaxonomySummary[];
   contentType?: TaxonomySummary | null;
   publishedAt?: string;
+  imageUrl?: string;
+  imageAlt?: string | null;
 };
 
 const createContentItem = ({
@@ -77,6 +113,8 @@ const createContentItem = ({
   personas: personaList = [],
   contentType = null,
   publishedAt,
+  imageUrl,
+  imageAlt = null,
 }: ContentItemConfig): ContentItem => ({
   id,
   type,
@@ -86,6 +124,8 @@ const createContentItem = ({
   personas: personaList,
   contentType,
   publishedAt,
+  imageUrl,
+  imageAlt,
 });
 
 const contentItems = {
@@ -96,6 +136,7 @@ const contentItems = {
     industries: [industries.beauty],
     personas: [personas.marketer],
     contentType: contentTypes.caseStudy,
+    imageUrl: mediaPlaceholders.caseStudy,
   }),
   beautyLifecycle: createContentItem({
     id: "feature-beauty-lifecycle",
@@ -104,6 +145,7 @@ const contentItems = {
     industries: [industries.beauty],
     personas: [personas.productLead],
     contentType: contentTypes.feature,
+    imageUrl: mediaPlaceholders.feature,
   }),
   beautyInsights: createContentItem({
     id: "article-beauty-insights",
@@ -113,6 +155,7 @@ const contentItems = {
     personas: [personas.operations],
     contentType: contentTypes.article,
     publishedAt: "2024-03-12T10:00:00Z",
+    imageUrl: mediaPlaceholders.article,
   }),
   retailAutomation: createContentItem({
     id: "feature-retail-automation",
@@ -121,6 +164,7 @@ const contentItems = {
     industries: [industries.retail],
     personas: [personas.operations],
     contentType: contentTypes.feature,
+    imageUrl: mediaPlaceholders.feature,
   }),
   personaPlaybook: createContentItem({
     id: "article-persona-playbook",
@@ -128,6 +172,7 @@ const contentItems = {
     title: "Personalization Playbook",
     personas: [personas.marketer],
     contentType: contentTypes.article,
+    imageUrl: mediaPlaceholders.article,
   }),
   opsChecklist: createContentItem({
     id: "feature-ops-checklist",
@@ -136,6 +181,7 @@ const contentItems = {
     personas: [personas.operations],
     industries: [industries.finance],
     contentType: contentTypes.feature,
+    imageUrl: mediaPlaceholders.feature,
   }),
   fintechExample: createContentItem({
     id: "example-fintech-onboarding",
@@ -143,8 +189,15 @@ const contentItems = {
     title: "FinPay Onboarding Benchmark",
     industries: [industries.finance],
     personas: [personas.productLead],
-    contentType: contentTypes.caseStudy,
+    contentType: contentTypes.example,
     publishedAt: "2024-02-04T08:30:00Z",
+    imageUrl: mediaPlaceholders.example,
+  }),
+  generalOverview: createContentItem({
+    id: "resource-general-overview",
+    type: "resource",
+    title: "Customer Engagement Overview",
+    imageUrl: mediaPlaceholders.default,
   }),
 };
 
@@ -329,3 +382,22 @@ export const getSetBlockFixtures = () => ({
   persona: createPersonaDynamicSetBlock("fixture-persona"),
   combined: createCombinedDynamicSetBlock("fixture-combined"),
 });
+
+const presetContentItemMap: Record<ContentTypePresetKey, ContentItem> = {
+  default: contentItems.generalOverview,
+  "case-study": contentItems.beautyLaunch,
+  article: contentItems.beautyInsights,
+  "feature-spotlight": contentItems.beautyLifecycle,
+  example: contentItems.fintechExample,
+};
+
+export type ContentTypeShowcaseEntry = {
+  preset: ContentTypePreset;
+  item: ContentItem;
+};
+
+export const getContentTypeShowcaseEntries = (): ContentTypeShowcaseEntry[] =>
+  contentTypePresetList.map((preset) => ({
+    preset,
+    item: presetContentItemMap[preset.key],
+  }));

@@ -2,13 +2,18 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 
 import { Section } from "@/components/Section";
+import { Header } from "@/components/Header";
 import { isShowcaseEnabled } from "@/lib/showcase/config";
+import { navigationFallback } from "@/lib/sanity/navigation";
+import type { NavigationData, NavigationItem } from "@/lib/sanity/navigation";
+import { siteSettingsFallback } from "@/lib/sanity/siteSettings";
 import {
   gmColors,
   gmRadius,
   gmSpacing,
   gmTypography,
 } from "@/styles/designTokens";
+import { buttonClassList } from "@/styles/buttons";
 
 export const revalidate = 0;
 
@@ -54,43 +59,63 @@ const buttonVariants = [
   {
     label: "Primary",
     description: "Foreground on background with pill spacing and strong text.",
-    className: joinClassNames(
-      "inline-flex items-center justify-center gap-2 text-background",
-      gmSpacing["gm-spacing-pill"],
-      gmTypography["gm-typography-body-sm"],
-      gmTypography["gm-typography-strong"],
-      gmRadius["gm-radius-md"],
-      "bg-foreground hover:bg-foreground/90 transition"
-    ),
+    className: joinClassNames(...buttonClassList.primary),
   },
   {
     label: "Secondary",
     description: "Accent-tinted surface with matching text for quieter CTAs.",
-    className: joinClassNames(
-      "inline-flex items-center justify-center gap-2",
-      gmSpacing["gm-spacing-pill"],
-      gmTypography["gm-typography-body-sm"],
-      gmTypography["gm-typography-strong"],
-      gmColors["gm-color-text-accent"],
-      gmRadius["gm-radius-md"],
-      gmColors["gm-color-surface-accent-soft"],
-      gmColors["gm-color-hover-surface-accent-soft"],
-    ),
+    className: joinClassNames(...buttonClassList.secondary),
   },
   {
     label: "Ghost",
     description: "Bare button with accent hover fill for minimal emphasis.",
-    className: joinClassNames(
-      "inline-flex items-center justify-center gap-2",
-      gmSpacing["gm-spacing-pill"],
-      gmTypography["gm-typography-body-sm"],
-      gmTypography["gm-typography-strong"],
-      gmColors["gm-color-text-accent"],
-      gmRadius["gm-radius-md"],
-      gmColors["gm-color-hover-surface-accent-soft"],
-    ),
+    className: joinClassNames(...buttonClassList.ghost),
   },
 ];
+
+function cloneNavigationItem(item: NavigationItem): NavigationItem {
+  return {
+    ...item,
+    children: item.children.map(cloneNavigationItem),
+  };
+}
+
+function cloneNavigation(data: NavigationData): NavigationData {
+  return {
+    ...data,
+    layout: {
+      ...data.layout,
+    },
+    items: data.items.map(cloneNavigationItem),
+  };
+}
+
+const headerPreviewVariants = (() => {
+  const light = cloneNavigation(navigationFallback);
+  light.anchor = "preview-navigation-light";
+
+  const dark = cloneNavigation(navigationFallback);
+  dark.anchor = "preview-navigation-dark";
+  dark.theme = "dark";
+  dark.density = "compact";
+  dark.itemSpacingToken = "gm-spacing-tight-stack";
+  dark.linkColorToken = "gm-color-text-on-accent";
+  dark.hoverStateToken = "gm-color-hover-surface-accent-soft";
+  dark.focusRingToken = "gm-color-border-strong";
+
+  return [
+    {
+      id: "light-default",
+      label: "Light theme · Default density",
+      navigation: light,
+    },
+    {
+      id: "dark-compact",
+      label: "Dark theme · Compact density",
+      navigation: dark,
+    },
+  ] as const;
+})();
 
 const metadataVariants = [
   {
@@ -185,6 +210,40 @@ export default function StyleGuidePage() {
         >
           Snapshot of core tokens, typography, and call-to-action spacing to verify visual tweaks quickly.
         </p>
+      </Section>
+
+      <Section className={gmSpacing["gm-spacing-shell-stack"]}>
+        <header className={gmSpacing["gm-spacing-tight-stack"]}>
+          <h2 className={gmTypography["gm-typography-subheading"]}>Header Preview</h2>
+          <p
+            className={joinClassNames(
+              gmTypography["gm-typography-body-sm"],
+              gmColors["gm-color-text-subtle"],
+            )}
+          >
+            Navigation singleton rendered with theme and density tokens. Hover and focus states follow the
+            configured interaction tokens.
+          </p>
+        </header>
+        <div className="grid gap-6 md:grid-cols-2">
+          {headerPreviewVariants.map(({ id, label, navigation }) => (
+            <div
+              key={id}
+              className="overflow-hidden rounded-lg border border-foreground/10 bg-background shadow-sm"
+            >
+              <div
+                className={joinClassNames(
+                  "border-b border-foreground/10 px-4 py-2",
+                  gmTypography["gm-typography-label-xs"],
+                  gmColors["gm-color-text-muted"],
+                )}
+              >
+                {label}
+              </div>
+              <Header navigation={navigation} siteSettings={siteSettingsFallback} />
+            </div>
+          ))}
+        </div>
       </Section>
 
       <Section className={gmSpacing["gm-spacing-shell-stack"]}>

@@ -4,21 +4,16 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+import { ContentItemCard } from "@/components/content";
 import type { SetBlockView } from "@/lib/sanity/pageViews";
 import {
   gmBreakpoints,
   gmColors,
   gmEffects,
   gmRadius,
-  gmSpacing,
-  gmTypography,
 } from "@/styles/designTokens";
 
-const SET_TYPE_LABELS: Record<SetBlockView["setType"], string> = {
-  curatedSet: "Curated Set",
-  dynamicSet: "Dynamic Set",
-  generated: "Generated",
-};
+import { resolveSpacingToken, resolveTypographyToken } from "./tokenUtils";
 
 type SetBlockProps = {
   block: SetBlockView;
@@ -27,9 +22,12 @@ type SetBlockProps = {
 export function SetBlock({ block }: SetBlockProps) {
   const pagination = block.pagination;
   const searchParams = useSearchParams();
+  const activePagination =
+    block.setType === "dynamicSet" && pagination && pagination.totalPages > 1 ? pagination : null;
+  const density = block.density ?? "default";
 
   const { prevHref, nextHref } = useMemo(() => {
-    if (!pagination) {
+    if (!activePagination) {
       return { prevHref: "", nextHref: "" };
     }
 
@@ -53,161 +51,117 @@ export function SetBlock({ block }: SetBlockProps) {
     };
 
     return {
-      prevHref: buildHref(pagination.page - 1),
-      nextHref: buildHref(pagination.page + 1),
+      prevHref: buildHref(activePagination.page - 1),
+      nextHref: buildHref(activePagination.page + 1),
     };
-  }, [pagination, searchParams]);
+  }, [activePagination, searchParams]);
 
   if (block.items.length === 0) {
     return null;
   }
-
-  const isDynamic = block.setType === "dynamicSet" && pagination;
 
   const shouldShowSource = Boolean(
     block.setTitle && (block.resolvedFromFallback || block.setTitle !== block.title),
   );
   const sourceLabel = block.resolvedFromFallback ? "Fallback set" : "Source set";
 
+  const containerStack = resolveSpacingToken(
+    "gm-spacing-shell-stack",
+    "gm-spacing-shell-stack",
+    density,
+    "SetBlock.container",
+  );
+  const headerStack = resolveSpacingToken(
+    "gm-spacing-tight-stack",
+    "gm-spacing-tight-stack",
+    density,
+    "SetBlock.header",
+  );
+  const headerGridGap = resolveSpacingToken(
+    "gm-spacing-grid",
+    "gm-spacing-grid",
+    density,
+    "SetBlock.headerGrid",
+  );
+  const contentGridGap = resolveSpacingToken(
+    "gm-spacing-grid-relaxed",
+    "gm-spacing-grid-relaxed",
+    density,
+    "SetBlock.contentGrid",
+  );
+  const paginationStack = resolveSpacingToken(
+    "gm-spacing-grid-tight",
+    "gm-spacing-grid-tight",
+    density,
+    "SetBlock.pagination",
+  );
+  const paginationButtonSpacing = resolveSpacingToken(
+    "gm-spacing-pill",
+    "gm-spacing-pill",
+    density,
+    "SetBlock.paginationButton",
+  );
+
+  const titleClass = resolveTypographyToken(
+    "gm-typography-block-heading",
+    "gm-typography-block-heading",
+    "SetBlock.title",
+  );
+  const labelClass = resolveTypographyToken(
+    "gm-typography-label-xs",
+    "gm-typography-label-xs",
+    "SetBlock.label",
+  );
+  const bodyClass = resolveTypographyToken(
+    "gm-typography-body-base",
+    "gm-typography-body-base",
+    "SetBlock.body",
+  );
+  const metaClass = resolveTypographyToken(
+    "gm-typography-body-sm",
+    "gm-typography-body-sm",
+    "SetBlock.meta",
+  );
+
   return (
-    <div className={gmSpacing["gm-spacing-shell-stack"]}>
-      <header className={gmSpacing["gm-spacing-tight-stack"]}>
-        <div
-          className={[
-            "flex flex-wrap items-center",
-            gmSpacing["gm-spacing-grid"],
-          ].join(" ")}
-        >
-          <h2 className={gmTypography["gm-typography-block-heading"]}>{block.title}</h2>
-          <span
-            className={[
-              gmRadius["gm-radius-pill"],
-              gmColors["gm-color-surface-tint"],
-              gmSpacing["gm-spacing-pill"],
-              gmTypography["gm-typography-label-xs"],
-              gmColors["gm-color-text-subtle"],
-            ].join(" ")}
-          >
-            {SET_TYPE_LABELS[block.setType]}
-          </span>
+    <div className={containerStack}>
+      <header className={headerStack}>
+        <div className={["flex flex-wrap items-center", headerGridGap].join(" ")}>
+          <h2 className={titleClass}>{block.title}</h2>
         </div>
-        {block.description && (
-          <p
-            className={[
-              gmTypography["gm-typography-body-base"],
-              gmColors["gm-color-text-muted"],
-            ].join(" ")}
-          >
+        {block.description ? (
+          <p className={[bodyClass, gmColors["gm-color-text-muted"]].join(" ")}>
             {block.description}
           </p>
-        )}
-        {shouldShowSource && (
-          <p
-            className={[
-              gmTypography["gm-typography-body-sm"],
-              gmColors["gm-color-text-subtle"],
-            ].join(" ")}
-          >
+        ) : null}
+        {shouldShowSource ? (
+          <p className={[metaClass, gmColors["gm-color-text-subtle"]].join(" ")}>
             {sourceLabel}: {block.setTitle}
           </p>
-        )}
+        ) : null}
       </header>
       <div
-        className={[
-          "grid",
-          gmSpacing["gm-spacing-grid-relaxed"],
-          gmBreakpoints["gm-breakpoint-grid-two-column"],
-        ].join(" ")}
+        className={["grid", contentGridGap, gmBreakpoints["gm-breakpoint-grid-two-column"]].join(" ")}
       >
         {block.items.map((item) => (
-          <article
-            key={item.id}
-            className={[
-              gmSpacing["gm-spacing-compact-stack"],
-              gmRadius["gm-radius-base"],
-              "border",
-              gmColors["gm-color-border-subtle"],
-              gmColors["gm-color-surface-raised"],
-              gmSpacing["gm-spacing-card"],
-              "shadow-sm",
-              gmColors["gm-color-shadow-subtle"],
-            ].join(" ")}
-          >
-            <div
-              className={[
-                "flex flex-wrap items-center justify-between",
-                gmSpacing["gm-spacing-grid-tight"],
-                gmTypography["gm-typography-label-xs"],
-                gmColors["gm-color-text-faint"],
-              ].join(" ")}
-            >
-              <span>{item.type}</span>
-              {item.contentType?.label && <span>{item.contentType.label}</span>}
-            </div>
-            <h3
-              className={[
-                gmTypography["gm-typography-body-lg"],
-                gmTypography["gm-typography-strong"],
-                gmColors["gm-color-text-primary"],
-              ].join(" ")}
-            >
-              {item.title}
-            </h3>
-            {(item.industries.length > 0 || item.personas.length > 0) && (
-              <div
-                className={[
-                  "flex flex-wrap",
-                  gmSpacing["gm-spacing-grid-tight"],
-                  gmTypography["gm-typography-body-xs"],
-                  gmColors["gm-color-text-tag"],
-                ].join(" ")}
-              >
-                {item.industries.map((industry) => (
-                  <span
-                    key={industry.id}
-                    className={[
-                      gmRadius["gm-radius-pill"],
-                      gmColors["gm-color-surface-chip"],
-                      gmSpacing["gm-spacing-chip"],
-                      gmColors["gm-color-text-chip"],
-                    ].join(" ")}
-                  >
-                    {industry.label}
-                  </span>
-                ))}
-                {item.personas.map((persona) => (
-                  <span
-                    key={persona.id}
-                    className={[
-                      gmRadius["gm-radius-pill"],
-                      gmColors["gm-color-surface-chip"],
-                      gmSpacing["gm-spacing-chip"],
-                      gmColors["gm-color-text-chip"],
-                    ].join(" ")}
-                  >
-                    {persona.label}
-                  </span>
-                ))}
-              </div>
-            )}
-          </article>
+          <ContentItemCard key={item.id} item={item} />
         ))}
       </div>
-      {isDynamic ? (
+      {activePagination ? (
         <div
           className={[
             "flex flex-col",
-            gmSpacing["gm-spacing-grid-tight"],
-            gmTypography["gm-typography-body-sm"],
+            paginationStack,
+            metaClass,
             gmColors["gm-color-text-muted"],
             gmBreakpoints["gm-breakpoint-pagination-layout"],
           ].join(" ")}
         >
           <span>
-            Page {pagination.page} of {pagination.totalPages}
+            Page {activePagination.page} of {activePagination.totalPages}
           </span>
-          <div className={["flex", gmSpacing["gm-spacing-grid"]].join(" ")}>
-            {pagination.hasPrevious ? (
+          <div className={["flex", headerGridGap].join(" ")}>
+            {activePagination.hasPrevious ? (
               <Link
                 href={prevHref}
                 scroll={false}
@@ -215,8 +169,8 @@ export function SetBlock({ block }: SetBlockProps) {
                   gmRadius["gm-radius-base"],
                   "border",
                   gmColors["gm-color-border-strong"],
-                  gmSpacing["gm-spacing-pill"],
-                  gmTypography["gm-typography-label-xs"],
+                  paginationButtonSpacing,
+                  labelClass,
                   gmColors["gm-color-text-muted"],
                   "transition",
                   gmColors["gm-color-hover-surface-tint"],
@@ -230,8 +184,8 @@ export function SetBlock({ block }: SetBlockProps) {
                   gmRadius["gm-radius-base"],
                   "border",
                   gmColors["gm-color-border-strong"],
-                  gmSpacing["gm-spacing-pill"],
-                  gmTypography["gm-typography-label-xs"],
+                  paginationButtonSpacing,
+                  labelClass,
                   gmColors["gm-color-text-faint"],
                   gmEffects["gm-effect-opacity-subdued"],
                 ].join(" ")}
@@ -239,7 +193,7 @@ export function SetBlock({ block }: SetBlockProps) {
                 Previous
               </span>
             )}
-            {pagination.hasNext ? (
+            {activePagination.hasNext ? (
               <Link
                 href={nextHref}
                 scroll={false}
@@ -247,8 +201,8 @@ export function SetBlock({ block }: SetBlockProps) {
                   gmRadius["gm-radius-base"],
                   "border",
                   gmColors["gm-color-border-strong"],
-                  gmSpacing["gm-spacing-pill"],
-                  gmTypography["gm-typography-label-xs"],
+                  paginationButtonSpacing,
+                  labelClass,
                   gmColors["gm-color-text-muted"],
                   "transition",
                   gmColors["gm-color-hover-surface-tint"],
@@ -262,8 +216,8 @@ export function SetBlock({ block }: SetBlockProps) {
                   gmRadius["gm-radius-base"],
                   "border",
                   gmColors["gm-color-border-strong"],
-                  gmSpacing["gm-spacing-pill"],
-                  gmTypography["gm-typography-label-xs"],
+                  paginationButtonSpacing,
+                  labelClass,
                   gmColors["gm-color-text-faint"],
                   gmEffects["gm-effect-opacity-subdued"],
                 ].join(" ")}

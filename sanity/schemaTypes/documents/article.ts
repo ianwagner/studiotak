@@ -2,6 +2,7 @@ import {defineArrayMember, defineField, defineType} from 'sanity'
 
 import {statusField} from '../fields/status'
 import {ADVANCED_GROUP, ESSENTIALS_GROUP, editorialGroups} from '../utils/editorialGroups'
+import {portableTextBlock} from '../utils/portableText'
 
 export const articleType = defineType({
   name: 'article',
@@ -21,11 +22,28 @@ export const articleType = defineType({
     }),
     statusField,
     defineField({
+      name: 'media',
+      title: 'Media',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt Text',
+          type: 'string',
+          description: 'Brief description of the media for accessibility.',
+        }),
+      ],
+      group: ESSENTIALS_GROUP,
+    }),
+    defineField({
       name: 'body',
       title: 'Body',
       type: 'array',
       of: [
-        defineArrayMember({type: 'block'}),
+        portableTextBlock,
         defineArrayMember({
           type: 'image',
           options: {hotspot: true},
@@ -76,6 +94,7 @@ export const articleType = defineType({
   preview: {
     select: {
       title: 'title',
+      media: 'media',
     },
   },
 })

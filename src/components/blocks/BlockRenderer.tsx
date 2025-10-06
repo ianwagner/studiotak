@@ -4,10 +4,16 @@ import type { ReactNode } from "react";
 import { Section } from "@/components/Section";
 import { portableTextComponents } from "@/components/portableText/components";
 import type { SetBlockView } from "@/lib/sanity/pageViews";
-import type { BlockTheme, SanityBlock } from "@/lib/sanity/types";
+import type { BlockLayoutSettings, BlockTheme, SanityBlock } from "@/lib/sanity/types";
 import { gmColors, gmRadius, gmSpacing, gmTypography } from "@/styles/designTokens";
 
+import { FeaturesBlock } from "./FeaturesBlock";
+import type { FeaturesBlockData } from "./FeaturesBlock";
+import { HeroBlock } from "./HeroBlock";
+import type { HeroBlockData } from "./HeroBlock";
 import { SetBlock } from "./SetBlock";
+import { SplitBlock } from "./SplitBlock";
+import type { SplitBlockData } from "./SplitBlock";
 
 type PortableTextValue = Array<Record<string, unknown>>;
 
@@ -51,10 +57,25 @@ const SetBlockComponent: BlockComponent<SetBlockView> = ({ block }) => {
   return <SetBlock block={block} />;
 };
 
+const HeroBlockComponent: BlockComponent<HeroBlockData> = ({ block }) => {
+  return <HeroBlock block={block} />;
+};
+
+const SplitBlockComponent: BlockComponent<SplitBlockData> = ({ block }) => {
+  return <SplitBlock block={block} />;
+};
+
+const FeaturesBlockComponent: BlockComponent<FeaturesBlockData> = ({ block }) => {
+  return <FeaturesBlock block={block} />;
+};
+
 const defaultComponents: Record<string, BlockComponent> = {
   portableText: PortableTextBlock,
   richText: PortableTextBlock,
   blockContent: PortableTextBlock,
+  heroBlock: HeroBlockComponent,
+  splitBlock: SplitBlockComponent,
+  featuresBlock: FeaturesBlockComponent,
   setBlock: SetBlockComponent,
 };
 
@@ -111,9 +132,15 @@ export function BlockRenderer({
             : undefined;
 
         const theme: BlockTheme = (block as { theme?: BlockTheme }).theme ?? "light";
+        const layout = (block as { layout?: BlockLayoutSettings | null }).layout ?? null;
 
         return (
-          <Section key={block._key ?? `${block._type}-${index}`} id={anchor} theme={theme}>
+          <Section
+            key={block._key ?? `${block._type}-${index}`}
+            id={anchor}
+            theme={theme}
+            layout={layout}
+          >
             <Component block={block} />
           </Section>
         );

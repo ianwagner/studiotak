@@ -48,13 +48,38 @@ const groups: GroupConfig[] = [
   },
 ]
 
-export const studioStructure: StructureResolver = (S) =>
-  S.list()
+export const studioStructure: StructureResolver = (S) => {
+  const groupedItems = groups
+    .map((group) => createGroup(S, group))
+    .flatMap((item, index, array) => (index < array.length - 1 ? [item, S.divider()] : [item]))
+
+  return S.list()
     .title('Studio')
-    .items(
-      groups
-        .map((group) => createGroup(S, group))
-        .flatMap((item, index, array) =>
-          index < array.length - 1 ? [item, S.divider()] : [item],
-        ),
-    )
+    .items([
+      S.listItem()
+        .title('Homepage')
+        .schemaType('homepage')
+        .child(S.document().schemaType('homepage').documentId('homepage')),
+      S.divider(),
+      S.listItem()
+        .title('Site Settings')
+        .schemaType('siteSettings')
+        .child(S.document().schemaType('siteSettings').documentId('siteSettings')),
+      S.divider(),
+      S.listItem()
+        .title('Navigation')
+        .schemaType('navigation')
+        .child(S.document().schemaType('navigation').documentId('navigation')),
+      S.divider(),
+      S.listItem()
+        .title('Routes')
+        .schemaType('route')
+        .child(S.documentTypeList('route').title('Routes')),
+      S.listItem()
+        .title('Redirects')
+        .schemaType('redirect')
+        .child(S.documentTypeList('redirect').title('Redirects')),
+      S.divider(),
+      ...groupedItems,
+    ])
+}

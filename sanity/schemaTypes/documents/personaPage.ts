@@ -1,7 +1,8 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 
 import {ADVANCED_GROUP, ESSENTIALS_GROUP, editorialGroups} from '../utils/editorialGroups'
-import {blockThemeField} from '../fields/blockTheme'
+import {blockMetaFields} from '../blocks/base'
+import {portableTextBlock} from '../utils/portableText'
 
 export const personaPageType = defineType({
   name: 'personaPage',
@@ -58,7 +59,7 @@ export const personaPageType = defineType({
           name: 'body',
           title: 'Intro Copy',
           type: 'array',
-          of: [defineArrayMember({type: 'block'})],
+          of: [portableTextBlock],
         }),
       ],
       group: ESSENTIALS_GROUP,
@@ -68,6 +69,9 @@ export const personaPageType = defineType({
       title: 'Content Blocks',
       type: 'array',
       of: [
+        defineArrayMember({type: 'heroBlock'}),
+        defineArrayMember({type: 'splitBlock'}),
+        defineArrayMember({type: 'featuresBlock'}),
         defineArrayMember({
           name: 'setBlock',
           title: 'Set Block',
@@ -86,7 +90,7 @@ export const personaPageType = defineType({
               type: 'text',
               rows: 3,
             }),
-            blockThemeField,
+            ...blockMetaFields,
             defineField({
               name: 'set',
               title: 'Set',

@@ -6,6 +6,16 @@ export type SanityBlock = {
 
 export type BlockTheme = "light" | "dark" | "brand";
 
+export type BlockDensity = "default" | "compact";
+
+
+export type BlockLayoutSettings = {
+  container?: string;
+  maxWidth?: string;
+  inlinePadding?: string;
+  blockPadding?: string;
+  stackSpacing?: string;
+};
 export interface BlocksDocument {
   title?: string;
   blocks: SanityBlock[];

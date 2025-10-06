@@ -4,7 +4,7 @@ const shellInlinePadding = "px-6 sm:px-8 lg:px-12";
 const shellBlockPadding = "py-12 sm:py-16";
 const shellStackSpacing = "space-y-6";
 const shellContainerBase = "mx-auto w-full";
-const shellContainerMax = "max-w-5xl";
+const shellContainerMax = "max-w-6xl";
 
 export const gmColors = {
   "gm-color-text-primary": "text-foreground",
@@ -13,15 +13,27 @@ export const gmColors = {
   "gm-color-text-muted": "text-foreground/70",
   "gm-color-text-subtle": "text-foreground/60",
   "gm-color-text-faint": "text-foreground/50",
+  "gm-color-text-accent": "text-accent",
+  "gm-color-text-on-accent": "text-accent-foreground",
+  "gm-color-text-tag": "text-accent/80",
+  "gm-color-text-chip": "text-accent",
   "gm-color-surface-muted": "bg-foreground/5",
   "gm-color-surface-tint": "bg-foreground/10",
+  "gm-color-surface-accent": "bg-accent",
+  "gm-color-surface-accent-soft": "bg-accent/10",
+  "gm-color-surface-tag": "bg-accent/10",
+  "gm-color-surface-chip": "bg-accent/10",
   "gm-color-surface-raised": "bg-background/80",
   "gm-color-border-subtle": "border-foreground/10",
   "gm-color-border-strong": "border-foreground/20",
+  "gm-color-border-accent": "border-accent",
   "gm-color-shadow-subtle": "shadow-foreground/5",
   "gm-color-hover-surface-tint": "hover:bg-foreground/10",
+  "gm-color-hover-surface-accent-soft": "hover:bg-accent/20",
+  "gm-color-hover-surface-accent": "hover:bg-accent/80",
   "gm-color-decoration-muted": "decoration-foreground/40",
   "gm-color-decoration-strong": "decoration-foreground",
+  "gm-color-decoration-accent": "decoration-accent",
   "gm-color-hover-decoration-strong": "hover:decoration-foreground",
 } as const;
 
@@ -43,7 +55,7 @@ export const gmSpacing = {
   "gm-spacing-page-bottom-lg": "pb-16",
   "gm-spacing-card": "p-4",
   "gm-spacing-card-lg": "p-6",
-  "gm-spacing-pill": "px-3 py-1",
+  "gm-spacing-pill": "px-4 py-2",
   "gm-spacing-chip": "px-2 py-1",
   "gm-spacing-indent": "pl-6",
   "gm-spacing-border-accent": "border-l-2",
@@ -68,7 +80,14 @@ export const gmTypography = {
 } as const;
 
 export const gmRadius = {
+  "gm-radius-none": "rounded-none",
+  "gm-radius-sm": "rounded-sm",
   "gm-radius-base": "rounded",
+  "gm-radius-md": "rounded-md",
+  "gm-radius-lg": "rounded-lg",
+  "gm-radius-xl": "rounded-xl",
+  "gm-radius-2xl": "rounded-2xl",
+  "gm-radius-3xl": "rounded-3xl",
   "gm-radius-pill": "rounded-full",
 } as const;
 
@@ -79,7 +98,7 @@ export const gmLayout = {
 
 export const gmBreakpoints = {
   "gm-breakpoint-content-max": shellContainerMax,
-  "gm-breakpoint-grid-two-column": "md:grid-cols-2",
+  "gm-breakpoint-grid-two-column": "md:grid-cols-2 lg:grid-cols-3",
   "gm-breakpoint-pagination-layout": "sm:flex-row sm:items-center sm:justify-between",
 } as const;
 
