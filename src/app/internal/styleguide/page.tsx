@@ -5,6 +5,7 @@ import { Section } from "@/components/Section";
 import { isShowcaseEnabled } from "@/lib/showcase/config";
 import {
   gmColors,
+  gmRadius,
   gmSpacing,
   gmTypography,
 } from "@/styles/designTokens";
@@ -54,37 +55,102 @@ const buttonVariants = [
     label: "Primary",
     description: "Foreground on background with pill spacing and strong text.",
     className: joinClassNames(
-      "inline-flex items-center justify-center gap-2 rounded-full text-background",
+      "inline-flex items-center justify-center gap-2 text-background",
       gmSpacing["gm-spacing-pill"],
       gmTypography["gm-typography-body-sm"],
       gmTypography["gm-typography-strong"],
+      gmRadius["gm-radius-md"],
       "bg-foreground hover:bg-foreground/90 transition"
     ),
   },
   {
     label: "Secondary",
-    description: "Tinted surface with border reinforcement for quieter CTAs.",
+    description: "Accent-tinted surface with matching text for quieter CTAs.",
     className: joinClassNames(
-      "inline-flex items-center justify-center gap-2 rounded-full",
+      "inline-flex items-center justify-center gap-2",
       gmSpacing["gm-spacing-pill"],
       gmTypography["gm-typography-body-sm"],
       gmTypography["gm-typography-strong"],
-      "border",
-      gmColors["gm-color-border-strong"],
-      gmColors["gm-color-surface-tint"],
-      gmColors["gm-color-hover-surface-tint"],
+      gmColors["gm-color-text-accent"],
+      gmRadius["gm-radius-md"],
+      gmColors["gm-color-surface-accent-soft"],
+      gmColors["gm-color-hover-surface-accent-soft"],
     ),
   },
   {
     label: "Ghost",
-    description: "Bare button with hover underline for minimal emphasis.",
+    description: "Bare button with accent hover fill for minimal emphasis.",
     className: joinClassNames(
-      "inline-flex items-center justify-center gap-2 rounded-full",
+      "inline-flex items-center justify-center gap-2",
       gmSpacing["gm-spacing-pill"],
       gmTypography["gm-typography-body-sm"],
       gmTypography["gm-typography-strong"],
-      gmColors["gm-color-text-primary"],
-      "hover:bg-foreground/5",
+      gmColors["gm-color-text-accent"],
+      gmRadius["gm-radius-md"],
+      gmColors["gm-color-hover-surface-accent-soft"],
+    ),
+  },
+];
+
+const metadataVariants = [
+  {
+    label: "Content type tag",
+    description: "Stacks entry type above card titles in set blocks.",
+    sample: (
+      <div
+        className={joinClassNames(
+          "inline-flex flex-wrap items-center gap-2",
+          gmTypography["gm-typography-label-xs"],
+          gmColors["gm-color-text-tag"],
+        )}
+      >
+        <span>Case study</span>
+        <span
+          className={joinClassNames(
+            "inline-flex items-center",
+            gmRadius["gm-radius-pill"],
+            gmSpacing["gm-spacing-chip"],
+            gmColors["gm-color-text-chip"],
+            gmColors["gm-color-surface-chip"],
+          )}
+        >
+          Long form
+        </span>
+      </div>
+    ),
+  },
+  {
+    label: "Industry pill",
+    description: "Tinted chips used for industry filters and metadata.",
+    sample: (
+      <span
+        className={joinClassNames(
+          "inline-flex items-center",
+          gmRadius["gm-radius-pill"],
+          gmSpacing["gm-spacing-chip"],
+          gmColors["gm-color-text-chip"],
+          gmColors["gm-color-surface-chip"],
+        )}
+      >
+        Healthcare
+      </span>
+    ),
+  },
+  {
+    label: "Persona pill",
+    description: "Alternate chip style for persona highlights.",
+    sample: (
+      <span
+        className={joinClassNames(
+          "inline-flex items-center",
+          gmRadius["gm-radius-pill"],
+          gmSpacing["gm-spacing-chip"],
+          gmColors["gm-color-text-chip"],
+          gmColors["gm-color-surface-chip"],
+        )}
+      >
+        Ops lead
+      </span>
     ),
   },
 ];
@@ -208,6 +274,50 @@ export default function StyleGuidePage() {
               <button type="button" className={button.className}>
                 Trigger Action
               </button>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section className={gmSpacing["gm-spacing-shell-stack"]}>
+        <header className={gmSpacing["gm-spacing-tight-stack"]}>
+          <h2 className={gmTypography["gm-typography-subheading"]}>Tags & pills</h2>
+          <p
+            className={joinClassNames(
+              gmTypography["gm-typography-body-sm"],
+              gmColors["gm-color-text-subtle"],
+            )}
+          >
+            Content metadata treatments pulled straight from token aliases.
+          </p>
+        </header>
+        <div className="grid gap-4 md:grid-cols-3">
+          {metadataVariants.map((variant) => (
+            <div
+              key={variant.label}
+              className={joinClassNames(
+                "flex h-full flex-col justify-between",
+                gmSpacing["gm-spacing-compact-stack"],
+              )}
+            >
+              <div className={gmSpacing["gm-spacing-tight-stack"]}>
+                <p className={gmTypography["gm-typography-body-sm"]}>{variant.label}</p>
+                <p
+                  className={joinClassNames(
+                    gmTypography["gm-typography-body-xs"],
+                    gmColors["gm-color-text-subtle"],
+                  )}
+                >
+                  {variant.description}
+                </p>
+              </div>
+              <div className={joinClassNames(
+                "rounded border border-dashed border-foreground/20 bg-foreground/5 p-4",
+                "flex items-center justify-center",
+              )}
+              >
+                {variant.sample}
+              </div>
             </div>
           ))}
         </div>

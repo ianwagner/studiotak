@@ -159,7 +159,7 @@ export function SetBlock({ block }: SetBlockProps) {
                   "flex flex-wrap",
                   gmSpacing["gm-spacing-grid-tight"],
                   gmTypography["gm-typography-body-xs"],
-                  gmColors["gm-color-text-subtle"],
+                  gmColors["gm-color-text-tag"],
                 ].join(" ")}
               >
                 {item.industries.map((industry) => (
@@ -167,8 +167,9 @@ export function SetBlock({ block }: SetBlockProps) {
                     key={industry.id}
                     className={[
                       gmRadius["gm-radius-pill"],
-                      gmColors["gm-color-surface-tint"],
+                      gmColors["gm-color-surface-chip"],
                       gmSpacing["gm-spacing-chip"],
+                      gmColors["gm-color-text-chip"],
                     ].join(" ")}
                   >
                     {industry.label}
@@ -179,8 +180,9 @@ export function SetBlock({ block }: SetBlockProps) {
                     key={persona.id}
                     className={[
                       gmRadius["gm-radius-pill"],
-                      gmColors["gm-color-surface-tint"],
+                      gmColors["gm-color-surface-chip"],
                       gmSpacing["gm-spacing-chip"],
+                      gmColors["gm-color-text-chip"],
                     ].join(" ")}
                   >
                     {persona.label}
