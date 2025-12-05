@@ -1,8 +1,8 @@
-import {defineArrayMember, defineField, defineType} from 'sanity'
+import {defineField, defineType} from 'sanity'
 
 import {ADVANCED_GROUP, ESSENTIALS_GROUP, editorialGroups} from '../utils/editorialGroups'
-import {blockMetaFields} from '../blocks/base'
 import {portableTextBlock} from '../utils/portableText'
+import {sectionBlockMembers} from '../utils/sectionBlocks'
 
 export const personaPageType = defineType({
   name: 'personaPage',
@@ -44,6 +44,12 @@ export const personaPageType = defineType({
       type: 'object',
       fields: [
         defineField({
+          name: 'eyebrow',
+          title: 'Eyebrow',
+          type: 'string',
+          description: 'Optional label shown above the headline.',
+        }),
+        defineField({
           name: 'headline',
           title: 'Headline',
           type: 'string',
@@ -61,6 +67,23 @@ export const personaPageType = defineType({
           type: 'array',
           of: [portableTextBlock],
         }),
+        defineField({
+          name: 'backgroundMedia',
+          title: 'Background Media',
+          type: 'image',
+          options: {
+            hotspot: true,
+          },
+          fields: [
+            defineField({
+              name: 'alt',
+              title: 'Alt Text',
+              type: 'string',
+              description:
+                'Describe the image for accessibility. Leave blank if the background is purely decorative.',
+            }),
+          ],
+        }),
       ],
       group: ESSENTIALS_GROUP,
     }),
@@ -68,57 +91,7 @@ export const personaPageType = defineType({
       name: 'blocks',
       title: 'Content Blocks',
       type: 'array',
-      of: [
-        defineArrayMember({type: 'heroBlock'}),
-        defineArrayMember({type: 'splitBlock'}),
-        defineArrayMember({type: 'featuresBlock'}),
-        defineArrayMember({
-          name: 'setBlock',
-          title: 'Set Block',
-          type: 'object',
-          fields: [
-            defineField({
-              name: 'title',
-              title: 'Title',
-              type: 'string',
-              description: 'Label shown above the set.',
-              validation: (Rule) => Rule.required(),
-            }),
-            defineField({
-              name: 'description',
-              title: 'Description',
-              type: 'text',
-              rows: 3,
-            }),
-            ...blockMetaFields,
-            defineField({
-              name: 'set',
-              title: 'Set',
-              type: 'reference',
-              to: [{type: 'dynamicSet'}, {type: 'curatedSet'}],
-              validation: (Rule) => Rule.required(),
-            }),
-            defineField({
-              name: 'fallbackSet',
-              title: 'Fallback Set',
-              type: 'reference',
-              to: [{type: 'dynamicSet'}, {type: 'curatedSet'}],
-              description: 'Optional set to use when the primary set resolves no approved items.',
-            }),
-          ],
-          preview: {
-            select: {
-              title: 'title',
-              setTitle: 'set.title',
-            },
-            prepare({title, setTitle}) {
-              return {
-                title: title ?? setTitle ?? 'Untitled Set Block',
-              }
-            },
-          },
-        }),
-      ],
+      of: sectionBlockMembers,
       group: ADVANCED_GROUP,
     }),
   ],

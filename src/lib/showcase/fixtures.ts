@@ -87,7 +87,7 @@ const createPlaceholderMedia = (label: string, colors: PlaceholderColors): strin
 
 const mediaPlaceholders = {
   default: createPlaceholderMedia("Content", { background: "#f4f4f5", foreground: "#27272a" }),
-  caseStudy: createPlaceholderMedia("Case Study", { background: "#f5f3ff", foreground: "#4c1d95" }),
+  caseStudy: createPlaceholderMedia("Case Study", { background: "#f7dac6", foreground: "#ff700b" }),
   article: createPlaceholderMedia("Article", { background: "#e0f2fe", foreground: "#0f172a" }),
   feature: createPlaceholderMedia("Feature", { background: "#fef3c7", foreground: "#92400e" }),
   example: createPlaceholderMedia("Example", { background: "#ecfdf5", foreground: "#047857" }),

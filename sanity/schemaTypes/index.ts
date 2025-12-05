@@ -7,6 +7,7 @@ import {featureType} from './documents/feature'
 import {navigationType} from './documents/navigation'
 import {homepageType} from './documents/homepage'
 import {pageType} from './documents/page'
+import {sharedBlockType} from './documents/sharedBlock'
 import {siteSettingsType} from './documents/siteSettings'
 import {industryPageType} from './documents/industryPage'
 import {personaPageType} from './documents/personaPage'
@@ -27,6 +28,7 @@ export const schemaTypes = [
   navigationType,
   homepageType,
   pageType,
+  sharedBlockType,
   industryPageType,
   personaPageType,
   routeType,

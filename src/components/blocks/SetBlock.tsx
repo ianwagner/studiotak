@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -20,11 +20,15 @@ type SetBlockProps = {
 };
 
 export function SetBlock({ block }: SetBlockProps) {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [isMobile, setIsMobile] = useState(true);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
   const pagination = block.pagination;
   const searchParams = useSearchParams();
   const activePagination =
     block.setType === "dynamicSet" && pagination && pagination.totalPages > 1 ? pagination : null;
   const density = block.density ?? "default";
+  const isAdGallery = Boolean(block.adGallery);
 
   const { prevHref, nextHref } = useMemo(() => {
     if (!activePagination) {
@@ -56,15 +60,6 @@ export function SetBlock({ block }: SetBlockProps) {
     };
   }, [activePagination, searchParams]);
 
-  if (block.items.length === 0) {
-    return null;
-  }
-
-  const shouldShowSource = Boolean(
-    block.setTitle && (block.resolvedFromFallback || block.setTitle !== block.title),
-  );
-  const sourceLabel = block.resolvedFromFallback ? "Fallback set" : "Source set";
-
   const containerStack = resolveSpacingToken(
     "gm-spacing-shell-stack",
     "gm-spacing-shell-stack",
@@ -83,12 +78,6 @@ export function SetBlock({ block }: SetBlockProps) {
     density,
     "SetBlock.headerGrid",
   );
-  const contentGridGap = resolveSpacingToken(
-    "gm-spacing-grid-relaxed",
-    "gm-spacing-grid-relaxed",
-    density,
-    "SetBlock.contentGrid",
-  );
   const paginationStack = resolveSpacingToken(
     "gm-spacing-grid-tight",
     "gm-spacing-grid-tight",
@@ -101,6 +90,147 @@ export function SetBlock({ block }: SetBlockProps) {
     density,
     "SetBlock.paginationButton",
   );
+
+  const [itemsPerSlide, setItemsPerSlide] = useState(() => (isAdGallery ? 2 : 1));
+  const shouldUseCarousel = isAdGallery || isMobile;
+  const effectiveItemsPerSlide = shouldUseCarousel
+    ? Math.max(1, isAdGallery ? itemsPerSlide : 1)
+    : 1;
+  const rawTotalSlides = shouldUseCarousel
+    ? Math.ceil(block.items.length / effectiveItemsPerSlide)
+    : block.items.length;
+  const totalSlides = Math.max(0, rawTotalSlides);
+
+  const desktopColumnClasses = useMemo(() => {
+    const baseColumns = gmBreakpoints["gm-breakpoint-grid-two-column"];
+
+    if (totalSlides <= 3) {
+      return baseColumns;
+    }
+
+    const columns = ["md:grid-cols-2", "lg:grid-cols-3", "xl:grid-cols-4"];
+
+    if (totalSlides >= 5) {
+      columns.push(totalSlides >= 6 ? "2xl:grid-cols-6" : "2xl:grid-cols-5");
+    }
+
+    return columns.join(" ");
+  }, [totalSlides]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const handleChange = () => {
+      setIsMobile(!mediaQuery.matches);
+    };
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAdGallery) {
+      setItemsPerSlide((current) => (current === 1 ? current : 1));
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      setItemsPerSlide((current) => (current === 2 ? current : 2));
+      return;
+    }
+
+    const updateItemsPerSlide = () => {
+      const width = window.innerWidth;
+      const next = width >= 1024 ? 4 : width >= 768 ? 3 : 2;
+
+      setItemsPerSlide((current) => (current === next ? current : next));
+    };
+
+    updateItemsPerSlide();
+    window.addEventListener("resize", updateItemsPerSlide);
+
+    return () => {
+      window.removeEventListener("resize", updateItemsPerSlide);
+    };
+  }, [isAdGallery]);
+
+  useEffect(() => {
+    setActiveSlide(0);
+  }, [shouldUseCarousel, totalSlides]);
+
+  if (totalSlides === 0) {
+    return null;
+  }
+
+  const goToSlide = (index: number) => {
+    if (totalSlides === 0) {
+      return;
+    }
+
+    const next = Math.max(0, Math.min(index, totalSlides - 1));
+    setActiveSlide(next);
+  };
+
+  const handlePrevious = () => {
+    goToSlide(activeSlide - 1);
+  };
+
+  const handleNext = () => {
+    goToSlide(activeSlide + 1);
+  };
+
+  const trackGapClasses = useMemo(() => {
+    if (isAdGallery) {
+      return [
+        "gap-0",
+        "md:gap-x-px",
+        "md:gap-y-px",
+        "lg:gap-x-1",
+        "lg:gap-y-1",
+        "xl:gap-x-1",
+        "xl:gap-y-1",
+        "2xl:gap-x-1",
+        "2xl:gap-y-1",
+      ].join(" ");
+    }
+
+    return [
+      "gap-0",
+      "md:gap-x-px",
+      "md:gap-y-px",
+      "lg:gap-x-1",
+      "lg:gap-y-1",
+      "xl:gap-x-1",
+      "xl:gap-y-1",
+      "2xl:gap-x-1",
+      "2xl:gap-y-1",
+    ].join(" ");
+  }, [isAdGallery]);
+
+  const itemWrapperClasses = useMemo(() => {
+    if (isAdGallery) {
+      return [
+        "flex-shrink-0",
+        "w-1/2",
+        "md:w-1/3",
+        "lg:w-1/4",
+        "md:flex-shrink-0",
+      ].join(" ");
+    }
+
+    return ["w-full", "flex-shrink-0", "md:w-auto", "md:flex-shrink"].join(" ");
+  }, [isAdGallery]);
+
+  const trackStyle = shouldUseCarousel
+    ? { transform: `translateX(-${activeSlide * 100}%)` }
+    : undefined;
 
   const titleClass = resolveTypographyToken(
     "gm-typography-block-heading",
@@ -134,18 +264,89 @@ export function SetBlock({ block }: SetBlockProps) {
             {block.description}
           </p>
         ) : null}
-        {shouldShowSource ? (
-          <p className={[metaClass, gmColors["gm-color-text-subtle"]].join(" ")}>
-            {sourceLabel}: {block.setTitle}
-          </p>
-        ) : null}
       </header>
-      <div
-        className={["grid", contentGridGap, gmBreakpoints["gm-breakpoint-grid-two-column"]].join(" ")}
-      >
-        {block.items.map((item) => (
-          <ContentItemCard key={item.id} item={item} />
-        ))}
+      <div className="relative md:static">
+        <div className="overflow-hidden md:overflow-visible">
+          <div
+            ref={carouselRef}
+            className={[
+              "flex transition-transform duration-300 ease-out",
+              shouldUseCarousel ? "flex-nowrap" : "",
+              !isAdGallery ? "md:grid" : "",
+              !isAdGallery ? desktopColumnClasses : "",
+              trackGapClasses,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={trackStyle}
+          >
+            {block.items.map((item) => (
+              <div
+                key={item.id}
+                className={itemWrapperClasses}
+              >
+                <ContentItemCard item={item} className="p-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+        {shouldUseCarousel && totalSlides > 1 ? (
+          <div
+            className={[
+              "mt-4 flex items-center justify-center gap-4",
+              isAdGallery ? "" : "md:hidden",
+            ].join(" ")}
+          >
+            <button
+              type="button"
+              onClick={handlePrevious}
+              disabled={activeSlide === 0}
+              className={[
+                "inline-flex h-10 w-10 items-center justify-center rounded-full border bg-content transition disabled:cursor-not-allowed",
+                gmColors["gm-color-border-subtle"],
+                gmColors["gm-color-hover-surface-accent-soft"],
+                gmColors["gm-color-text-accent"],
+                activeSlide === 0 ? "opacity-40" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-label="Previous item"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalSlides }).map((_, index) => (
+                <span
+                  key={`indicator-${index}`}
+                  aria-hidden="true"
+                  className={[
+                    "h-2 w-2 rounded-full transition",
+                    index === activeSlide
+                      ? gmColors["gm-color-surface-accent"]
+                      : "bg-foreground/30",
+                  ].join(" ")}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={activeSlide === totalSlides - 1}
+              className={[
+                "inline-flex h-10 w-10 items-center justify-center rounded-full border bg-content transition disabled:cursor-not-allowed",
+                gmColors["gm-color-border-subtle"],
+                gmColors["gm-color-hover-surface-accent-soft"],
+                gmColors["gm-color-text-accent"],
+                activeSlide === totalSlides - 1 ? "opacity-40" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-label="Next item"
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        ) : null}
       </div>
       {activePagination ? (
         <div

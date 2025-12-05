@@ -1,10 +1,13 @@
 import type { BlockTheme } from "@/lib/sanity/types";
 
-const shellInlinePadding = "px-6 sm:px-8 lg:px-12";
+const shellInlinePadding = "px-3 sm:px-4 lg:px-5 xl:px-6 2xl:px-8";
 const shellBlockPadding = "py-12 sm:py-16";
+const blockInlinePadding = "px-6 sm:px-8 lg:px-12";
 const shellStackSpacing = "space-y-6";
 const shellContainerBase = "mx-auto w-full";
-const shellContainerMax = "max-w-6xl";
+const shellContainerMax = "max-w-[110rem]";
+const blockContainerBase = "mx-auto w-[90%]";
+const blockContainerMax = "max-w-[75rem]";
 
 export const gmColors = {
   "gm-color-text-primary": "text-foreground",
@@ -49,8 +52,10 @@ export const gmSpacing = {
   "gm-spacing-grid-relaxed": "gap-4",
   "gm-spacing-shell-inline": shellInlinePadding,
   "gm-spacing-section-inline": shellInlinePadding,
+  "gm-spacing-block-inline": blockInlinePadding,
   "gm-spacing-shell-block": shellBlockPadding,
   "gm-spacing-section-block": shellBlockPadding,
+  "gm-spacing-block-none": "py-0",
   "gm-spacing-page-bottom": "pb-12",
   "gm-spacing-page-bottom-lg": "pb-16",
   "gm-spacing-card": "p-4",
@@ -62,8 +67,8 @@ export const gmSpacing = {
 } as const;
 
 export const gmTypography = {
-  "gm-typography-hero-heading": "text-4xl font-semibold tracking-tight sm:text-5xl",
-  "gm-typography-hero-heading-static": "text-4xl font-semibold tracking-tight",
+  "gm-typography-hero-heading": "text-6xl font-bold tracking-tight sm:text-7xl",
+  "gm-typography-hero-heading-static": "text-6xl font-bold tracking-tight",
   "gm-typography-section-heading": "text-3xl font-semibold tracking-tight",
   "gm-typography-block-heading": "text-2xl font-semibold tracking-tight sm:text-3xl",
   "gm-typography-subheading": "text-2xl font-semibold tracking-tight",
@@ -94,6 +99,8 @@ export const gmRadius = {
 export const gmLayout = {
   "gm-layout-shell": shellContainerBase,
   "gm-layout-shell-max": shellContainerMax,
+  "gm-layout-block": blockContainerBase,
+  "gm-layout-block-max": blockContainerMax,
 } as const;
 
 export const gmBreakpoints = {
@@ -113,8 +120,8 @@ type ThemeVariableMap = {
 
 export const blockThemeVariables: Record<BlockTheme, ThemeVariableMap> = {
   light: {
-    "--background": "#ffffff",
-    "--foreground": "#171717",
+    "--background": "var(--surface-default)",
+    "--foreground": "var(--text-default)",
   },
   dark: {
     "--background": "#0a0a0a",

@@ -7,6 +7,7 @@ const COMPACT_SPACING_OVERRIDES: Partial<Record<keyof typeof gmSpacing, keyof ty
   "gm-spacing-page-stack": "gm-spacing-relaxed-stack",
   "gm-spacing-relaxed-stack": "gm-spacing-compact-stack",
   "gm-spacing-shell-inline": "gm-spacing-shell-inline",
+  "gm-spacing-block-inline": "gm-spacing-shell-inline",
   "gm-spacing-shell-block": "gm-spacing-shell-block",
   "gm-spacing-grid-relaxed": "gm-spacing-grid",
   "gm-spacing-grid": "gm-spacing-grid-tight",

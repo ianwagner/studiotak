@@ -37,6 +37,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="color-scheme" content="light dark" />
         {siteSettings.favicons.map((icon) => (
           <link
             key={[icon.rel, icon.sizes ?? "auto", icon.url].join(":")}

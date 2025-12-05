@@ -27,6 +27,12 @@ export const heroBlockType = defineType({
     bodyStyleField,
     contentSpacingField,
     defineField({
+      name: 'eyebrow',
+      title: 'Eyebrow',
+      type: 'string',
+      description: 'Optional label shown above the headline.',
+    }),
+    defineField({
       name: 'headline',
       title: 'Headline',
       type: 'string',
@@ -43,6 +49,23 @@ export const heroBlockType = defineType({
       title: 'Body',
       type: 'array',
       of: [portableTextBlock],
+    }),
+    defineField({
+      name: 'backgroundMedia',
+      title: 'Background Media',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt Text',
+          type: 'string',
+          description:
+            'Describe the image for accessibility. Leave blank if the background is purely decorative.',
+        }),
+      ],
     }),
     defineField({
       name: 'actions',

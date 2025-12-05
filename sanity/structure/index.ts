@@ -80,6 +80,11 @@ export const studioStructure: StructureResolver = (S) => {
         .schemaType('redirect')
         .child(S.documentTypeList('redirect').title('Redirects')),
       S.divider(),
+      S.listItem()
+        .title('Shared Blocks')
+        .schemaType('sharedBlock')
+        .child(S.documentTypeList('sharedBlock').title('Shared Blocks')),
+      S.divider(),
       ...groupedItems,
     ])
 }

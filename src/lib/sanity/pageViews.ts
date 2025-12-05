@@ -1,9 +1,12 @@
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import groq from "groq";
 import { unstable_cache } from "next/cache";
 import { draftMode } from "next/headers";
 
 import { hasSanityClient, requireSanityClient } from "@/lib/sanity/config";
-import type { BlockDensity, BlockLayoutSettings, BlockTheme, SanityBlock } from "@/lib/sanity/types";
+import { blocksProjection } from "@/lib/sanity/fragments";
+import { contentProjection, taxonomyProjection } from "@/lib/sanity/projections";
+import type { BlockDensity, BlockLayoutSettings, BlockTheme, BlockThemeSettings, SanityBlock } from "@/lib/sanity/types";
 
 type SortOrder = "newestFirst" | "oldestFirst" | "alphabeticalAsc" | "random";
 type FallbackMode = "strict" | "pinsOnly" | "anyApproved";
@@ -16,10 +19,39 @@ export type TaxonomySummary = {
   icon?: string;
 };
 
+type SanityFileLike = {
+  asset?: { _ref?: string; url?: string | null } | string | null;
+  url?: string | null;
+  _ref?: string;
+  alt?: string | null;
+};
+
+export type HeroMediaKind = "image" | "video";
+
+export type HeroMedia = {
+  kind?: HeroMediaKind | null;
+  image?: (SanityImageSource & { alt?: string | null; imageUrl?: string | null }) | null;
+  video?: SanityFileLike | null;
+  posterImage?: (SanityImageSource & { alt?: string | null }) | null;
+  alt?: string | null;
+  autoplay?: boolean | null;
+  muted?: boolean | null;
+  loop?: boolean | null;
+  playsInline?: boolean | null;
+};
+
 type HeroContent = {
+  eyebrow?: string;
   headline: string;
+  headlineLineOne?: string | null;
+  headlineLineTwo?: string | null;
   tagline?: string;
   body?: SanityBlock[];
+  backgroundMedia?: HeroMedia | null;
+  centerpieceMedia?: HeroMedia | null;
+  backgroundColor?: string | null;
+  backgroundImageOpacity?: number | null;
+  backgroundImageBlur?: number | null;
 };
 
 export type ContentItem = {
@@ -51,6 +83,7 @@ export type SetBlockView = SanityBlock & {
   title: string;
   description?: string;
   anchor?: string;
+  adGallery?: boolean;
   layout?: BlockLayoutSettings | null;
   setId?: string;
   setTitle?: string;
@@ -59,6 +92,7 @@ export type SetBlockView = SanityBlock & {
   pagination?: PaginationInfo;
   resolvedFromFallback?: boolean;
   theme: BlockTheme;
+  backgroundTheme: BlockTheme;
   density: BlockDensity;
 };
 
@@ -164,7 +198,7 @@ type HomepageDoc = {
       alt?: string | null;
     } | null;
   } | null;
-  blocks?: ThemedBlockDoc[] | null;
+  blocks?: (DocumentBlock | null | undefined)[] | null;
   featuredSets?: (FeaturedSetDoc | null)[] | null;
 };
 
@@ -175,7 +209,7 @@ type ResolvedFilterSet = {
 };
 
 type ThemedBlockDoc = SanityBlock & {
-  theme?: BlockTheme | null;
+  theme?: BlockTheme | BlockThemeSettings | null;
   layout?: BlockLayoutSettings | null;
   anchor?: string;
   density?: BlockDensity | null;
@@ -185,21 +219,36 @@ type SetBlockDoc = ThemedBlockDoc & {
   _type: 'setBlock';
   title?: string;
   description?: string;
+  adGallery?: boolean;
   set?: CuratedSetDoc | DynamicSetDoc | null;
   fallbackSet?: CuratedSetDoc | DynamicSetDoc | null;
 };
 
+type SharedBlockReferenceDoc = SanityBlock & {
+  _type: "sharedBlockReference";
+  sharedBlock?: SharedBlockDoc | null;
+};
+
+type SharedBlockDoc = {
+  _id?: string;
+  internalTitle?: string;
+  description?: string;
+  blocks?: (ThemedBlockDoc | SharedBlockReferenceDoc | null | undefined)[];
+};
+
+type DocumentBlock = ThemedBlockDoc | SharedBlockReferenceDoc;
+
 type IndustryPageDoc = {
   title?: string;
   hero?: HeroContent | null;
-  blocks?: ThemedBlockDoc[];
+  blocks?: (DocumentBlock | null | undefined)[];
   industry?: TaxonomySummary | null;
 };
 
 type PersonaPageDoc = {
   title?: string;
   hero?: HeroContent | null;
-  blocks?: ThemedBlockDoc[];
+  blocks?: (DocumentBlock | null | undefined)[];
   persona?: TaxonomySummary | null;
 };
 
@@ -223,6 +272,37 @@ const DEFAULT_LAYOUT: BlockLayoutSettings = {
 
 const DEFAULT_DENSITY: BlockDensity = 'default';
 
+type ResolvedBlockThemeSettings = {
+  background: BlockTheme;
+  content: BlockTheme;
+};
+
+const resolveBlockThemeSettings = (
+  theme: BlockTheme | BlockThemeSettings | null | undefined,
+): ResolvedBlockThemeSettings => {
+  if (!theme) {
+    return {
+      background: DEFAULT_BLOCK_THEME,
+      content: DEFAULT_BLOCK_THEME,
+    };
+  }
+
+  if (typeof theme === "string") {
+    return {
+      background: theme,
+      content: theme,
+    };
+  }
+
+  const background = (theme.background ?? theme.content ?? DEFAULT_BLOCK_THEME) as BlockTheme;
+  const content = (theme.content ?? background ?? DEFAULT_BLOCK_THEME) as BlockTheme;
+
+  return {
+    background,
+    content,
+  };
+};
+
 const DEFAULT_HOMEPAGE_SHARED_TOKENS: HomepageSharedTokens = {
   theme: DEFAULT_BLOCK_THEME,
   density: DEFAULT_DENSITY,
@@ -242,20 +322,132 @@ const HOMEPAGE_FALLBACK: HomepageData = {
   seo: null,
 };
 
-const isSetBlockDoc = (block: ThemedBlockDoc): block is SetBlockDoc => block._type === 'setBlock';
+async function homepageFallbackWithFooter(): Promise<HomepageData> {
+  const blocks = await appendDefaultFooter(HOMEPAGE_FALLBACK.blocks);
+
+  return {
+    ...HOMEPAGE_FALLBACK,
+    blocks,
+  };
+}
+
+const isSetBlockDoc = (block: SanityBlock): block is SetBlockDoc => block._type === 'setBlock';
 
 const normalizeBlockMeta = <T extends ThemedBlockDoc>(block: T): T & {
   theme: BlockTheme;
+  backgroundTheme: BlockTheme;
   layout: BlockLayoutSettings;
-} => ({
-  ...block,
-  theme: (block.theme ?? DEFAULT_BLOCK_THEME) as BlockTheme,
-  layout: {
-    ...DEFAULT_LAYOUT,
-    ...(block.layout ?? {}),
-  },
-  density: (block.density ?? DEFAULT_DENSITY) as BlockDensity,
-});
+} => {
+  const { background, content } = resolveBlockThemeSettings(block.theme);
+
+  return {
+    ...block,
+    theme: content,
+    backgroundTheme: background,
+    layout: {
+      ...DEFAULT_LAYOUT,
+      ...(block.layout ?? {}),
+    },
+    density: (block.density ?? DEFAULT_DENSITY) as BlockDensity,
+  };
+};
+
+const isSharedBlockReferenceDoc = (
+  block: SanityBlock | null | undefined,
+): block is SharedBlockReferenceDoc => Boolean(block && block._type === "sharedBlockReference");
+
+type ResolveBlocksOptions = {
+  filtersOverride?: ResolveSetArgs["filtersOverride"];
+  pageOverrides?: Record<string, number>;
+  sortOverride?: SortOrder;
+  sharedBlockAncestors?: Set<string>;
+};
+
+async function resolveSharedBlockReference(
+  block: SharedBlockReferenceDoc,
+  options: ResolveBlocksOptions,
+  parentIndex: number,
+): Promise<SanityBlock[]> {
+  const shared = block.sharedBlock;
+  if (!shared?.blocks || shared.blocks.length === 0) {
+    return [];
+  }
+
+  const ancestorIds = new Set(options.sharedBlockAncestors ?? []);
+  const sharedId = shared._id;
+
+  if (sharedId) {
+    if (ancestorIds.has(sharedId)) {
+      return [];
+    }
+
+    ancestorIds.add(sharedId);
+  }
+
+  const scopedBlocks = await resolveDocumentBlocks(shared.blocks, {
+    ...options,
+    sharedBlockAncestors: ancestorIds,
+  });
+
+  const scopeBase = `shared-${block._key ?? sharedId ?? parentIndex}`;
+
+  return scopedBlocks.map((inner, index) => {
+    const existingAnchor =
+      typeof (inner as { anchor?: unknown }).anchor === "string" && inner.anchor
+        ? inner.anchor
+        : undefined;
+
+    const scopedAnchor = existingAnchor ? `${scopeBase}-${existingAnchor}` : undefined;
+    const scopedKey = `${scopeBase}-${inner._key ?? `${inner._type}-${index}`}`;
+
+    const nextBlock: SanityBlock = {
+      ...inner,
+      _key: scopedKey,
+    };
+
+    if (scopedAnchor) {
+      (nextBlock as { anchor?: string }).anchor = scopedAnchor;
+    }
+
+    return nextBlock;
+  });
+}
+
+export async function resolveDocumentBlocks(
+  blocks: (DocumentBlock | null | undefined)[] | null | undefined,
+  options: ResolveBlocksOptions = {},
+): Promise<SanityBlock[]> {
+  if (!blocks || blocks.length === 0) {
+    return [];
+  }
+
+  const resolved = await Promise.all(
+    blocks.map(async (block, index) => {
+      if (!block) {
+        return [];
+      }
+
+      if (isSharedBlockReferenceDoc(block)) {
+        return resolveSharedBlockReference(block, options, index);
+      }
+
+      if (isSetBlockDoc(block)) {
+        const result = await resolveSetBlock({
+          block,
+          sortOverride: options.sortOverride,
+          filtersOverride: options.filtersOverride,
+          pageOverrides: options.pageOverrides,
+        });
+
+        return result ? [result] : [];
+      }
+
+      return [normalizeBlockMeta(block)];
+    }),
+  );
+
+  return resolved.flat().filter((value): value is SanityBlock => Boolean(value));
+}
 
 const normalizeHomepageSharedTokens = (
   tokens: Partial<HomepageSharedTokens> | null | undefined,
@@ -315,6 +507,87 @@ const normalizeFeaturedSets = (
 
 type Perspective = 'published' | 'previewDrafts';
 
+type DefaultFooterDoc = SharedBlockDoc | null;
+
+const defaultFooterQuery = groq`
+  *[_type == "siteSettings"][0].defaultFooter->{
+    _id,
+    ${blocksProjection}
+  }
+`;
+
+const DEFAULT_FOOTER_CACHE_TAG = "default-footer";
+const DEFAULT_FOOTER_REVALIDATE_SECONDS = 300;
+
+async function fetchDefaultFooterBlocks(perspective: Perspective): Promise<SanityBlock[]> {
+  if (!hasSanityClient()) {
+    return [];
+  }
+
+  const client = requireSanityClient();
+  const configured = perspective === "previewDrafts"
+    ? client.withConfig({ perspective: "previewDrafts", useCdn: false })
+    : client;
+
+  const footer = await configured.fetch<DefaultFooterDoc>(defaultFooterQuery);
+
+  if (!footer?.blocks || footer.blocks.length === 0) {
+    return [];
+  }
+
+  const scoped = await resolveSharedBlockReference(
+    {
+      _type: "sharedBlockReference",
+      _key: "default-footer",
+      sharedBlock: footer,
+    } as SharedBlockReferenceDoc,
+    {},
+    0,
+  );
+
+  return scoped;
+}
+
+const cachedDefaultFooterFetcher = unstable_cache(
+  async () => fetchDefaultFooterBlocks("published"),
+  ["default-footer"],
+  { revalidate: DEFAULT_FOOTER_REVALIDATE_SECONDS, tags: [DEFAULT_FOOTER_CACHE_TAG] },
+);
+
+async function getDefaultFooterBlocks(): Promise<SanityBlock[]> {
+  if (!hasSanityClient()) {
+    return [];
+  }
+
+  const { isEnabled } = draftMode();
+
+  if (isEnabled) {
+    return fetchDefaultFooterBlocks("previewDrafts");
+  }
+
+  const useCache = process.env.NODE_ENV === "production";
+
+  if (!useCache) {
+    return fetchDefaultFooterBlocks("published");
+  }
+
+  return cachedDefaultFooterFetcher();
+}
+
+export async function appendDefaultFooter(blocks: SanityBlock[]): Promise<SanityBlock[]> {
+  if (blocks.some((block) => block?._type === "footerBlock")) {
+    return blocks;
+  }
+
+  const footerBlocks = await getDefaultFooterBlocks();
+
+  if (footerBlocks.length === 0) {
+    return blocks;
+  }
+
+  return [...blocks, ...footerBlocks];
+}
+
 async function normalizeHomepageDoc(
   doc: HomepageDoc | null,
   options?: { pageOverrides?: Record<string, number> },
@@ -323,26 +596,17 @@ async function normalizeHomepageDoc(
     return null;
   }
 
-  const resolvedBlocks = doc.blocks
-    ? await Promise.all(
-        doc.blocks.map((block) => {
-          if (isSetBlockDoc(block)) {
-            return resolveSetBlock({
-              block,
-              pageOverrides: options?.pageOverrides,
-            });
-          }
+  const resolvedBlocks = await resolveDocumentBlocks(doc.blocks, {
+    pageOverrides: options?.pageOverrides,
+  });
 
-          return normalizeBlockMeta(block);
-        }),
-      )
-    : [];
+  const blocksWithFooter = await appendDefaultFooter(resolvedBlocks);
 
   return {
     title: doc.title ?? HOMEPAGE_FALLBACK.title,
     slug: doc.slug?.current ?? HOMEPAGE_FALLBACK.slug,
     sharedTokens: normalizeHomepageSharedTokens(doc.sharedTokens ?? null),
-    blocks: resolvedBlocks.filter(Boolean) as SanityBlock[],
+    blocks: blocksWithFooter,
     featuredSets: normalizeFeaturedSets(doc.featuredSets ?? null),
     seo: normalizeHomepageSeo(doc.seo ?? null),
   } satisfies HomepageData;
@@ -374,7 +638,7 @@ const cachedHomepageFetcher = unstable_cache(
 
 export async function getHomepage(options?: {page?: number}): Promise<HomepageData> {
   if (!hasSanityClient()) {
-    return HOMEPAGE_FALLBACK;
+    return homepageFallbackWithFooter();
   }
 
   const {isEnabled} = draftMode();
@@ -385,80 +649,23 @@ export async function getHomepage(options?: {page?: number}): Promise<HomepageDa
 
   if (isEnabled) {
     const preview = await fetchHomepageFromSanity('previewDrafts', {pageOverrides});
-    return preview ?? HOMEPAGE_FALLBACK;
+    return preview ?? (await homepageFallbackWithFooter());
   }
 
   if (pageOverrides) {
     const result = await fetchHomepageFromSanity('published', {pageOverrides});
-    return result ?? HOMEPAGE_FALLBACK;
+    return result ?? (await homepageFallbackWithFooter());
   }
 
   const useCache = process.env.NODE_ENV === 'production';
   if (!useCache) {
     const latest = await fetchHomepageFromSanity('published');
-    return latest ?? HOMEPAGE_FALLBACK;
+    return latest ?? (await homepageFallbackWithFooter());
   }
 
   const published = await cachedHomepageFetcher();
-  return published ?? HOMEPAGE_FALLBACK;
+  return published ?? (await homepageFallbackWithFooter());
 }
-
-const taxonomyProjection = groq`
-  _id,
-  label,
-  description,
-  icon,
-  "slug": slug.current,
-`;
-
-const contentProjection = groq`
-  _id,
-  _type,
-  title,
-  "status": status,
-  "industries": industries[]->{${taxonomyProjection}},
-  "personas": personas[]->{${taxonomyProjection}},
-  "contentType": contentType->{${taxonomyProjection}},
-  "imageUrl": select(
-    defined(media.asset) => media.asset->url,
-    null
-  ),
-  "imageAlt": select(
-    defined(media.alt) => media.alt,
-    null
-  ),
-  "mediaDisplay": coalesce(mediaDisplay, "image"),
-  _createdAt,
-  "body": select(
-    _type == "feature" => body,
-    null
-  ),
-`;
-
-const setProjection = groq`
-  _id,
-  _type,
-  title,
-  description,
-  "items": select(
-    _type == "curatedSet" => items[@->status == "approved"]->{${contentProjection}}
-  ),
-  "limit": select(_type == "dynamicSet" => limit),
-  "sortOrder": select(_type == "dynamicSet" => sortOrder),
-  "fallbackMode": select(_type == "dynamicSet" => fallbackMode),
-  "filters": select(
-    _type == "dynamicSet" => {
-      "industries": filters.industries[]->_id,
-      "personas": filters.personas[]->_id,
-      "contentTypes": filters.contentTypes[]->_id,
-    }
-  ),
-  "pins": select(
-    _type == "dynamicSet" => pins[@->status == "approved"]->{${contentProjection}}
-  ),
-  "updatedAt": select(_type == "dynamicSet" => _updatedAt),
-  "revision": select(_type == "dynamicSet" => _rev),
-`;
 
 const homepageQuery = groq`
   *[_type == "homepage"][0]{
@@ -480,13 +687,7 @@ const homepageQuery = groq`
       title,
       description
     },
-    blocks[]{
-      ...,
-      _type == "setBlock" => {
-        set->{${setProjection}},
-        "fallbackSet": fallbackSet->{${setProjection}}
-      }
-    }
+    ${blocksProjection}
   }
 `;
 
@@ -494,14 +695,7 @@ const industryPageBySlugQuery = groq`
   *[_type == "industryPage" && slug.current == $slug][0]{
     title,
     hero,
-    blocks[]{
-      ...,
-      "theme": coalesce(theme, "light"),
-      _type == "setBlock" => {
-        set->{${setProjection}},
-        "fallbackSet": fallbackSet->{${setProjection}}
-      }
-    },
+    ${blocksProjection},
     industry->{${taxonomyProjection}}
   }
 `;
@@ -510,14 +704,7 @@ const personaPageBySlugQuery = groq`
   *[_type == "personaPage" && slug.current == $slug][0]{
     title,
     hero,
-    blocks[]{
-      ...,
-      "theme": coalesce(theme, "light"),
-      _type == "setBlock" => {
-        set->{${setProjection}},
-        "fallbackSet": fallbackSet->{${setProjection}}
-      }
-    },
+    ${blocksProjection},
     persona->{${taxonomyProjection}}
   }
 `;
@@ -788,6 +975,7 @@ async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverr
     _key: normalizedBlock._key ?? `${resolution.setId}`,
     title,
     description,
+    adGallery: normalizedBlock.adGallery ?? undefined,
     anchor: normalizedBlock.anchor ?? undefined,
     layout: normalizedBlock.layout,
     setId: resolution.setId,
@@ -797,6 +985,7 @@ async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverr
     pagination: resolution.pagination,
     resolvedFromFallback: resolvedFromFallback || undefined,
     theme: normalizedBlock.theme,
+    backgroundTheme: normalizedBlock.backgroundTheme,
     density: normalizedBlock.density,
   };
 }
@@ -1201,7 +1390,17 @@ function buildHeroFromDoc(hero: HeroContent | null | undefined, fallbackTitle: s
   }
 
   return {
+    eyebrow: hero?.eyebrow,
     headline: fallbackTitle,
+    headlineLineOne: hero?.headlineLineOne,
+    headlineLineTwo: hero?.headlineLineTwo,
+    tagline: hero?.tagline,
+    body: hero?.body,
+    backgroundMedia: hero?.backgroundMedia,
+    centerpieceMedia: hero?.centerpieceMedia,
+    backgroundColor: hero?.backgroundColor,
+    backgroundImageOpacity: hero?.backgroundImageOpacity ?? 100,
+    backgroundImageBlur: hero?.backgroundImageBlur ?? 0,
   };
 }
 
@@ -1251,9 +1450,17 @@ function createHeroBlock(hero: HeroContent, key: string): SanityBlock {
   return normalizeBlockMeta({
     _type: "heroBlock",
     _key: key,
+    eyebrow: hero.eyebrow,
     headline: hero.headline,
+    headlineLineOne: hero.headlineLineOne,
+    headlineLineTwo: hero.headlineLineTwo,
     tagline: hero.tagline,
     body: hero.body,
+    backgroundMedia: hero.backgroundMedia,
+    centerpieceMedia: hero.centerpieceMedia,
+    backgroundColor: hero.backgroundColor,
+    backgroundImageOpacity: hero.backgroundImageOpacity,
+    backgroundImageBlur: hero.backgroundImageBlur,
   });
 }
 
@@ -1380,24 +1587,15 @@ export async function fetchIndustryPageView({
     const industry = toTaxonomySummary(pageDoc.industry ?? null);
     const hero = buildHeroFromDoc(pageDoc.hero ?? null, pageDoc.title ?? industry?.label ?? slug);
 
-    const blocks = pageDoc.blocks
-      ? await Promise.all(
-          pageDoc.blocks.map((block) => {
-            if (isSetBlockDoc(block)) {
-              return resolveSetBlock({
-                block,
-                filtersOverride: persona ? { personaIds: [persona.id] } : undefined,
-                pageOverrides,
-              });
-            }
+    const blocks = await resolveDocumentBlocks(pageDoc.blocks, {
+      filtersOverride: persona ? { personaIds: [persona.id] } : undefined,
+      pageOverrides,
+    });
 
-            return normalizeBlockMeta(block);
-          }),
-        )
-      : [];
+    const blocksWithFooter = await appendDefaultFooter(blocks);
 
     return {
-      blocks: blocks.filter(Boolean) as SanityBlock[],
+      blocks: blocksWithFooter,
       context: {
         source: 'document',
         industry,
@@ -1418,9 +1616,10 @@ export async function fetchIndustryPageView({
   const heroBlock = createHeroBlock(hero, `hero-generated-${slug}${persona ? `-${persona.slug}` : ''}`);
   const generatedBlocks = await buildGeneratedBlocks({ industry, persona });
   const blocks = addHeroBlockIfMissing(generatedBlocks, heroBlock);
+  const blocksWithFooter = await appendDefaultFooter(blocks);
 
   return {
-    blocks,
+    blocks: blocksWithFooter,
     context: {
       source: "generated",
       industry,
@@ -1458,24 +1657,15 @@ export async function fetchPersonaPageView({
     const persona = toTaxonomySummary(pageDoc.persona ?? null);
     const hero = buildHeroFromDoc(pageDoc.hero ?? null, pageDoc.title ?? persona?.label ?? slug);
 
-    const blocks = pageDoc.blocks
-      ? await Promise.all(
-          pageDoc.blocks.map((block) => {
-            if (isSetBlockDoc(block)) {
-              return resolveSetBlock({
-                block,
-                filtersOverride: industry ? { industryIds: [industry.id] } : undefined,
-                pageOverrides,
-              });
-            }
+    const blocks = await resolveDocumentBlocks(pageDoc.blocks, {
+      filtersOverride: industry ? { industryIds: [industry.id] } : undefined,
+      pageOverrides,
+    });
 
-            return normalizeBlockMeta(block);
-          }),
-        )
-      : [];
+    const blocksWithFooter = await appendDefaultFooter(blocks);
 
     return {
-      blocks: blocks.filter(Boolean) as SanityBlock[],
+      blocks: blocksWithFooter,
       context: {
         source: 'document',
         industry,
@@ -1499,9 +1689,10 @@ export async function fetchPersonaPageView({
   );
   const generatedBlocks = await buildGeneratedBlocks({ industry, persona });
   const blocks = addHeroBlockIfMissing(generatedBlocks, heroBlock);
+  const blocksWithFooter = await appendDefaultFooter(blocks);
 
   return {
-    blocks,
+    blocks: blocksWithFooter,
     context: {
       source: "generated",
       industry,

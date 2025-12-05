@@ -163,12 +163,13 @@ export function ContentItemCard({
   if (isFeatureType) {
     const featureBody = Array.isArray(item.body) && item.body.length > 0 ? item.body : null;
     const featureMediaDisplay = item.mediaDisplay === "icon" ? "icon" : "image";
+    const isIconFeature = featureMediaDisplay === "icon";
     const featureWrapperClasses =
-      featureMediaDisplay === "icon"
+      isIconFeature
         ? "flex items-center justify-center py-8"
         : joinClassNames(...preset.mediaWrapper);
     const featureFallbackClasses =
-      featureMediaDisplay === "icon"
+      isIconFeature
         ? joinClassNames(
             gmTypography["gm-typography-label-xs"],
             gmColors["gm-color-text-subtle"],
@@ -176,15 +177,36 @@ export function ContentItemCard({
           )
         : joinClassNames(...preset.mediaFallback);
     const featureIconDimensions =
-      featureMediaDisplay === "icon" && item.imageUrl
+      isIconFeature && item.imageUrl
         ? getImageDimensions(item.imageUrl)
         : null;
+    const featureCardClasses = isIconFeature
+      ? joinClassNames(
+          gmSpacing["gm-spacing-relaxed-stack"],
+          "flex flex-col items-center text-center",
+          className,
+        )
+      : joinClassNames(...preset.card, className);
+    const featureTitleClasses = joinClassNames(
+      ...preset.title,
+      isIconFeature ? "text-center" : null,
+    );
+    const featureBodyClasses = joinClassNames(
+      gmTypography["gm-typography-body-base"],
+      gmColors["gm-color-text-muted"],
+      isIconFeature ? "text-center" : null,
+    );
+    const featureDescriptionClasses = joinClassNames(
+      gmTypography["gm-typography-body-base"],
+      gmColors["gm-color-text-muted"],
+      isIconFeature ? "text-center" : null,
+    );
 
     return (
-      <article className={joinClassNames(...preset.card, className)}>
+      <article className={featureCardClasses}>
         <div className={featureWrapperClasses}>
           {item.imageUrl ? (
-            featureMediaDisplay === "icon" ? (
+            isIconFeature ? (
               <Image
                 src={item.imageUrl}
                 alt={imageAlt}
@@ -211,19 +233,14 @@ export function ContentItemCard({
             </div>
           )}
         </div>
-        <h3 className={joinClassNames(...preset.title)}>{item.title}</h3>
+        <h3 className={featureTitleClasses}>{item.title}</h3>
         {featureBody ? (
-          <div
-            className={joinClassNames(
-              gmTypography["gm-typography-body-base"],
-              gmColors["gm-color-text-muted"],
-            )}
-          >
+          <div className={featureBodyClasses}>
             <PortableText value={featureBody} components={portableTextComponents} />
           </div>
         ) : null}
         {!featureBody && item.contentType?.description ? (
-          <p className={joinClassNames(gmTypography["gm-typography-body-base"], gmColors["gm-color-text-muted"])}>
+          <p className={featureDescriptionClasses}>
             {item.contentType.description}
           </p>
         ) : null}
