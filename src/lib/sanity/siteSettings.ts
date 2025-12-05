@@ -28,6 +28,19 @@ export type SiteLogoSet = {
   clearSpaceNote: string | null;
 };
 
+export type SiteProduct = {
+  slug: string;
+  name: string;
+  badgeText?: string | null;
+  productColor?: string | null;
+  logos: {
+    light: SiteLogoAsset | null;
+    dark: SiteLogoAsset | null;
+    compactLight: SiteLogoAsset | null;
+    compactDark: SiteLogoAsset | null;
+  };
+};
+
 export type SiteSettings = {
   logos: SiteLogoSet;
   favicons: SiteIconAsset[];
