@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
@@ -20,6 +21,8 @@ export function PoweredByBadge({ product, theme, className }: PoweredByBadgeProp
   const badgeText = product.badgeText?.trim() || `Powered by ${product.name}`;
   const compactMark = selectProductAsset(product, theme, "compact");
   const accentColor = product.productColor ?? undefined;
+  const compactWidth = typeof compactMark?.width === "number" ? compactMark.width : 64;
+  const compactHeight = typeof compactMark?.height === "number" ? compactMark.height : 16;
 
   const style: CSSProperties = accentColor
     ? {
@@ -32,15 +35,13 @@ export function PoweredByBadge({ product, theme, className }: PoweredByBadgeProp
   return (
     <Link href={href} className={joinClassNames(baseClasses, className)} style={style}>
       {compactMark ? (
-        <img
+        <Image
           src={compactMark.url}
           alt=""
           aria-hidden="true"
-          width={typeof compactMark.width === "number" ? compactMark.width : undefined}
-          height={typeof compactMark.height === "number" ? compactMark.height : undefined}
+          width={compactWidth}
+          height={compactHeight}
           className="h-4 w-auto"
-          loading="lazy"
-          decoding="async"
         />
       ) : null}
       <span>{badgeText}</span>
