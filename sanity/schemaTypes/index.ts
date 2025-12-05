@@ -4,9 +4,11 @@ import {curatedSetType} from './documents/curatedSet'
 import {dynamicSetType} from './documents/dynamicSet'
 import {exampleType} from './documents/example'
 import {featureType} from './documents/feature'
+import {formType} from './documents/form'
 import {navigationType} from './documents/navigation'
 import {homepageType} from './documents/homepage'
 import {pageType} from './documents/page'
+import {errorPageType} from './documents/errorPage'
 import {sharedBlockType} from './documents/sharedBlock'
 import {siteSettingsType} from './documents/siteSettings'
 import {industryPageType} from './documents/industryPage'
@@ -24,10 +26,12 @@ export const schemaTypes = [
   dynamicSetType,
   exampleType,
   featureType,
+  formType,
   siteSettingsType,
   navigationType,
   homepageType,
   pageType,
+  errorPageType,
   sharedBlockType,
   industryPageType,
   personaPageType,

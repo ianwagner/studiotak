@@ -2,11 +2,14 @@ import { PortableText } from "@portabletext/react";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import Image from "next/image";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 
 import { portableTextComponents } from "@/components/portableText/components";
+import { buildSanityFileUrl } from "@/lib/sanity/files";
 import { buildSanityImage } from "@/lib/sanity/images";
-import type { BlockDensity, BlockTheme, SanityBlock } from "@/lib/sanity/types";
-import { gmColors, gmRadius } from "@/styles/designTokens";
+import type { HeroMedia } from "@/lib/sanity/pageViews";
+import type { BlockDensity, BlockTheme, BlockThemeSettings, SanityBlock } from "@/lib/sanity/types";
+import { blockThemeVariables, gmColors, gmRadius } from "@/styles/designTokens";
 import { getButtonClassName } from "@/styles/buttons";
 
 import { resolveSpacingToken, resolveTypographyToken } from "./tokenUtils";
@@ -16,9 +19,183 @@ type HeroBlockAction = {
   label?: string;
   href?: string;
   isPrimary?: boolean;
+  buttonTheme?: BlockTheme | "inherit" | null;
 };
 
-type HeroBackgroundMedia = (SanityImageSource & { alt?: string | null; imageUrl?: string | null }) | null;
+function normalizeHexColor(input?: string | null): string | null {
+  if (typeof input !== "string") {
+    return null;
+  }
+
+  const trimmed = input.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  const match = trimmed.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+  if (!match) {
+    return null;
+  }
+
+  let hex = match[1];
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+
+  return `#${hex.toLowerCase()}`;
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = normalizeHexColor(hex);
+  if (!normalized) {
+    return "";
+  }
+
+  const value = normalized.slice(1);
+  const r = Number.parseInt(value.slice(0, 2), 16);
+  const g = Number.parseInt(value.slice(2, 4), 16);
+  const b = Number.parseInt(value.slice(4, 6), 16);
+  const clampedAlpha = Math.min(Math.max(alpha, 0), 1);
+
+  return `rgba(${r}, ${g}, ${b}, ${clampedAlpha})`;
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  if (Number.isNaN(value)) {
+    return min;
+  }
+
+  if (value < min) {
+    return min;
+  }
+
+  if (value > max) {
+    return max;
+  }
+
+  return value;
+}
+
+function resolveBlockContentTheme(theme?: BlockTheme | BlockThemeSettings | null): BlockTheme {
+  if (!theme) {
+    return "light";
+  }
+
+  if (typeof theme === "string") {
+    return theme;
+  }
+
+  return (theme.content ?? theme.background ?? "light") as BlockTheme;
+}
+
+function resolveActionButtonTheme(
+  override: BlockTheme | "inherit" | null | undefined,
+  fallback: BlockTheme,
+): BlockTheme {
+  if (!override || override === "inherit") {
+    return fallback;
+  }
+
+  if (override === "light" || override === "dark" || override === "brand" || override === "system") {
+    return override;
+  }
+
+  return fallback;
+}
+
+type NormalizedHeroImageMedia = {
+  kind: "image";
+  image: (SanityImageSource & { alt?: string | null; imageUrl?: string | null }) | null;
+  alt: string;
+};
+
+type NormalizedHeroVideoMedia = {
+  kind: "video";
+  video: {
+    asset?: { _ref?: string; url?: string | null } | string | null;
+    _ref?: string;
+    url?: string | null;
+    alt?: string | null;
+  } | null;
+  posterImage: (SanityImageSource & { alt?: string | null }) | null;
+  alt: string;
+  autoplay: boolean;
+  muted: boolean;
+  loop: boolean;
+  playsInline: boolean;
+};
+
+type NormalizedHeroMedia = NormalizedHeroImageMedia | NormalizedHeroVideoMedia;
+
+function extractAlt(input: unknown): string {
+  if (!input || typeof input !== "object") {
+    return "";
+  }
+
+  const alt = (input as { alt?: unknown }).alt;
+  return typeof alt === "string" ? alt.trim() : "";
+}
+
+function normalizeHeroMedia(
+  raw:
+    | HeroMedia
+    | (SanityImageSource & { alt?: string | null; imageUrl?: string | null })
+    | null
+    | undefined,
+): NormalizedHeroMedia | null {
+  if (!raw) {
+    return null;
+  }
+
+  if (typeof raw === "object" && raw !== null && "kind" in raw) {
+    const kind = raw.kind === "video" ? "video" : "image";
+
+    if (kind === "video") {
+      const autoplay = typeof raw.autoplay === "boolean" ? raw.autoplay : true;
+      const muted = typeof raw.muted === "boolean" ? raw.muted : true;
+      const loop = typeof raw.loop === "boolean" ? raw.loop : true;
+      const playsInline = typeof raw.playsInline === "boolean" ? raw.playsInline : true;
+      const video = raw.video ?? null;
+      const alt = extractAlt(raw) || extractAlt(video);
+
+      return {
+        kind: "video",
+        video,
+        posterImage: raw.posterImage ?? null,
+        alt,
+        autoplay,
+        muted,
+        loop,
+        playsInline,
+      };
+    }
+
+    const image = (raw.image ??
+      null) as (SanityImageSource & { alt?: string | null; imageUrl?: string | null }) | null;
+    const alt = extractAlt(image) || extractAlt(raw);
+
+    return {
+      kind: "image",
+      image,
+      alt,
+    };
+  }
+
+  if (typeof raw === "object" && raw !== null && "asset" in raw) {
+    const image = raw as SanityImageSource & { alt?: string | null; imageUrl?: string | null };
+
+    return {
+      kind: "image",
+      image,
+      alt: extractAlt(image),
+    };
+  }
+
+  return null;
+}
 
 export type HeroBlockData = SanityBlock & {
   _type: "heroBlock";
@@ -32,10 +209,20 @@ export type HeroBlockData = SanityBlock & {
   headingStyle?: string;
   bodyStyle?: string;
   contentSpacing?: string;
-  backgroundMedia?: HeroBackgroundMedia;
-  centerpieceMedia?: HeroBackgroundMedia;
+  backgroundMedia?:
+    | HeroMedia
+    | (SanityImageSource & { alt?: string | null; imageUrl?: string | null })
+    | null;
+  centerpieceMedia?:
+    | HeroMedia
+    | (SanityImageSource & { alt?: string | null; imageUrl?: string | null })
+    | null;
+  backgroundColor?: string | null;
+  backgroundImageOpacity?: number | null;
+  backgroundImageBlur?: number | null;
   density?: BlockDensity;
-  theme?: BlockTheme;
+  theme?: BlockTheme | BlockThemeSettings;
+  backgroundTheme?: BlockTheme;
 };
 
 export type HeroBlockProps = {
@@ -44,6 +231,7 @@ export type HeroBlockProps = {
 
 export function HeroBlock({ block }: HeroBlockProps) {
   const density: BlockDensity = block.density ?? "default";
+  const contentTheme = resolveBlockContentTheme(block.theme);
 
   const headingClass = resolveTypographyToken(
     block.headingStyle,
@@ -92,45 +280,79 @@ export function HeroBlock({ block }: HeroBlockProps) {
   const primaryCtaClass = getButtonClassName("primary");
   const secondaryCtaClass = getButtonClassName("secondary");
 
-  const backgroundMedia = block.backgroundMedia ?? null;
-  const builtBackground = backgroundMedia
-    ? buildSanityImage(backgroundMedia, {
+  const normalizedBackgroundMedia = normalizeHeroMedia(block.backgroundMedia);
+  const isBackgroundVideo = normalizedBackgroundMedia?.kind === "video";
+  const backgroundImage =
+    normalizedBackgroundMedia?.kind === "image" ? normalizedBackgroundMedia.image : null;
+  const builtBackgroundImage = backgroundImage
+    ? buildSanityImage(backgroundImage, {
         width: 2400,
         quality: 80,
       })
     : null;
-  const backgroundUrlCandidate =
-    builtBackground?.url ??
-    (backgroundMedia && typeof backgroundMedia === "object" && "imageUrl" in backgroundMedia
-      ? (backgroundMedia.imageUrl as string | undefined)
+  const backgroundImageUrlCandidate =
+    builtBackgroundImage?.url ??
+    (backgroundImage && typeof backgroundImage === "object" && "imageUrl" in backgroundImage
+      ? (backgroundImage.imageUrl as string | undefined)
       : undefined);
-  const backgroundUrl =
-    typeof backgroundUrlCandidate === "string" && backgroundUrlCandidate.length > 0
-      ? backgroundUrlCandidate
+  const backgroundVideoUrl =
+    isBackgroundVideo && normalizedBackgroundMedia?.video
+      ? buildSanityFileUrl(normalizedBackgroundMedia.video)
       : null;
-  const shouldRenderBackground = Boolean(backgroundUrl);
+  const backgroundPosterImage =
+    isBackgroundVideo && normalizedBackgroundMedia?.posterImage
+      ? buildSanityImage(normalizedBackgroundMedia.posterImage, {
+          width: 2400,
+          quality: 70,
+        })
+      : null;
+  const backgroundImageUrl =
+    typeof backgroundImageUrlCandidate === "string" && backgroundImageUrlCandidate.length > 0
+      ? backgroundImageUrlCandidate
+      : null;
+  const shouldRenderBackground = isBackgroundVideo
+    ? Boolean(backgroundVideoUrl)
+    : Boolean(backgroundImageUrl);
+  const backgroundAlt =
+    normalizedBackgroundMedia?.kind === "image" ? normalizedBackgroundMedia.alt ?? "" : "";
+  const backgroundVideoMedia =
+    normalizedBackgroundMedia?.kind === "video" ? normalizedBackgroundMedia : null;
 
-  const centerpieceMedia = block.centerpieceMedia ?? null;
-  const builtCenterpiece = centerpieceMedia
-    ? buildSanityImage(centerpieceMedia, {
+  const centerpieceMedia = normalizeHeroMedia(block.centerpieceMedia);
+  const isCenterpieceVideo = centerpieceMedia?.kind === "video";
+  const centerpieceImage = centerpieceMedia?.kind === "image" ? centerpieceMedia.image : null;
+  const builtCenterpieceImage = centerpieceImage
+    ? buildSanityImage(centerpieceImage, {
         width: 1024,
         quality: 90,
       })
     : null;
-  const centerpieceUrlCandidate =
-    builtCenterpiece?.url ??
-    (centerpieceMedia && typeof centerpieceMedia === "object" && "imageUrl" in centerpieceMedia
-      ? (centerpieceMedia.imageUrl as string | undefined)
+  const centerpieceImageUrlCandidate =
+    builtCenterpieceImage?.url ??
+    (centerpieceImage && typeof centerpieceImage === "object" && "imageUrl" in centerpieceImage
+      ? (centerpieceImage.imageUrl as string | undefined)
       : undefined);
-  const centerpieceUrl =
-    typeof centerpieceUrlCandidate === "string" && centerpieceUrlCandidate.length > 0
-      ? centerpieceUrlCandidate
+  const centerpieceVideoUrl =
+    isCenterpieceVideo && centerpieceMedia?.video ? buildSanityFileUrl(centerpieceMedia.video) : null;
+  const centerpiecePosterImage =
+    isCenterpieceVideo && centerpieceMedia?.posterImage
+      ? buildSanityImage(centerpieceMedia.posterImage, {
+          width: 1024,
+          quality: 85,
+        })
       : null;
-  const shouldRenderCenterpiece = Boolean(centerpieceUrl);
+  const centerpieceImageUrl =
+    typeof centerpieceImageUrlCandidate === "string" && centerpieceImageUrlCandidate.length > 0
+      ? centerpieceImageUrlCandidate
+      : null;
+  const shouldRenderCenterpiece = isCenterpieceVideo
+    ? Boolean(centerpieceVideoUrl)
+    : Boolean(centerpieceImageUrl);
   const centerpieceAlt = (centerpieceMedia?.alt ?? "").trim();
   const isCenterpieceDecorative = centerpieceAlt.length === 0;
-  const centerpieceWidth = builtCenterpiece?.width ?? 512;
-  const centerpieceHeight = builtCenterpiece?.height ?? 512;
+  const centerpieceWidth = builtCenterpieceImage?.width ?? centerpiecePosterImage?.width ?? 512;
+  const centerpieceHeight = builtCenterpieceImage?.height ?? centerpiecePosterImage?.height ?? 512;
+  const centerpieceVideoMedia = centerpieceMedia?.kind === "video" ? centerpieceMedia : null;
   const rawHeadline = block.headline ?? "";
   const headlineSegments = rawHeadline
     ? rawHeadline
@@ -145,7 +367,31 @@ export function HeroBlock({ block }: HeroBlockProps) {
     (headlineSegments.length > 1 ? headlineSegments.slice(1).join("\n") : "");
   const hasHeadlineLineOne = headlineLineOne.length > 0;
   const hasHeadlineLineTwo = headlineLineTwo.length > 0;
-  const shouldRenderStylizedHeadline = shouldRenderCenterpiece && hasHeadlineLineOne && hasHeadlineLineTwo;
+  const normalizedLineOneLength = headlineLineOne.replace(/\s+/g, "").length;
+  const isLineOneLong = normalizedLineOneLength > 14;
+  const shouldRenderStylizedHeadline = shouldRenderCenterpiece && hasHeadlineLineOne;
+  const iconTopPercent = hasHeadlineLineTwo
+    ? isLineOneLong
+      ? 44
+      : 46
+    : isLineOneLong
+      ? 60
+      : 56;
+  const headlineMinHeightClass = hasHeadlineLineTwo
+    ? "min-h-[13rem] sm:min-h-[17rem] lg:min-h-[21rem]"
+    : "min-h-[10rem] sm:min-h-[13rem] lg:min-h-[17rem]";
+  const lineOneShiftClass = hasHeadlineLineTwo
+    ? isLineOneLong
+      ? "-translate-y-8 sm:-translate-y-10 lg:-translate-y-12"
+      : "-translate-y-7 sm:-translate-y-9 lg:-translate-y-11"
+    : isLineOneLong
+      ? "-translate-y-6 sm:-translate-y-8 lg:-translate-y-10"
+      : "-translate-y-4 sm:-translate-y-6 lg:-translate-y-8";
+  const lineTwoShiftClass = hasHeadlineLineTwo
+    ? isLineOneLong
+      ? "translate-y-4 sm:translate-y-6 lg:translate-y-8"
+      : "translate-y-3 sm:translate-y-5 lg:translate-y-7"
+    : "";
   const plainHeadline =
     rawHeadline ||
     [headlineLineOne, headlineLineTwo]
@@ -159,7 +405,57 @@ export function HeroBlock({ block }: HeroBlockProps) {
     "HeroBlock.cardPadding",
   );
 
-  const cardBackgroundClass = shouldRenderBackground ? "bg-background" : gmColors["gm-color-surface-tint"];
+  const normalizedBackgroundColor = normalizeHexColor(block.backgroundColor);
+  const hasCustomBackgroundColor = Boolean(normalizedBackgroundColor);
+
+  const rawOpacity = typeof block.backgroundImageOpacity === "number" ? block.backgroundImageOpacity : null;
+  const normalizedOpacity = rawOpacity !== null ? clampNumber(rawOpacity, 0, 100) / 100 : 1;
+
+  const rawBlur = typeof block.backgroundImageBlur === "number" ? block.backgroundImageBlur : null;
+  const normalizedBlur = rawBlur !== null ? clampNumber(rawBlur, 0, 40) : 0;
+
+  const containerStyle: CSSProperties | undefined = hasCustomBackgroundColor
+    ? { backgroundColor: normalizedBackgroundColor }
+    : undefined;
+
+  const imageStyle: CSSProperties = {
+    opacity: normalizedOpacity,
+  };
+
+  if (normalizedBlur > 0) {
+    imageStyle.filter = `blur(${normalizedBlur}px)`;
+    imageStyle.transform = "scale(1.05)";
+    imageStyle.transformOrigin = "center";
+  }
+
+  let overlayStyle: CSSProperties | undefined;
+  let shouldRenderOverlay = false;
+
+  if (normalizedBlur > 0) {
+    overlayStyle = {
+      backdropFilter: `blur(${normalizedBlur}px)`,
+      WebkitBackdropFilter: `blur(${normalizedBlur}px)`,
+    };
+    shouldRenderOverlay = true;
+  }
+
+  if (normalizedBackgroundColor) {
+    const overlayAlpha = clampNumber(1 - normalizedOpacity, 0, 0.85);
+    if (overlayAlpha > 0) {
+      overlayStyle = {
+        ...(overlayStyle ?? {}),
+        backgroundColor: hexToRgba(normalizedBackgroundColor, overlayAlpha),
+      };
+      shouldRenderOverlay = true;
+    }
+  }
+
+  if (shouldRenderOverlay && !overlayStyle) {
+    overlayStyle = {};
+  }
+
+  const cardBackgroundClass =
+    shouldRenderBackground || hasCustomBackgroundColor ? "" : gmColors["gm-color-surface-tint"];
 
   return (
     <div
@@ -169,19 +465,37 @@ export function HeroBlock({ block }: HeroBlockProps) {
         "overflow-hidden",
         cardBackgroundClass,
       ].join(" ")}
+      style={containerStyle}
     >
       {shouldRenderBackground ? (
         <>
           <div className="absolute inset-0 z-0">
-            <Image
-              src={backgroundUrl!}
-              alt={backgroundMedia?.alt ?? ""}
-              fill
-              className="h-full w-full object-cover"
-              sizes="(min-width: 1280px) 1152px, (min-width: 768px) 90vw, 100vw"
-            />
+            {isBackgroundVideo && backgroundVideoUrl ? (
+              <video
+                className="h-full w-full object-cover"
+                src={backgroundVideoUrl}
+                poster={backgroundPosterImage?.url}
+                autoPlay={backgroundVideoMedia?.autoplay ?? true}
+                muted={backgroundVideoMedia?.muted ?? true}
+                loop={backgroundVideoMedia?.loop ?? true}
+                playsInline={backgroundVideoMedia?.playsInline ?? true}
+                style={imageStyle}
+                aria-hidden="true"
+              />
+            ) : backgroundImageUrl ? (
+              <Image
+                src={backgroundImageUrl}
+                alt={backgroundAlt}
+                fill
+                className="h-full w-full object-cover"
+                style={imageStyle}
+                sizes="(min-width: 1280px) 1152px, (min-width: 768px) 90vw, 100vw"
+              />
+            ) : null}
           </div>
-          <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm" aria-hidden="true" />
+          {shouldRenderOverlay ? (
+            <div className="absolute inset-0 z-10" aria-hidden="true" style={overlayStyle} />
+          ) : null}
         </>
       ) : null}
       <div
@@ -201,13 +515,18 @@ export function HeroBlock({ block }: HeroBlockProps) {
             <h1
               className={[
                 headingClass,
-                "relative flex min-h-[11rem] flex-col items-center text-center sm:min-h-[13rem] lg:min-h-[16rem]",
+                "relative grid place-items-center text-center",
+                headlineMinHeightClass,
               ].join(" ")}
             >
-              <span className="relative z-0 block leading-none -mb-10 sm:-mb-12 lg:-mb-16">{headlineLineOne}</span>
+              <span
+                className={["relative z-0 block leading-none transform", lineOneShiftClass].join(" ")}
+              >
+                {headlineLineOne}
+              </span>
               <span
                 className={[
-                  "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+                  "absolute left-1/2 -translate-x-1/2 -translate-y-1/2",
                   "flex items-center justify-center",
                   "h-44 w-44 sm:h-52 sm:w-52 lg:h-64 lg:w-64",
                   "z-10",
@@ -215,21 +534,45 @@ export function HeroBlock({ block }: HeroBlockProps) {
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                style={{
+                  top: `${iconTopPercent}%`,
+                }}
                 aria-hidden={isCenterpieceDecorative ? true : undefined}
               >
-                <Image
-                  src={centerpieceUrl!}
-                  alt={centerpieceAlt}
-                  aria-hidden={isCenterpieceDecorative ? true : undefined}
-                  width={centerpieceWidth}
-                  height={centerpieceHeight}
-                  className="h-full w-full object-contain"
-                  sizes="(min-width: 1280px) 16rem, (min-width: 768px) 13rem, 11rem"
-                />
+                {isCenterpieceVideo && centerpieceVideoUrl ? (
+                  <video
+                    className="h-full w-full object-contain"
+                    src={centerpieceVideoUrl}
+                    poster={centerpiecePosterImage?.url}
+                    autoPlay={centerpieceVideoMedia?.autoplay ?? true}
+                    muted={centerpieceVideoMedia?.muted ?? true}
+                    loop={centerpieceVideoMedia?.loop ?? true}
+                    playsInline={centerpieceVideoMedia?.playsInline ?? true}
+                    aria-hidden={isCenterpieceDecorative ? true : undefined}
+                    aria-label={isCenterpieceDecorative ? undefined : centerpieceAlt}
+                  />
+                ) : centerpieceImageUrl ? (
+                  <Image
+                    src={centerpieceImageUrl}
+                    alt={centerpieceAlt}
+                    aria-hidden={isCenterpieceDecorative ? true : undefined}
+                    width={centerpieceWidth}
+                    height={centerpieceHeight}
+                    className="h-full w-full object-contain"
+                    sizes="(min-width: 1280px) 16rem, (min-width: 768px) 13rem, 11rem"
+                  />
+                ) : null}
               </span>
-              <span className="relative z-20 block -mt-10 sm:-mt-12 lg:-mt-16 leading-none whitespace-pre-line">
-                {headlineLineTwo}
-              </span>
+              {hasHeadlineLineTwo ? (
+                <span
+                  className={[
+                    "relative z-20 block leading-none whitespace-pre-line transform",
+                    lineTwoShiftClass,
+                  ].join(" ")}
+                >
+                  {headlineLineTwo}
+                </span>
+              ) : null}
             </h1>
           ) : (
             <h1 className={[headingClass, "whitespace-pre-line"].join(" ")}>{plainHeadline}</h1>
@@ -256,9 +599,22 @@ export function HeroBlock({ block }: HeroBlockProps) {
           <div className={["flex flex-wrap items-center justify-center", actionsGap].join(" ")}>
             {actions.map((action) => {
               const className = (action.isPrimary ?? true) ? primaryCtaClass : secondaryCtaClass;
+              const buttonTheme = resolveActionButtonTheme(action.buttonTheme, contentTheme);
+              const themeVariables = blockThemeVariables[buttonTheme];
+              const buttonStyle: CSSProperties = {
+                "--foreground": themeVariables["--foreground"],
+                "--color-foreground": themeVariables["--foreground"],
+                "--background": themeVariables["--background"],
+                "--color-background": themeVariables["--background"],
+              } as CSSProperties;
 
               return (
-                <Link key={action._key ?? action.label} href={action.href ?? "#"} className={className}>
+                <Link
+                  key={action._key ?? action.label}
+                  href={action.href ?? "#"}
+                  className={className}
+                  style={buttonStyle}
+                >
                   {action.label}
                 </Link>
               );

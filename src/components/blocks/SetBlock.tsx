@@ -165,10 +165,6 @@ export function SetBlock({ block }: SetBlockProps) {
     setActiveSlide(0);
   }, [shouldUseCarousel, totalSlides]);
 
-  if (totalSlides === 0) {
-    return null;
-  }
-
   const goToSlide = (index: number) => {
     if (totalSlides === 0) {
       return;
@@ -227,6 +223,10 @@ export function SetBlock({ block }: SetBlockProps) {
 
     return ["w-full", "flex-shrink-0", "md:w-auto", "md:flex-shrink"].join(" ");
   }, [isAdGallery]);
+
+  if (totalSlides === 0) {
+    return null;
+  }
 
   const trackStyle = shouldUseCarousel
     ? { transform: `translateX(-${activeSlide * 100}%)` }

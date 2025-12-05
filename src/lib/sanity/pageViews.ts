@@ -78,6 +78,31 @@ export type PaginationInfo = {
   hasNext: boolean;
 };
 
+export type DisplayBlockType = "gallery" | "splay";
+
+const MIN_SPLAY_LIMIT = 2;
+const MAX_SPLAY_LIMIT = 8;
+const DEFAULT_SPLAY_LIMIT = 5;
+const MIN_SPLAY_GAP = -30;
+const MAX_SPLAY_GAP = 60;
+const DEFAULT_SPLAY_GAP = 8;
+
+const clampSplayLimitValue = (value: number | null | undefined): number => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return DEFAULT_SPLAY_LIMIT;
+  }
+
+  return Math.max(MIN_SPLAY_LIMIT, Math.min(value, MAX_SPLAY_LIMIT));
+};
+
+const clampSplayGapValue = (value: number | null | undefined): number => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return DEFAULT_SPLAY_GAP;
+  }
+
+  return Math.max(MIN_SPLAY_GAP, Math.min(value, MAX_SPLAY_GAP));
+};
+
 export type SetBlockView = SanityBlock & {
   _type: "setBlock";
   title: string;
@@ -94,6 +119,25 @@ export type SetBlockView = SanityBlock & {
   theme: BlockTheme;
   backgroundTheme: BlockTheme;
   density: BlockDensity;
+};
+
+export type DisplayBlockView = SanityBlock & {
+  _type: "displayBlock";
+  displayType: DisplayBlockType;
+  anchor?: string;
+  layout?: BlockLayoutSettings | null;
+  setId?: string;
+  setTitle?: string;
+  setDescription?: string;
+  setType: "dynamicSet" | "curatedSet" | "generated";
+  items: ContentItem[];
+  pagination?: PaginationInfo;
+  resolvedFromFallback?: boolean;
+  theme: BlockTheme;
+  backgroundTheme: BlockTheme;
+  density: BlockDensity;
+  splayLimit?: number;
+  splayGap?: number;
 };
 
 type PageContext = {
@@ -215,13 +259,36 @@ type ThemedBlockDoc = SanityBlock & {
   density?: BlockDensity | null;
 };
 
-type SetBlockDoc = ThemedBlockDoc & {
+type SetReferenceBlockDoc = ThemedBlockDoc & {
+  set?: CuratedSetDoc | DynamicSetDoc | null;
+  fallbackSet?: CuratedSetDoc | DynamicSetDoc | null;
+};
+
+type SetBlockDoc = SetReferenceBlockDoc & {
   _type: 'setBlock';
   title?: string;
   description?: string;
   adGallery?: boolean;
+};
+
+type DisplayBlockDoc = SetReferenceBlockDoc & {
+  _type: 'displayBlock';
+  displayType?: DisplayBlockType | null;
+  splayLimit?: number | null;
+  splayGap?: number | null;
+};
+
+type InlineDisplayDoc = {
+  displayType?: DisplayBlockType | null;
+  splayLimit?: number | null;
+  splayGap?: number | null;
   set?: CuratedSetDoc | DynamicSetDoc | null;
   fallbackSet?: CuratedSetDoc | DynamicSetDoc | null;
+};
+
+type SplitBlockDoc = ThemedBlockDoc & {
+  _type: 'splitBlock';
+  display?: InlineDisplayDoc | null;
 };
 
 type SharedBlockReferenceDoc = SanityBlock & {
@@ -332,6 +399,8 @@ async function homepageFallbackWithFooter(): Promise<HomepageData> {
 }
 
 const isSetBlockDoc = (block: SanityBlock): block is SetBlockDoc => block._type === 'setBlock';
+const isDisplayBlockDoc = (block: SanityBlock): block is DisplayBlockDoc => block._type === 'displayBlock';
+const isSplitBlockDoc = (block: SanityBlock): block is SplitBlockDoc => block._type === 'splitBlock';
 
 const normalizeBlockMeta = <T extends ThemedBlockDoc>(block: T): T & {
   theme: BlockTheme;
@@ -357,7 +426,7 @@ const isSharedBlockReferenceDoc = (
 ): block is SharedBlockReferenceDoc => Boolean(block && block._type === "sharedBlockReference");
 
 type ResolveBlocksOptions = {
-  filtersOverride?: ResolveSetArgs["filtersOverride"];
+  filtersOverride?: SetFiltersOverride;
   pageOverrides?: Record<string, number>;
   sortOverride?: SortOrder;
   sharedBlockAncestors?: Set<string>;
@@ -431,8 +500,24 @@ export async function resolveDocumentBlocks(
         return resolveSharedBlockReference(block, options, index);
       }
 
+      if (isSplitBlockDoc(block)) {
+        const result = await resolveSplitBlock(block, options);
+        return result ? [result] : [];
+      }
+
       if (isSetBlockDoc(block)) {
         const result = await resolveSetBlock({
+          block,
+          sortOverride: options.sortOverride,
+          filtersOverride: options.filtersOverride,
+          pageOverrides: options.pageOverrides,
+        });
+
+        return result ? [result] : [];
+      }
+
+      if (isDisplayBlockDoc(block)) {
+        const result = await resolveDisplayBlock({
           block,
           sortOverride: options.sortOverride,
           filtersOverride: options.filtersOverride,
@@ -860,23 +945,25 @@ function createPortableTextBlock(text: string, index = 0): SanityBlock {
   } as unknown as SanityBlock;
 }
 
-type ResolveSetArgs = {
-  block: SetBlockDoc;
+type SetFiltersOverride = {
+  industryIds?: string[];
+  personaIds?: string[];
+};
+
+type ResolveSetBlockArgs<TBlock extends SetReferenceBlockDoc> = {
+  block: TBlock;
   sortOverride?: SortOrder;
-  filtersOverride?: {
-    industryIds?: string[];
-    personaIds?: string[];
-  };
+  filtersOverride?: SetFiltersOverride;
   pageOverrides?: Record<string, number>;
 };
+
+type ResolveSetArgs = ResolveSetBlockArgs<SetBlockDoc>;
+type ResolveDisplayBlockArgs = ResolveSetBlockArgs<DisplayBlockDoc>;
 
 type ResolveSetDocArgs = {
   set: CuratedSetDoc | DynamicSetDoc;
   sortOverride?: SortOrder;
-  filtersOverride?: {
-    industryIds?: string[];
-    personaIds?: string[];
-  };
+  filtersOverride?: SetFiltersOverride;
   visited: Set<string>;
   pageOverrides?: Record<string, number>;
 };
@@ -926,7 +1013,24 @@ async function resolveSetDoc({ set, sortOverride, filtersOverride, visited, page
   };
 }
 
-async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverrides }: ResolveSetArgs): Promise<SetBlockView | null> {
+type ResolvedSetLinkedBlock<TBlock extends SetReferenceBlockDoc> = {
+  block: TBlock & {
+    theme: BlockTheme;
+    backgroundTheme: BlockTheme;
+    layout: BlockLayoutSettings;
+    density: BlockDensity;
+  };
+  resolution: SetResolution;
+  resolvedSetDoc?: CuratedSetDoc | DynamicSetDoc | null;
+  resolvedFromFallback: boolean;
+};
+
+async function resolveSetLinkedBlock<TBlock extends SetReferenceBlockDoc>({
+  block,
+  sortOverride,
+  filtersOverride,
+  pageOverrides,
+}: ResolveSetBlockArgs<TBlock>): Promise<ResolvedSetLinkedBlock<TBlock> | null> {
   const normalizedBlock = normalizeBlockMeta(block);
 
   if (!normalizedBlock.set) {
@@ -934,7 +1038,7 @@ async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverr
   }
 
   const visited = new Set<string>();
-  const primaryResolution = await resolveSetDoc({
+  let resolution = await resolveSetDoc({
     set: normalizedBlock.set,
     sortOverride,
     filtersOverride,
@@ -942,7 +1046,6 @@ async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverr
     pageOverrides,
   });
 
-  let resolution = primaryResolution;
   let resolvedFromFallback = false;
 
   const needsFallback = !resolution || resolution.items.length === 0;
@@ -966,7 +1069,22 @@ async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverr
     return null;
   }
 
-  const resolvedSetDoc = resolvedFromFallback ? normalizedBlock.fallbackSet : normalizedBlock.set;
+  return {
+    block: normalizedBlock,
+    resolution,
+    resolvedSetDoc: resolvedFromFallback ? normalizedBlock.fallbackSet : normalizedBlock.set,
+    resolvedFromFallback,
+  };
+}
+
+async function resolveSetBlock(args: ResolveSetArgs): Promise<SetBlockView | null> {
+  const result = await resolveSetLinkedBlock(args);
+
+  if (!result) {
+    return null;
+  }
+
+  const { block: normalizedBlock, resolution, resolvedSetDoc, resolvedFromFallback } = result;
   const title = normalizedBlock.title ?? resolvedSetDoc?.title ?? 'Untitled';
   const description = normalizedBlock.description ?? resolvedSetDoc?.description ?? undefined;
 
@@ -987,6 +1105,103 @@ async function resolveSetBlock({ block, sortOverride, filtersOverride, pageOverr
     theme: normalizedBlock.theme,
     backgroundTheme: normalizedBlock.backgroundTheme,
     density: normalizedBlock.density,
+  };
+}
+
+async function resolveSplitBlock(block: SplitBlockDoc, options: ResolveBlocksOptions): Promise<SanityBlock | null> {
+  const normalizedBlock = normalizeBlockMeta(block);
+  const inlineDisplay = normalizedBlock.display ?? null;
+
+  if (!inlineDisplay) {
+    return normalizedBlock;
+  }
+
+  const resolvedDisplay = await resolveInlineDisplay({
+    display: inlineDisplay,
+    parent: normalizedBlock,
+    options,
+  });
+
+  if (resolvedDisplay) {
+    (normalizedBlock as SplitBlockDoc & { display?: DisplayBlockView | null }).display = resolvedDisplay;
+  } else if ("display" in normalizedBlock) {
+    (normalizedBlock as { display?: null }).display = null;
+  }
+
+  return normalizedBlock;
+}
+
+async function resolveInlineDisplay({
+  display,
+  parent,
+  options,
+}: {
+  display: InlineDisplayDoc;
+  parent: SplitBlockDoc & {
+    theme: BlockTheme;
+    backgroundTheme: BlockTheme;
+    layout: BlockLayoutSettings;
+    density: BlockDensity;
+  };
+  options: ResolveBlocksOptions;
+}): Promise<DisplayBlockView | null> {
+  if (!display?.set) {
+    return null;
+  }
+
+  const inlineBlock: DisplayBlockDoc = {
+    _type: "displayBlock",
+    _key: parent._key ? `${parent._key}-display` : undefined,
+    anchor: undefined,
+    layout: parent.layout,
+    theme: parent.theme,
+    backgroundTheme: parent.backgroundTheme,
+    density: parent.density,
+    displayType: display.displayType,
+    splayLimit: typeof display.splayLimit === "number" ? display.splayLimit : undefined,
+    splayGap: typeof display.splayGap === "number" ? display.splayGap : undefined,
+    set: display.set,
+    fallbackSet: display.fallbackSet,
+  };
+
+  return resolveDisplayBlock({
+    block: inlineBlock,
+    sortOverride: options.sortOverride,
+    filtersOverride: options.filtersOverride,
+    pageOverrides: options.pageOverrides,
+  });
+}
+
+async function resolveDisplayBlock(args: ResolveDisplayBlockArgs): Promise<DisplayBlockView | null> {
+  const result = await resolveSetLinkedBlock(args);
+
+  if (!result) {
+    return null;
+  }
+
+  const { block: normalizedBlock, resolution, resolvedSetDoc, resolvedFromFallback } = result;
+  const displayType: DisplayBlockType = normalizedBlock.displayType === "splay" ? "splay" : "gallery";
+  const splayLimit = clampSplayLimitValue(normalizedBlock.splayLimit);
+  const splayGap = clampSplayGapValue(normalizedBlock.splayGap);
+
+  return {
+    _type: "displayBlock",
+    _key: normalizedBlock._key ?? `${resolution.setId}-display`,
+    displayType,
+    anchor: normalizedBlock.anchor ?? undefined,
+    layout: normalizedBlock.layout,
+    setId: resolution.setId,
+    setTitle: resolvedSetDoc?.title ?? undefined,
+    setDescription: resolvedSetDoc?.description ?? undefined,
+    setType: resolution.setType,
+    items: resolution.items,
+    pagination: resolution.pagination,
+    resolvedFromFallback: resolvedFromFallback || undefined,
+    theme: normalizedBlock.theme,
+    backgroundTheme: normalizedBlock.backgroundTheme,
+    density: normalizedBlock.density,
+    splayLimit: displayType === "splay" ? splayLimit : undefined,
+    splayGap: displayType === "splay" ? splayGap : undefined,
   };
 }
 

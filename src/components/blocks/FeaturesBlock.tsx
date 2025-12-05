@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { portableTextComponents } from "@/components/portableText/components";
-import type { BlockDensity, BlockTheme, SanityBlock } from "@/lib/sanity/types";
+import type { BlockDensity, BlockTheme, BlockThemeSettings, SanityBlock } from "@/lib/sanity/types";
 import { buildSanityImage } from "@/lib/sanity/images";
 import { gmColors, gmRadius } from "@/styles/designTokens";
 
@@ -41,7 +41,8 @@ export type FeaturesBlockData = SanityBlock & {
   gridSpacingToken?: string;
   features?: FeatureItem[];
   density?: BlockDensity;
-  theme?: BlockTheme;
+  theme?: BlockTheme | BlockThemeSettings;
+  backgroundTheme?: BlockTheme;
 };
 
 const GRID_COLUMN_CLASSES = "grid-cols-1 md:grid-cols-2 xl:grid-cols-3";
@@ -138,6 +139,7 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
         <div className={["grid", GRID_COLUMN_CLASSES, gridGap].join(" ")}>
           {features.map((feature) => {
             const mediaDisplay = feature.mediaDisplay === "icon" ? "icon" : "image";
+            const isIconFeature = mediaDisplay === "icon";
             const featureHeadingClass = resolveTypographyToken(
               "gm-typography-block-heading",
               "gm-typography-block-heading",
@@ -149,6 +151,9 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
               "FeaturesBlock.featureLabel",
             );
 
+            const cardPaddingClass = isIconFeature ? "px-4 py-2 sm:py-3" : cardPadding;
+            const textContentClasses = isIconFeature ? "px-4 text-center" : "";
+
             const cardClassName = [
               gmRadius["gm-radius-lg"],
               "border",
@@ -156,7 +161,7 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
               mediaDisplay === "icon"
                 ? gmColors["gm-color-surface-raised"]
                 : gmColors["gm-color-surface-muted"],
-              cardPadding,
+              cardPaddingClass,
               cardStack,
             ].join(" ");
 
@@ -179,7 +184,7 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
                 ? {
                     width: "100%",
                     height: "auto",
-                    maxWidth: "128px",
+                    maxWidth: "192px",
                     objectFit: "contain",
                   }
                 : {
@@ -202,13 +207,25 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
                   </div>
                 ) : null}
                 {feature.icon ? (
-                  <span className={[gmColors["gm-color-text-accent"], featureLabelClass].join(" ")}>
+                  <span
+                    className={[gmColors["gm-color-text-accent"], featureLabelClass, textContentClasses]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     {feature.icon}
                   </span>
                 ) : null}
-                {feature.title ? <h3 className={featureHeadingClass}>{feature.title}</h3> : null}
+                {feature.title ? (
+                  <h3 className={[featureHeadingClass, textContentClasses].filter(Boolean).join(" ")}>
+                    {feature.title}
+                  </h3>
+                ) : null}
                 {feature.body ? (
-                  <p className={[bodyClass, gmColors["gm-color-text-muted"]].join(" ")}>
+                  <p
+                    className={[bodyClass, gmColors["gm-color-text-muted"], textContentClasses]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     {feature.body}
                   </p>
                 ) : null}
@@ -224,7 +241,11 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
                       "inline-flex",
                       "items-center",
                       "transition",
-                    ].join(" ")}
+                      textContentClasses,
+                      isIconFeature ? "justify-center" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                   >
                     {feature.link.label}
                   </Link>

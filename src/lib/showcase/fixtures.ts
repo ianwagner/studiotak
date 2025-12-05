@@ -1,6 +1,7 @@
 import type { SanityBlock } from "@/lib/sanity/types";
 import type {
   ContentItem,
+  DisplayBlockView,
   SetBlockView,
   TaxonomySummary,
 } from "@/lib/sanity/pageViews";
@@ -272,6 +273,7 @@ const createBlockContentBlock = (): SanityBlock => ({
 });
 
 type SetBlockFactory = (key: string) => SetBlockView;
+type DisplayBlockFactory = (key: string) => DisplayBlockView;
 
 const createCuratedSetBlock: SetBlockFactory = (key) => ({
   _type: "setBlock",
@@ -342,6 +344,39 @@ const createCombinedDynamicSetBlock: SetBlockFactory = (key) => ({
   ],
 });
 
+const createGalleryDisplayBlock: DisplayBlockFactory = (key) => ({
+  _type: "displayBlock",
+  _key: key,
+  displayType: "gallery",
+  setType: "generated",
+  setTitle: "Gallery Library",
+  setDescription: "A clean gallery layout that scales gracefully with the viewport.",
+  items: [
+    contentItems.beautyLaunch,
+    contentItems.retailAutomation,
+    contentItems.personaPlaybook,
+    contentItems.opsChecklist,
+  ],
+});
+
+const createSplayDisplayBlock: DisplayBlockFactory = (key) => ({
+  _type: "displayBlock",
+  _key: key,
+  displayType: "splay",
+  splayLimit: 4,
+  splayGap: 24,
+  setType: "generated",
+  setTitle: "Splayed Highlights",
+  setDescription: "Layered arrangement with playful rotation for inspiration spreads.",
+  items: [
+    contentItems.beautyLaunch,
+    contentItems.fintechExample,
+    contentItems.retailAutomation,
+    contentItems.beautyInsights,
+    contentItems.opsChecklist,
+  ],
+});
+
 export type SetShowcaseSection = {
   title: string;
   description: string;
@@ -355,6 +390,8 @@ export const getBlockShowcaseFixtures = (): SanityBlock[] => [
   createCuratedSetBlock("showcase-curated-set"),
   createGeneratedSetBlock("showcase-generated-set"),
   createIndustryDynamicSetBlock("showcase-dynamic-industry"),
+  createGalleryDisplayBlock("showcase-display-gallery"),
+  createSplayDisplayBlock("showcase-display-splay"),
 ];
 
 export const getSetShowcaseSections = (): SetShowcaseSection[] => [

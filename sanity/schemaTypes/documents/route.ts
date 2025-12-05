@@ -64,7 +64,7 @@ export const routeType = defineType({
       name: 'target',
       title: 'Target',
       type: 'reference',
-      to: [{type: 'industryPage'}, {type: 'personaPage'}],
+      to: [{type: 'page'}, {type: 'industryPage'}, {type: 'personaPage'}],
       group: ESSENTIALS_GROUP,
       validation: (Rule) => Rule.required(),
     }),
@@ -85,7 +85,15 @@ export const routeType = defineType({
       targetType: 'target._type',
     },
     prepare({path, product, targetTitle, targetType}) {
-      const label = targetTitle ?? (targetType === 'industryPage' ? 'Industry Page' : targetType === 'personaPage' ? 'Persona Page' : 'Unassigned Target')
+      const label =
+        targetTitle ??
+        (targetType === 'page'
+          ? 'Page'
+          : targetType === 'industryPage'
+            ? 'Industry Page'
+            : targetType === 'personaPage'
+              ? 'Persona Page'
+              : 'Unassigned Target')
 
       return {
         title: path ? `/${path}` : 'Untitled Route',

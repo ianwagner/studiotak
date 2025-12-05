@@ -1,11 +1,16 @@
-import Image from "next/image";
 import { PortableText } from "@portabletext/react";
+import Image from "next/image";
+import Link from "next/link";
 
 import { portableTextComponents } from "@/components/portableText/components";
 import { buildSanityImage } from "@/lib/sanity/images";
-import type { BlockDensity, BlockTheme, SanityBlock } from "@/lib/sanity/types";
+import type { DisplayBlockView } from "@/lib/sanity/pageViews";
+import type { BlockDensity, BlockTheme, BlockThemeSettings, SanityBlock } from "@/lib/sanity/types";
+import { getButtonClassName } from "@/styles/buttons";
 import { gmColors, gmRadius } from "@/styles/designTokens";
 
+import { CustomCodeEmbed } from "./CustomCodeEmbed";
+import { DisplayBlock } from "./DisplayBlock";
 import { resolveSpacingToken, resolveTypographyToken } from "./tokenUtils";
 
 type PortableTextValue = Array<Record<string, unknown>>;
@@ -40,6 +45,17 @@ type SplitMedia = {
   imageUrl?: string;
 };
 
+type SplitCustomMedia = {
+  code?: string | null;
+};
+
+type SplitBlockCta = {
+  label?: string;
+  href?: string;
+};
+
+type SplitMediaMode = "media" | "custom" | "display";
+
 export type SplitBlockData = SanityBlock & {
   _type: "splitBlock";
   layoutVariant?: "mediaRight" | "mediaLeft";
@@ -51,29 +67,38 @@ export type SplitBlockData = SanityBlock & {
   textStackToken?: string;
   points?: SplitPoint[];
   media?: SplitMedia | null;
+  customMedia?: SplitCustomMedia | null;
+  display?: DisplayBlockView | null;
+  mediaMode?: SplitMediaMode | null;
+  cta?: SplitBlockCta | null;
   density?: BlockDensity;
-  theme?: BlockTheme;
+  theme?: BlockTheme | BlockThemeSettings;
+  backgroundTheme?: BlockTheme;
 };
 
 const MEDIA_WRAPPER_CLASS = [
   "relative",
+  "aspect-square",
+  "w-full",
+  "max-h-full",
+  "max-w-full",
+  "min-h-[16rem]",
+  "min-w-[16rem]",
   gmRadius["gm-radius-lg"],
   "overflow-hidden",
-  "border",
-  gmColors["gm-color-border-subtle"],
-  gmColors["gm-color-surface-muted"],
-  "aspect-video",
 ].join(" ");
 
 const MEDIA_PLACEHOLDER_CLASS = [
-  gmRadius["gm-radius-lg"],
-  gmColors["gm-color-surface-muted"],
-  gmColors["gm-color-border-subtle"],
-  "border",
-  "aspect-video",
   "flex",
+  "aspect-square",
+  "w-full",
+  "max-h-full",
+  "max-w-full",
+  "min-h-[16rem]",
+  "min-w-[16rem]",
   "items-center",
   "justify-center",
+  gmRadius["gm-radius-lg"],
   gmColors["gm-color-text-muted"],
 ].join(" ");
 
@@ -134,6 +159,7 @@ export function SplitBlock({ block }: SplitBlockProps) {
     density,
     "SplitBlock.grid",
   );
+  const columnGap = density === "compact" ? "lg:gap-x-12" : "lg:gap-x-16";
   const borderAccent = resolveSpacingToken(
     "gm-spacing-border-accent",
     "gm-spacing-border-accent",
@@ -151,15 +177,44 @@ export function SplitBlock({ block }: SplitBlockProps) {
     ? block.points.filter((point) => point?.title || point?.body)
     : [];
   const bodyValue = Array.isArray(block.body) && block.body.length > 0 ? (block.body as PortableTextValue) : null;
+  const cta = block.cta && typeof block.cta === "object" ? block.cta : null;
+  const ctaLabel = typeof cta?.label === "string" ? cta.label.trim() : "";
+  const ctaHref = typeof cta?.href === "string" ? cta.href : "";
+  const hasCta = ctaLabel.length > 0 && ctaHref.length > 0;
+  const ctaClassName = getButtonClassName("primary", ["self-start"]);
+
+  const rootClasses = [
+    "grid",
+    "w-full",
+    "gap-y-10",
+    gridGap,
+    columnGap,
+    "items-start",
+    "lg:grid-cols-2",
+    "lg:items-stretch",
+  ].join(" ");
+  const textColumnClasses = [
+    textStack,
+    "flex",
+    "h-full",
+    "w-full",
+    "flex-col",
+    "justify-center",
+    isMediaLeft ? "lg:order-2" : "lg:order-1",
+  ].join(" ");
+  const mediaColumnClasses = [
+    "flex",
+    "h-full",
+    "w-full",
+    "items-center",
+    "justify-center",
+    "overflow-hidden",
+    isMediaLeft ? "lg:order-1" : "lg:order-2",
+  ].join(" ");
 
   return (
-    <div className={["grid", "items-center", "gap-y-10", gridGap, "md:grid-cols-2"].join(" ")}>
-      <div
-        className={[
-          textStack,
-          isMediaLeft ? "md:order-2" : "md:order-1",
-        ].join(" ")}
-      >
+    <div className={rootClasses}>
+      <div className={textColumnClasses}>
         {block.eyebrow ? (
           <p className={[eyebrowClass, gmColors["gm-color-text-subtle"], "uppercase"].join(" ")}>
             {block.eyebrow}
@@ -202,9 +257,20 @@ export function SplitBlock({ block }: SplitBlockProps) {
             ))}
           </div>
         ) : null}
+        {hasCta ? (
+          <Link href={ctaHref} className={ctaClassName}>
+            {ctaLabel}
+          </Link>
+        ) : null}
       </div>
-      <div className={isMediaLeft ? "md:order-1" : "md:order-2"}>
-        <SplitMediaContent media={block.media} altFallback={block.headline} />
+      <div className={mediaColumnClasses}>
+        <SplitMediaContent
+          media={block.media}
+          customMedia={block.customMedia}
+          display={block.display}
+          mediaMode={block.mediaMode ?? null}
+          altFallback={block.headline}
+        />
       </div>
     </div>
   );
@@ -212,12 +278,43 @@ export function SplitBlock({ block }: SplitBlockProps) {
 
 type SplitMediaContentProps = {
   media?: SplitMedia | null;
+  customMedia?: SplitCustomMedia | null;
+  display?: DisplayBlockView | null;
+  mediaMode?: SplitMediaMode | null;
   altFallback?: string;
 };
 
-function SplitMediaContent({ media, altFallback }: SplitMediaContentProps) {
+export function SplitMediaContent({ media, customMedia, display, mediaMode, altFallback }: SplitMediaContentProps) {
+  const customCode = typeof customMedia?.code === "string" ? customMedia.code.trim() : "";
+  const mode: SplitMediaMode =
+    mediaMode ?? (display ? "display" : customCode ? "custom" : "media");
+
+  if (mode === "custom") {
+    if (customCode.length === 0) {
+      return <div className={MEDIA_PLACEHOLDER_CLASS}>Add custom embed markup</div>;
+    }
+
+    return (
+      <div className={MEDIA_WRAPPER_CLASS}>
+        <CustomCodeEmbed code={customCode} />
+      </div>
+    );
+  }
+
+  if (mode === "display") {
+    if (!display) {
+      return <div className={MEDIA_PLACEHOLDER_CLASS}>Select a display set</div>;
+    }
+
+    return (
+      <div className="w-full">
+        <DisplayBlock block={display} variant="media" />
+      </div>
+    );
+  }
+
   if (!media) {
-    return <div className={MEDIA_PLACEHOLDER_CLASS}>Add media</div>;
+    return <div className={MEDIA_PLACEHOLDER_CLASS}>Add media or custom embed</div>;
   }
 
   const image =
@@ -227,7 +324,11 @@ function SplitMediaContent({ media, altFallback }: SplitMediaContentProps) {
     }) ?? (media.imageUrl ? { url: media.imageUrl } : null);
 
   if (!image?.url) {
-    return <div className={MEDIA_PLACEHOLDER_CLASS}>{altFallback ?? media.alt ?? "Add media"}</div>;
+    return (
+      <div className={MEDIA_PLACEHOLDER_CLASS}>
+        {altFallback ?? media.alt ?? "Add media or custom embed"}
+      </div>
+    );
   }
 
   const altText = media.alt || altFallback || "Illustration";

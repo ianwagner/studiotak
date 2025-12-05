@@ -84,6 +84,38 @@ export const industryPageType = defineType({
             }),
           ],
         }),
+        defineField({
+          name: 'backgroundColor',
+          title: 'Background Color',
+          type: 'string',
+          description: 'Optional hex color (e.g. #261AFF) shown behind the background image.',
+          validation: (Rule) =>
+            Rule.regex(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, {
+              name: 'hex color',
+            }).warning('Use a 3- or 6-digit hex value like #261AFF.'),
+        }),
+        defineField({
+          name: 'backgroundImageOpacity',
+          title: 'Image Transparency',
+          type: 'number',
+          description: '0 hides the background image, 100 keeps it fully visible.',
+          initialValue: 100,
+          validation: (Rule) => Rule.min(0).max(100),
+          options: {
+            range: {min: 0, max: 100, step: 5},
+          },
+        }),
+        defineField({
+          name: 'backgroundImageBlur',
+          title: 'Image Blur',
+          type: 'number',
+          description: 'Blur radius (in pixels) applied to the hero background image.',
+          initialValue: 0,
+          validation: (Rule) => Rule.min(0).max(40),
+          options: {
+            range: {min: 0, max: 40, step: 1},
+          },
+        }),
       ],
       group: ESSENTIALS_GROUP,
     }),

@@ -10,7 +10,7 @@ import { typographyMap } from "@/styles/typography";
 
 export default async function NotFound() {
   const errorPage = await fetchErrorPage();
-  const iconImage = buildSanityImage(errorPage.icon, { width: 256, height: 256, quality: 90, fit: "max" });
+  const iconImage = buildSanityImage(errorPage.icon, { width: 360, height: 360, quality: 95, fit: "max" });
   const backgroundPalette = blockThemeVariables[errorPage.backgroundTheme];
   const contentPalette = blockThemeVariables[errorPage.theme];
   const themeStyle: CSSProperties = {
@@ -33,9 +33,9 @@ export default async function NotFound() {
             <Image
               src={iconImage.url}
               alt={errorPage.iconAlt}
-              width={iconImage.width ?? 256}
-              height={iconImage.height ?? 256}
-              className="mb-8 h-28 w-28 object-contain sm:h-32 sm:w-32"
+              width={iconImage.width ?? 360}
+              height={iconImage.height ?? 360}
+              className="mb-8 h-36 w-36 object-contain sm:h-40 sm:w-40"
               priority
             />
           ) : null}

@@ -2,11 +2,15 @@ import groq from "groq";
 import { draftMode } from "next/headers";
 import { unstable_cache } from "next/cache";
 
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
+
 import { resolveRouteHref, type RouteReference } from "@/lib/routes";
 import { hasSanityClient, requireSanityClient } from "@/lib/sanity/config";
-import type { BlockDensity, BlockLayoutSettings, BlockTheme } from "@/lib/sanity/types";
+import type { BlockDensity, BlockLayoutSettings, BlockTheme, BlockThemeSettings } from "@/lib/sanity/types";
 
 export type NavigationAudience = "internal" | "external";
+
+export type NavigationIcon = (SanityImageSource & { alt?: string | null }) | null;
 
 export type NavigationItem = {
   id: string;
@@ -15,13 +19,14 @@ export type NavigationItem = {
   isExternal: boolean;
   isCta: boolean;
   audience?: NavigationAudience;
-  icon?: string | null;
+  icon: NavigationIcon;
   children: NavigationItem[];
 };
 
 export type NavigationData = {
   anchor: string | null;
   theme: BlockTheme;
+  backgroundTheme: BlockTheme;
   density: BlockDensity;
   layout: BlockLayoutSettings;
   itemSpacingToken: string;
@@ -37,7 +42,7 @@ type NavigationItemDocument = {
   label?: string;
   audience?: NavigationAudience | null;
   isCta?: boolean;
-  icon?: string | null;
+  icon?: NavigationIcon;
   route?: RouteReference | null;
   externalUrl?: string | null;
   children?: NavigationItemDocument[] | null;
@@ -45,7 +50,7 @@ type NavigationItemDocument = {
 
 type NavigationDocument = {
   anchor?: string | null;
-  theme?: BlockTheme | null;
+  theme?: BlockTheme | BlockThemeSettings | null;
   density?: BlockDensity | null;
   layout?: BlockLayoutSettings | null;
   itemSpacingToken?: string | null;
@@ -72,6 +77,23 @@ const DEFAULT_LINK_COLOR_TOKEN = "gm-color-text-primary";
 const DEFAULT_HOVER_TOKEN = "gm-color-hover-surface-tint";
 const DEFAULT_FOCUS_TOKEN = "gm-color-border-accent";
 
+const resolveNavigationTheme = (
+  theme: BlockTheme | BlockThemeSettings | null | undefined,
+): { background: BlockTheme; content: BlockTheme } => {
+  if (!theme) {
+    return { background: DEFAULT_THEME, content: DEFAULT_THEME };
+  }
+
+  if (typeof theme === "string") {
+    return { background: theme, content: theme };
+  }
+
+  const background = (theme.background ?? theme.content ?? DEFAULT_THEME) as BlockTheme;
+  const content = (theme.content ?? background ?? DEFAULT_THEME) as BlockTheme;
+
+  return { background, content };
+};
+
 const FALLBACK_NAV_ITEMS: NavigationItem[] = [
   {
     id: "fallback-home",
@@ -79,6 +101,7 @@ const FALLBACK_NAV_ITEMS: NavigationItem[] = [
     href: "/",
     isExternal: false,
     isCta: false,
+    icon: null,
     children: [],
   },
   {
@@ -87,6 +110,7 @@ const FALLBACK_NAV_ITEMS: NavigationItem[] = [
     href: "/solutions",
     isExternal: false,
     isCta: false,
+    icon: null,
     children: [
       {
         id: "fallback-solutions-journey",
@@ -94,6 +118,7 @@ const FALLBACK_NAV_ITEMS: NavigationItem[] = [
         href: "/solutions/journey-orchestration",
         isExternal: false,
         isCta: false,
+        icon: null,
         children: [],
       },
       {
@@ -102,6 +127,7 @@ const FALLBACK_NAV_ITEMS: NavigationItem[] = [
         href: "/solutions/analytics-insights",
         isExternal: false,
         isCta: false,
+        icon: null,
         children: [],
       },
       {
@@ -110,6 +136,7 @@ const FALLBACK_NAV_ITEMS: NavigationItem[] = [
         href: "/solutions/lifecycle-automation",
         isExternal: false,
         isCta: false,
+        icon: null,
         children: [],
       },
     ],
@@ -120,6 +147,7 @@ const FALLBACK_NAV_ITEMS: NavigationItem[] = [
     href: "https://blog.studiotak.com",
     isExternal: true,
     isCta: false,
+    icon: null,
     children: [],
   },
   {
@@ -128,6 +156,7 @@ const FALLBACK_NAV_ITEMS: NavigationItem[] = [
     href: "/contact",
     isExternal: false,
     isCta: true,
+    icon: null,
     children: [],
   },
 ];
@@ -135,6 +164,7 @@ const FALLBACK_NAV_ITEMS: NavigationItem[] = [
 export const navigationFallback: NavigationData = {
   anchor: "site-navigation",
   theme: DEFAULT_THEME,
+  backgroundTheme: DEFAULT_THEME,
   density: DEFAULT_DENSITY,
   layout: {...DEFAULT_LAYOUT},
   itemSpacingToken: DEFAULT_ITEM_SPACING_TOKEN,
@@ -245,6 +275,18 @@ function normalizeLayout(layout?: BlockLayoutSettings | null): BlockLayoutSettin
   };
 }
 
+function normalizeIcon(icon?: NavigationIcon): NavigationIcon {
+  if (!icon || typeof icon !== "object") {
+    return null;
+  }
+
+  if (!("asset" in icon) || !icon.asset) {
+    return null;
+  }
+
+  return icon;
+}
+
 function normalizeItems(items?: NavigationItemDocument[] | null): NavigationItem[] {
   if (!items) {
     return [];
@@ -267,7 +309,7 @@ function normalizeItems(items?: NavigationItemDocument[] | null): NavigationItem
         isExternal: destination?.isExternal ?? false,
         isCta: Boolean(item.isCta),
         audience: item.audience ?? undefined,
-        icon: item.icon ?? null,
+        icon: normalizeIcon(item.icon),
         children,
       } satisfies NavigationItem;
     })
@@ -280,10 +322,12 @@ function normalizeNavigation(doc: NavigationDocument | null): NavigationData | n
   }
 
   const items = normalizeItems(doc.items);
+  const { background, content } = resolveNavigationTheme(doc.theme);
 
   return {
     anchor: doc.anchor ?? navigationFallback.anchor,
-    theme: (doc.theme ?? DEFAULT_THEME) as BlockTheme,
+    theme: content,
+    backgroundTheme: background,
     density: (doc.density ?? DEFAULT_DENSITY) as BlockDensity,
     layout: normalizeLayout(doc.layout),
     itemSpacingToken: doc.itemSpacingToken ?? DEFAULT_ITEM_SPACING_TOKEN,

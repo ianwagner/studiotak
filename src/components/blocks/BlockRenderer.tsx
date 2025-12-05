@@ -3,17 +3,26 @@ import type { ReactNode } from "react";
 
 import { Section } from "@/components/Section";
 import { portableTextComponents } from "@/components/portableText/components";
-import type { SetBlockView } from "@/lib/sanity/pageViews";
-import type { BlockLayoutSettings, BlockTheme, SanityBlock } from "@/lib/sanity/types";
+import type { DisplayBlockView, SetBlockView } from "@/lib/sanity/pageViews";
+import type { BlockLayoutSettings, BlockTheme, BlockThemeSettings, SanityBlock } from "@/lib/sanity/types";
 import { gmColors, gmRadius, gmSpacing, gmTypography } from "@/styles/designTokens";
 
+import { DisplayBlock } from "./DisplayBlock";
 import { FeaturesBlock } from "./FeaturesBlock";
 import type { FeaturesBlockData } from "./FeaturesBlock";
+import { FooterBlock } from "./FooterBlock";
+import type { FooterBlockData } from "./FooterBlock";
+import { FormBlock } from "./FormBlock";
+import type { FormBlockData } from "./FormBlock";
 import { HeroBlock } from "./HeroBlock";
 import type { HeroBlockData } from "./HeroBlock";
+import { LogoGridBlock } from "./LogoGridBlock";
+import type { LogoGridBlockData } from "./LogoGridBlock";
 import { SetBlock } from "./SetBlock";
 import { SplitBlock } from "./SplitBlock";
 import type { SplitBlockData } from "./SplitBlock";
+import { ThirdsBlock } from "./ThirdsBlock";
+import type { ThirdsBlockData } from "./ThirdsBlock";
 
 type PortableTextValue = Array<Record<string, unknown>>;
 
@@ -57,6 +66,10 @@ const SetBlockComponent: BlockComponent<SetBlockView> = ({ block }) => {
   return <SetBlock block={block} />;
 };
 
+const DisplayBlockComponent: BlockComponent<DisplayBlockView> = ({ block }) => {
+  return <DisplayBlock block={block} />;
+};
+
 const HeroBlockComponent: BlockComponent<HeroBlockData> = ({ block }) => {
   return <HeroBlock block={block} />;
 };
@@ -65,8 +78,24 @@ const SplitBlockComponent: BlockComponent<SplitBlockData> = ({ block }) => {
   return <SplitBlock block={block} />;
 };
 
+const ThirdsBlockComponent: BlockComponent<ThirdsBlockData> = ({ block }) => {
+  return <ThirdsBlock block={block} />;
+};
+
 const FeaturesBlockComponent: BlockComponent<FeaturesBlockData> = ({ block }) => {
   return <FeaturesBlock block={block} />;
+};
+
+const FormBlockComponent: BlockComponent<FormBlockData> = ({ block }) => {
+  return <FormBlock block={block} />;
+};
+
+const LogoGridBlockComponent: BlockComponent<LogoGridBlockData> = ({ block }) => {
+  return <LogoGridBlock block={block} />;
+};
+
+const FooterBlockComponent: BlockComponent<FooterBlockData> = ({ block }) => {
+  return <FooterBlock block={block} />;
 };
 
 const defaultComponents: Record<string, BlockComponent> = {
@@ -75,8 +104,13 @@ const defaultComponents: Record<string, BlockComponent> = {
   blockContent: PortableTextBlock,
   heroBlock: HeroBlockComponent,
   splitBlock: SplitBlockComponent,
+  thirdsBlock: ThirdsBlockComponent,
   featuresBlock: FeaturesBlockComponent,
+  formBlock: FormBlockComponent,
+  logoGridBlock: LogoGridBlockComponent,
+  footerBlock: FooterBlockComponent,
   setBlock: SetBlockComponent,
+  displayBlock: DisplayBlockComponent,
 };
 
 const FallbackBlock: BlockComponent = ({ block }) => (
@@ -108,6 +142,23 @@ const FallbackBlock: BlockComponent = ({ block }) => (
   </div>
 );
 
+function resolveBlockThemes(block: SanityBlock): { background: BlockTheme; content: BlockTheme } {
+  const rawTheme = (block as { theme?: BlockTheme | BlockThemeSettings | null }).theme;
+
+  if (!rawTheme) {
+    return { background: "light", content: "light" };
+  }
+
+  if (typeof rawTheme === "string") {
+    return { background: rawTheme, content: rawTheme };
+  }
+
+  const background = (rawTheme.background ?? rawTheme.content ?? "light") as BlockTheme;
+  const content = (rawTheme.content ?? background ?? "light") as BlockTheme;
+
+  return { background, content };
+}
+
 export function BlockRenderer({
   blocks,
   components,
@@ -131,15 +182,107 @@ export function BlockRenderer({
             ? block.slug
             : undefined;
 
-        const theme: BlockTheme = (block as { theme?: BlockTheme }).theme ?? "light";
-        const layout = (block as { layout?: BlockLayoutSettings | null }).layout ?? null;
+        const { background, content } = resolveBlockThemes(block);
+        const backgroundTheme: BlockTheme =
+          (block as { backgroundTheme?: BlockTheme }).backgroundTheme ?? background;
+        const theme: BlockTheme = content;
+        const layoutSettings = (block as { layout?: BlockLayoutSettings | null }).layout ?? null;
+
+        const isHeroBlock = block._type === "heroBlock";
+        const isFormBlock = block._type === "formBlock";
+
+        let sectionLayout: BlockLayoutSettings | null = layoutSettings;
+
+        if (isHeroBlock) {
+          const shouldOverrideInline =
+            !layoutSettings?.inlinePadding ||
+            layoutSettings.inlinePadding === "gm-spacing-shell-inline" ||
+            layoutSettings.inlinePadding === "gm-spacing-inline-none";
+          const shouldOverrideContainer =
+            !layoutSettings?.container || layoutSettings.container === "gm-layout-shell";
+          const shouldOverrideMaxWidth =
+            !layoutSettings?.maxWidth || layoutSettings.maxWidth === "gm-layout-shell-max";
+          const shouldOverrideBlockPadding =
+            !layoutSettings?.blockPadding ||
+            layoutSettings.blockPadding === "gm-spacing-shell-block" ||
+            layoutSettings.blockPadding === "gm-spacing-block-none";
+
+          if (
+            shouldOverrideInline ||
+            shouldOverrideContainer ||
+            shouldOverrideMaxWidth ||
+            shouldOverrideBlockPadding
+          ) {
+            sectionLayout = {
+              ...(layoutSettings ?? {}),
+              ...(shouldOverrideInline ? { inlinePadding: "gm-spacing-hero-frame-inline" } : {}),
+              ...(shouldOverrideContainer ? { container: "gm-layout-shell" } : {}),
+              ...(shouldOverrideMaxWidth ? { maxWidth: "gm-layout-hero-max" } : {}),
+              ...(shouldOverrideBlockPadding ? { blockPadding: "gm-spacing-hero-frame-block" } : {}),
+            };
+          }
+        } else if (isFormBlock) {
+          const shouldOverrideInline =
+            !layoutSettings?.inlinePadding ||
+            layoutSettings.inlinePadding === "gm-spacing-shell-inline" ||
+            layoutSettings.inlinePadding === "gm-spacing-block-inline";
+          const shouldOverrideContainer =
+            !layoutSettings?.container || layoutSettings.container === "gm-layout-block";
+          const shouldOverrideMaxWidth =
+            !layoutSettings?.maxWidth || layoutSettings.maxWidth === "gm-layout-block-max";
+          const shouldOverrideBlockPadding =
+            !layoutSettings?.blockPadding ||
+            layoutSettings.blockPadding === "gm-spacing-shell-block" ||
+            layoutSettings.blockPadding === "gm-spacing-hero-frame-block";
+
+          if (
+            shouldOverrideInline ||
+            shouldOverrideContainer ||
+            shouldOverrideMaxWidth ||
+            shouldOverrideBlockPadding
+          ) {
+            sectionLayout = {
+              ...(layoutSettings ?? {}),
+              ...(shouldOverrideInline ? { inlinePadding: "gm-spacing-inline-none" } : {}),
+              ...(shouldOverrideContainer ? { container: "gm-layout-shell" } : {}),
+              ...(shouldOverrideMaxWidth ? { maxWidth: "gm-layout-shell-max" } : {}),
+              ...(shouldOverrideBlockPadding ? { blockPadding: "gm-spacing-block-none" } : {}),
+            };
+          }
+        } else if (block._type === "displayBlock") {
+          sectionLayout = {
+            ...(layoutSettings ?? {}),
+            blockPadding: "gm-spacing-block-none",
+          };
+        } else {
+          const shouldAdjustInlinePadding =
+            !layoutSettings?.inlinePadding || layoutSettings.inlinePadding === "gm-spacing-shell-inline";
+
+          const shouldAdjustContainer =
+            !layoutSettings?.container || layoutSettings.container === "gm-layout-shell";
+
+          const shouldAdjustMaxWidth =
+            !layoutSettings?.maxWidth || layoutSettings.maxWidth === "gm-layout-shell-max";
+
+          const needsLayoutOverride = shouldAdjustInlinePadding || shouldAdjustContainer || shouldAdjustMaxWidth;
+
+          if (needsLayoutOverride) {
+            sectionLayout = {
+              ...(layoutSettings ?? {}),
+              ...(shouldAdjustInlinePadding ? { inlinePadding: "gm-spacing-block-inline" } : {}),
+              ...(shouldAdjustContainer ? { container: "gm-layout-block" } : {}),
+              ...(shouldAdjustMaxWidth ? { maxWidth: "gm-layout-block-max" } : {}),
+            };
+          }
+        }
 
         return (
           <Section
             key={block._key ?? `${block._type}-${index}`}
             id={anchor}
             theme={theme}
-            layout={layout}
+            backgroundTheme={backgroundTheme}
+            layout={sectionLayout}
           >
             <Component block={block} />
           </Section>

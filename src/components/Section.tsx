@@ -10,6 +10,7 @@ type SectionProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode;
   layout?: BlockLayoutSettings | null;
   theme?: BlockTheme;
+  backgroundTheme?: BlockTheme;
 };
 
 const DEFAULT_LAYOUT_TOKENS: Required<BlockLayoutSettings> = {
@@ -33,10 +34,13 @@ export function Section({
   className,
   layout,
   theme = "light",
+  backgroundTheme,
   style,
   children,
   ...rest
 }: SectionProps) {
+  const resolvedBackgroundTheme = backgroundTheme ?? theme;
+
   const resolvedLayout = {
     ...DEFAULT_LAYOUT_TOKENS,
     ...(layout ?? {}),
@@ -54,8 +58,17 @@ export function Section({
 
   const baseClassName = classSegments.join(" ");
   const composedClassName = className ? `${baseClassName} ${className}` : baseClassName;
+  const backgroundPalette = blockThemeVariables[resolvedBackgroundTheme];
+  const contentPalette = blockThemeVariables[theme];
+  const accent = contentPalette["--accent"];
+  const accentForeground = contentPalette["--accent-foreground"];
   const themeStyle: CSSProperties = {
-    ...blockThemeVariables[theme],
+    "--background": backgroundPalette["--background"],
+    "--foreground": contentPalette["--foreground"],
+    "--content-background": contentPalette["--background"],
+    "--content-foreground": contentPalette["--foreground"],
+    ...(accent ? { "--accent": accent } : {}),
+    ...(accentForeground ? { "--accent-foreground": accentForeground } : {}),
     ...(style ?? {}),
   };
 

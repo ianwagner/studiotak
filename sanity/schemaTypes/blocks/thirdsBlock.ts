@@ -6,7 +6,6 @@ import {
   createTokenField,
   headingStyleField,
 } from './base'
-import {displayContentFields} from './displayBlock'
 import {stackSpacingTokenOptions} from './tokens'
 import {portableTextBlock} from '../utils/portableText'
 
@@ -18,20 +17,9 @@ const textStackField = createTokenField({
   description: 'Controls spacing between heading, body, and list items.',
 })
 
-const splitDisplayFields = displayContentFields.map((field) => {
-  if (field.name === 'set') {
-    return {
-      ...field,
-      validation: undefined,
-    }
-  }
-
-  return field
-})
-
-export const splitBlockType = defineType({
-  name: 'splitBlock',
-  title: 'Split',
+export const thirdsBlockType = defineType({
+  name: 'thirdsBlock',
+  title: 'Thirds',
   type: 'object',
   fields: [
     ...blockMetaFields,
@@ -113,21 +101,6 @@ export const splitBlockType = defineType({
         }),
     }),
     defineField({
-      name: 'mediaMode',
-      title: 'Media Source',
-      type: 'string',
-      description: 'Select how the visual column should render.',
-      options: {
-        list: [
-          {title: 'Image / Video', value: 'media'},
-          {title: 'Custom Code', value: 'custom'},
-          {title: 'Set Display', value: 'display'},
-        ],
-        layout: 'radio',
-      },
-      initialValue: 'media',
-    }),
-    defineField({
       name: 'media',
       title: 'Media',
       type: 'image',
@@ -143,7 +116,6 @@ export const splitBlockType = defineType({
           validation: (Rule) => Rule.required(),
         }),
       ],
-      hidden: ({parent}) => parent?.mediaMode && parent.mediaMode !== 'media',
     }),
     defineField({
       name: 'customMedia',
@@ -164,19 +136,6 @@ export const splitBlockType = defineType({
         collapsible: true,
         collapsed: true,
       },
-      hidden: ({parent}) => parent?.mediaMode && parent.mediaMode !== 'custom',
-    }),
-    defineField({
-      name: 'display',
-      title: 'Display Media',
-      type: 'object',
-      description: 'Use a Display configuration instead of traditional media.',
-      options: {
-        collapsible: true,
-        collapsed: true,
-      },
-      fields: [...splitDisplayFields],
-      hidden: ({parent}) => parent?.mediaMode && parent.mediaMode !== 'display',
     }),
     defineField({
       name: 'points',
@@ -218,7 +177,7 @@ export const splitBlockType = defineType({
     },
     prepare({title, subtitle}) {
       return {
-        title: title ?? 'Split Block',
+        title: title ?? 'Thirds Block',
         subtitle: subtitle === 'mediaLeft' ? 'Media Left' : 'Media Right',
       }
     },

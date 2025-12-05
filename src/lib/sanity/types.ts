@@ -4,7 +4,12 @@ export type SanityBlock = {
   [key: string]: unknown;
 };
 
-export type BlockTheme = "light" | "dark" | "brand";
+export type BlockTheme = "light" | "dark" | "brand" | "system";
+
+export type BlockThemeSettings = {
+  background?: BlockTheme | null;
+  content?: BlockTheme | null;
+};
 
 export type BlockDensity = "default" | "compact";
 

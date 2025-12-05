@@ -64,6 +64,7 @@ export const sectionBlockMembers = [
   defineArrayMember({type: 'logoGridBlock'}),
   defineArrayMember({type: 'formBlock'}),
   defineArrayMember({type: 'footerBlock'}),
+  defineArrayMember({type: 'displayBlock'}),
   setBlockMember,
   defineArrayMember({
     type: 'sharedBlockReference',

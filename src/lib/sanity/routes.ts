@@ -46,7 +46,7 @@ type RouteResolutionQueryResult = {
 
 export type RouteTarget = {
   id: string;
-  type: "industryPage" | "personaPage";
+  type: "page" | "industryPage" | "personaPage";
   slug: string;
 };
 
@@ -66,7 +66,7 @@ function normalizeRouteTarget(target: RouteTargetDocument | null | undefined): R
     return null;
   }
 
-  if (target._type !== "industryPage" && target._type !== "personaPage") {
+  if (target._type !== "page" && target._type !== "industryPage" && target._type !== "personaPage") {
     return null;
   }
 

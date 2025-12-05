@@ -229,7 +229,7 @@ export default function StyleGuidePage() {
           {headerPreviewVariants.map(({ id, label, navigation }) => (
             <div
               key={id}
-              className="overflow-hidden rounded-lg border border-foreground/10 bg-background shadow-sm"
+              className="overflow-hidden rounded-lg border border-foreground/10 bg-content shadow-sm"
             >
               <div
                 className={joinClassNames(
@@ -533,7 +533,7 @@ function TokenCard({ token, value, sample }: { token: string; value: string; sam
         </span>
         <code className="text-xs font-mono text-foreground/70">{value}</code>
       </div>
-      <div className="rounded bg-background/60 p-3">
+      <div className="rounded bg-content/60 p-3">
         {sample}
       </div>
     </article>
@@ -583,7 +583,7 @@ function renderColorSample(token: ColorTokenKey) {
 
   if (token.includes("border")) {
     return (
-      <div className="rounded border bg-background">
+      <div className="rounded border bg-content">
         <div className={joinClassNames("h-16 w-full rounded", gmColors[token])} />
       </div>
     );
@@ -591,7 +591,7 @@ function renderColorSample(token: ColorTokenKey) {
 
   if (token.includes("shadow")) {
     return (
-      <div className={joinClassNames("h-16 w-full rounded border border-foreground/10 bg-background", gmColors[token])} />
+      <div className={joinClassNames("h-16 w-full rounded border border-foreground/10 bg-content", gmColors[token])} />
     );
   }
 

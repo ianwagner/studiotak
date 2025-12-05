@@ -27,7 +27,7 @@ export function PoweredByBadge({ product, theme, className }: PoweredByBadgeProp
       }
     : {};
 
-  const baseClasses = "inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-background/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-foreground/5";
+  const baseClasses = "inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-content/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-foreground/5";
 
   return (
     <Link href={href} className={joinClassNames(baseClasses, className)} style={style}>

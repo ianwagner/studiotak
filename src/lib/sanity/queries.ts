@@ -2,7 +2,7 @@ import groq from "groq";
 
 import { blocksProjection } from "@/lib/sanity/fragments";
 import { hasSanityClient, requireSanityClient } from "@/lib/sanity/config";
-import { resolveDocumentBlocks } from "@/lib/sanity/pageViews";
+import { appendDefaultFooter, resolveDocumentBlocks } from "@/lib/sanity/pageViews";
 import type { BlocksDocument } from "@/lib/sanity/types";
 
 const EMPTY_RESULT: BlocksDocument = { blocks: [] };
@@ -26,9 +26,10 @@ export async function fetchPageBySlug(slug: string): Promise<BlocksDocument | nu
 
   const rawBlocks = (result as { blocks?: unknown }).blocks as Parameters<typeof resolveDocumentBlocks>[0];
   const blocks = await resolveDocumentBlocks(rawBlocks);
+  const blocksWithFooter = await appendDefaultFooter(blocks);
 
   return {
     ...result,
-    blocks,
+    blocks: blocksWithFooter,
   };
 }

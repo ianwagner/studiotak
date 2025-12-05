@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import type {
   AnchorHTMLAttributes,
   CSSProperties,
@@ -9,9 +9,11 @@ import type {
   ReactNode,
 } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 import { Section } from "@/components/Section";
 import type { NavigationData, NavigationItem } from "@/lib/sanity/navigation";
+import { buildSanityImage } from "@/lib/sanity/images";
 import type { BlockDensity } from "@/lib/sanity/types";
 import type { SiteLogoSet, SiteSettings } from "@/lib/sanity/siteSettings";
 import { resolveSpacingToken, resolveTypographyToken } from "@/components/blocks/tokenUtils";
@@ -186,7 +188,7 @@ type NavigationLinkProps = {
   dataDropdownTrigger?: boolean;
 } & Pick<
   AnchorHTMLAttributes<HTMLAnchorElement>,
-  "aria-expanded" | "aria-haspopup" | "aria-controls" | "onMouseEnter" | "onMouseLeave" | "onFocus" | "onBlur"
+  "aria-expanded" | "aria-haspopup" | "aria-controls" | "onMouseEnter" | "onMouseLeave" | "onFocus" | "onBlur" | "onClick"
 >;
 
 type ReactKeyboardEventHandler = (event: ReactKeyboardEvent<HTMLAnchorElement>) => void;
@@ -206,10 +208,16 @@ const NavigationLink = ({
   onMouseLeave,
   onFocus,
   onBlur,
+  onClick,
   dataDropdownTrigger,
 }: NavigationLinkProps) => {
   const { href, label, isExternal, audience, icon } = item;
   const external = isExternal || isExternalHref(href);
+  const iconImage = icon ? buildSanityImage(icon, { width: 160, height: 160, fit: "max" }) : null;
+  const rawIconAlt =
+    icon && typeof icon === "object" && "alt" in icon && typeof icon.alt === "string" ? icon.alt : null;
+  const iconAlt = rawIconAlt?.trim() ?? "";
+  const iconContainerAriaHidden = iconAlt === "" ? true : undefined;
 
   return (
     <Link
@@ -229,11 +237,23 @@ const NavigationLink = ({
       onMouseLeave={onMouseLeave}
       onFocus={onFocus}
       onBlur={onBlur}
+      onClick={onClick}
       data-dropdown-trigger={dataDropdownTrigger ? "true" : undefined}
     >
-      {icon ? (
-        <span aria-hidden className="mr-2 text-sm">
-          {icon}
+      {iconImage ? (
+        <span
+          aria-hidden={iconContainerAriaHidden}
+          className="mr-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-end"
+        >
+          <Image
+            src={iconImage.url}
+            alt={iconAlt}
+            width={iconImage.width ?? 160}
+            height={iconImage.height ?? 160}
+            className="h-8 w-8 object-contain"
+            loading="lazy"
+            sizes="36px"
+          />
         </span>
       ) : null}
       <span>{label}</span>
@@ -256,17 +276,15 @@ function createFocusStyle(color: string): FocusStyle {
 function createLinkClasses(
   typographyClass: string,
   textColorClass: string,
-  hoverClass: string | null,
   density: BlockDensity,
 ): string {
   const paddingClass = density === "compact" ? "px-2 py-1.5" : "px-3 py-2";
 
   return joinClassNames(
-    "inline-flex items-center rounded-md transition-colors",
+    "inline-flex items-center rounded-md transition-colors hover:underline underline-offset-4",
     paddingClass,
     typographyClass,
     textColorClass,
-    hoverClass,
     focusRingClass,
   );
 }
@@ -278,6 +296,7 @@ type DropdownItemProps = {
   dropdownSpacingClass: string | null;
   focusStyle: FocusStyle;
   density: BlockDensity;
+  onNavigate?: () => void;
 };
 
 function DropdownItem({
@@ -287,6 +306,7 @@ function DropdownItem({
   dropdownSpacingClass,
   focusStyle,
   density,
+  onNavigate,
 }: DropdownItemProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLLIElement>(null);
@@ -423,7 +443,7 @@ function DropdownItem({
     "flex-col",
     dropdownSpacingClass,
     dropdownPadding,
-    "rounded-lg border border-foreground/10 bg-background shadow-lg",
+    "rounded-lg border border-foreground/10 bg-content shadow-lg",
     "md:absolute md:left-0 md:top-full md:z-30 md:min-w-[240px] md:mt-2",
     "mt-2",
   );
@@ -449,6 +469,7 @@ function DropdownItem({
           onKeyDown={handleButtonKeyDown}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          onClick={onNavigate}
           dataDropdownTrigger
         >
           <span aria-hidden className="ml-1 hidden text-xs md:inline">▾</span>
@@ -487,6 +508,7 @@ function DropdownItem({
             role="menuitem"
             dataDropdownIndex={index}
             onKeyDown={(event) => handleChildKeyDown(event, index, itemCount)}
+            onClick={onNavigate}
           />
         ))}
       </div>
@@ -500,6 +522,7 @@ function renderNavigationLink(
   focusStyle: FocusStyle,
   hoverClass: string | null,
   typographyClass: string,
+  onNavigate?: () => void,
 ): ReactNode {
   if (item.isCta) {
     const baseCtaClasses = buttonClassList.primary.filter((className) => !className.startsWith("hover:"));
@@ -511,14 +534,30 @@ function renderNavigationLink(
       typographyClass,
     );
 
-    return <NavigationLink item={item} className={ctaClasses} focusStyle={focusStyle} role="menuitem" />;
+    return (
+      <NavigationLink
+        item={item}
+        className={ctaClasses}
+        focusStyle={focusStyle}
+        role="menuitem"
+        onClick={onNavigate}
+      />
+    );
   }
 
   if (item.children.length > 0) {
     return null;
   }
 
-  return <NavigationLink item={item} className={linkClassName} focusStyle={focusStyle} role="menuitem" />;
+  return (
+    <NavigationLink
+      item={item}
+      className={linkClassName}
+      focusStyle={focusStyle}
+      role="menuitem"
+      onClick={onNavigate}
+    />
+  );
 }
 
 export function Header({ navigation, siteSettings, className }: HeaderProps) {
@@ -527,6 +566,7 @@ export function Header({ navigation, siteSettings, className }: HeaderProps) {
     items,
     layout,
     theme,
+    backgroundTheme,
     density,
     itemSpacingToken,
     typographyToken,
@@ -559,27 +599,80 @@ export function Header({ navigation, siteSettings, className }: HeaderProps) {
     [itemSpacingToken, density],
   );
 
+  const headerLayout = useMemo(() => {
+    if (!layout) {
+      return { blockPadding: "gm-spacing-block-none" };
+    }
+
+    if (layout.blockPadding === "gm-spacing-block-none") {
+      return layout;
+    }
+
+    return {
+      ...layout,
+      blockPadding: "gm-spacing-block-none",
+    };
+  }, [layout]);
+
   const horizontalGapClass = useMemo(() => toHorizontalGapVariant(spacingClass), [spacingClass]);
-  const listClassName = useMemo(
+  const baseListClassName = useMemo(
     () =>
       joinClassNames(
-        "flex flex-col md:flex-row md:items-center",
+        "flex-col md:flex-row md:items-center",
         spacingClass,
         "md:space-y-0",
         horizontalGapClass,
+        "w-full md:w-auto",
       ),
     [spacingClass, horizontalGapClass],
   );
 
   const linkClassName = useMemo(
-    () => createLinkClasses(typographyClass, textColorClass, hoverClass, density),
-    [typographyClass, textColorClass, hoverClass, density],
+    () => createLinkClasses(typographyClass, textColorClass, density),
+    [typographyClass, textColorClass, density],
   );
 
   const triggerClassName = useMemo(
     () => joinClassNames(linkClassName, "cursor-pointer select-none"),
     [linkClassName],
   );
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false);
+  }, []);
+  const toggleMobileMenu = useCallback(() => {
+    setMobileMenuOpen((value) => !value);
+  }, []);
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeMobileMenu();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen, closeMobileMenu]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        closeMobileMenu();
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [closeMobileMenu]);
 
   const navDataAttributes = useMemo(
     () => ({
@@ -595,13 +688,35 @@ export function Header({ navigation, siteSettings, className }: HeaderProps) {
   );
 
   const navPadding = density === "compact" ? "py-3" : "py-4";
+  const baseAnchor = anchor ?? "site-navigation";
+  const sanitizedAnchor = baseAnchor.replace(/\s+/g, "-");
+  const mobileMenuId = `${sanitizedAnchor}-items`;
+  const ctaItem = useMemo(() => items?.find((item) => item.isCta) ?? null, [items]);
+  const navigationItems = useMemo(() => {
+    if (!items) {
+      return [];
+    }
+
+    if (!ctaItem) {
+      return items;
+    }
+
+    return items.filter((item) => item.id !== ctaItem.id);
+  }, [items, ctaItem]);
+  const listClassName = joinClassNames(mobileMenuOpen ? "flex" : "hidden", "md:flex", baseListClassName);
 
   if (!items || items.length === 0) {
     return null;
   }
 
   return (
-    <Section as="header" theme={theme} layout={layout} className={joinClassNames("py-0", className)}>
+    <Section
+      as="header"
+      theme={theme}
+      backgroundTheme={backgroundTheme}
+      layout={headerLayout}
+      className={joinClassNames("sticky top-0 z-50 border-b py-0", gmColors["gm-color-border-subtle"], className)}
+    >
       <nav
         id={anchor ?? undefined}
         aria-label="Primary navigation"
@@ -609,14 +724,71 @@ export function Header({ navigation, siteSettings, className }: HeaderProps) {
         {...navDataAttributes}
       >
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <BrandLink
-            logos={siteSettings.logos}
-            focusStyle={focusStyle}
-            textColorClass={textColorClass}
-          />
-          <ul className={listClassName} role="menubar">
-            {items.map((item) => {
-              if (item.children.length > 0 && !item.isCta) {
+          <div className="flex w-full items-center justify-between md:w-auto">
+            <BrandLink
+              logos={siteSettings.logos}
+              focusStyle={focusStyle}
+              textColorClass={textColorClass}
+            />
+            <div className="ml-4 flex items-center gap-2 md:hidden">
+              <button
+                type="button"
+                className={joinClassNames(
+                  "inline-flex h-10 w-10 items-center justify-center rounded-md border border-foreground/10 p-2",
+                  focusRingClass,
+                )}
+                aria-expanded={mobileMenuOpen}
+                aria-controls={mobileMenuId}
+                onClick={toggleMobileMenu}
+                style={focusStyle}
+              >
+                <span className="sr-only">Toggle navigation menu</span>
+                {mobileMenuOpen ? (
+                  <svg
+                    aria-hidden
+                    className="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                  >
+                    <path d="M6 6L18 18" />
+                    <path d="M18 6L6 18" />
+                  </svg>
+                ) : (
+                  <svg
+                    aria-hidden
+                    className="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                  >
+                    <path d="M4 6H20" />
+                    <path d="M4 12H20" />
+                    <path d="M4 18H20" />
+                  </svg>
+                )}
+              </button>
+              {ctaItem ? (
+                <div className="shrink-0">
+                  {renderNavigationLink(
+                    ctaItem,
+                    linkClassName,
+                    focusStyle,
+                    hoverClass,
+                    typographyClass,
+                    closeMobileMenu,
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <ul className={listClassName} role="menubar" id={mobileMenuId}>
+            {navigationItems.map((item) => {
+              if (item.children.length > 0) {
                 return (
                   <DropdownItem
                     key={item.id}
@@ -626,16 +798,36 @@ export function Header({ navigation, siteSettings, className }: HeaderProps) {
                     dropdownSpacingClass={dropdownSpacingClass}
                     focusStyle={focusStyle}
                     density={density}
+                    onNavigate={closeMobileMenu}
                   />
                 );
               }
 
               return (
                 <li key={item.id} role="none">
-                  {renderNavigationLink(item, linkClassName, focusStyle, hoverClass, typographyClass)}
+                  {renderNavigationLink(
+                    item,
+                    linkClassName,
+                    focusStyle,
+                    hoverClass,
+                    typographyClass,
+                    closeMobileMenu,
+                  )}
                 </li>
               );
             })}
+            {ctaItem ? (
+              <li className="hidden md:block" role="none">
+                {renderNavigationLink(
+                  ctaItem,
+                  linkClassName,
+                  focusStyle,
+                  hoverClass,
+                  typographyClass,
+                  closeMobileMenu,
+                )}
+              </li>
+            ) : null}
           </ul>
         </div>
       </nav>

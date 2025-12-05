@@ -20,11 +20,6 @@ const DEFAULT_DIMENSIONS = {
   height: 900,
 };
 
-const ICON_FALLBACK_DIMENSIONS = {
-  width: 160,
-  height: 160,
-};
-
 const humanizeType = (value: string | null | undefined) => {
   if (!value) {
     return "";
@@ -127,17 +122,20 @@ export function ContentItemCard({
   const contentTypeLabel = overrideContentTypeLabel ?? item.contentType?.label ?? null;
   const hasTaxonomyTags = item.industries.length > 0 || item.personas.length > 0;
   const fallbackMediaLabel = contentTypeLabel ?? preset.label;
-  const isExample = isExampleType;
-  const typeLabel = humanizeType(item.type);
-  const showTypeLabel = Boolean(typeLabel) &&
-    (!contentTypeLabel || typeLabel.toLowerCase() !== contentTypeLabel.toLowerCase());
-  const showMetaRow = showTypeLabel || Boolean(contentTypeLabel);
   const imageAlt =
     typeof item.imageAlt === "string" && item.imageAlt.trim()
       ? item.imageAlt.trim()
       : item.title;
 
-  if (isExample) {
+  const portableBody = Array.isArray(item.body) && item.body.length > 0 ? item.body : null;
+  const isIconDisplay = item.mediaDisplay === "icon";
+  const typeLabel = humanizeType(item.type);
+  const showTypeLabel =
+    Boolean(typeLabel) &&
+    (!contentTypeLabel || typeLabel.toLowerCase() !== contentTypeLabel.toLowerCase());
+  const showMetaRow = showTypeLabel || Boolean(contentTypeLabel);
+
+  if (isExampleType) {
     if (!item.imageUrl) {
       return null;
     }
@@ -160,87 +158,111 @@ export function ContentItemCard({
     );
   }
 
-  if (isFeatureType) {
-    const featureBody = Array.isArray(item.body) && item.body.length > 0 ? item.body : null;
-    const featureMediaDisplay = item.mediaDisplay === "icon" ? "icon" : "image";
-    const isIconFeature = featureMediaDisplay === "icon";
-    const featureWrapperClasses =
-      isIconFeature
-        ? "flex items-center justify-center py-8"
-        : joinClassNames(...preset.mediaWrapper);
-    const featureFallbackClasses =
-      isIconFeature
-        ? joinClassNames(
-            gmTypography["gm-typography-label-xs"],
-            gmColors["gm-color-text-subtle"],
-            "text-center",
-          )
-        : joinClassNames(...preset.mediaFallback);
-    const featureIconDimensions =
-      isIconFeature && item.imageUrl
-        ? getImageDimensions(item.imageUrl)
-        : null;
-    const featureCardClasses = isIconFeature
-      ? joinClassNames(
-          gmSpacing["gm-spacing-relaxed-stack"],
-          "flex flex-col items-center text-center",
-          className,
-        )
-      : joinClassNames(...preset.card, className);
-    const featureTitleClasses = joinClassNames(
-      ...preset.title,
-      isIconFeature ? "text-center" : null,
+  if (isIconDisplay) {
+    const baseCardClasses = preset.card.filter((token) => {
+      if (!token) {
+        return false;
+      }
+
+      if (token.includes("space-y-")) {
+        return false;
+      }
+
+      if (token === "border" || token.startsWith("border-") || token.includes(" border-")) {
+        return false;
+      }
+
+      if (token.startsWith("shadow")) {
+        return false;
+      }
+
+      return true;
+    });
+    const iconCardClasses = joinClassNames(
+      ...baseCardClasses,
+      gmSpacing["gm-spacing-tight-stack"],
+      "flex flex-col items-center text-center",
+      className,
     );
-    const featureBodyClasses = joinClassNames(
+    const iconContainerClasses = "relative flex h-48 w-48 items-center justify-center sm:h-56 sm:w-56";
+    const iconFallbackClasses = joinClassNames(
+      "flex h-full w-full items-center justify-center text-center",
+      gmTypography["gm-typography-label-xs"],
+      gmColors["gm-color-text-subtle"],
+    );
+    const iconTitleClasses = joinClassNames(...preset.title, "text-center");
+    const iconBodyClasses = joinClassNames(
       gmTypography["gm-typography-body-base"],
       gmColors["gm-color-text-muted"],
-      isIconFeature ? "text-center" : null,
-    );
-    const featureDescriptionClasses = joinClassNames(
-      gmTypography["gm-typography-body-base"],
-      gmColors["gm-color-text-muted"],
-      isIconFeature ? "text-center" : null,
+      "text-center",
     );
 
     return (
-      <article className={featureCardClasses}>
-        <div className={featureWrapperClasses}>
+      <article className={iconCardClasses}>
+        <div className={iconContainerClasses}>
           {item.imageUrl ? (
-            isIconFeature ? (
-              <Image
-                src={item.imageUrl}
-                alt={imageAlt}
-                width={featureIconDimensions?.width ?? ICON_FALLBACK_DIMENSIONS.width}
-                height={featureIconDimensions?.height ?? ICON_FALLBACK_DIMENSIONS.height}
-                sizes="(min-width: 1024px) 160px, (min-width: 768px) 120px, 96px"
-                style={{ width: "auto", height: "auto", maxWidth: "160px", maxHeight: "160px" }}
-                className="object-contain"
-                priority={false}
-              />
-            ) : (
-              <Image
-                src={item.imageUrl}
-                alt={imageAlt}
-                fill
-                sizes="(min-width: 1024px) 320px, (min-width: 768px) 45vw, 90vw"
-                className="h-full w-full object-cover"
-                priority={false}
-              />
-            )
+            <Image
+              src={item.imageUrl}
+              alt={imageAlt}
+              fill
+              sizes="(min-width: 1024px) 224px, (min-width: 768px) 192px, 160px"
+              className="h-full w-full object-contain"
+              priority={false}
+            />
           ) : (
-            <div className={featureFallbackClasses}>
+            <div className={iconFallbackClasses}>
               <span>{fallbackMediaLabel}</span>
             </div>
           )}
         </div>
-        <h3 className={featureTitleClasses}>{item.title}</h3>
-        {featureBody ? (
-          <div className={featureBodyClasses}>
-            <PortableText value={featureBody} components={portableTextComponents} />
+        <h3 className={iconTitleClasses}>{item.title}</h3>
+        {portableBody ? (
+          <div className={iconBodyClasses}>
+            <PortableText value={portableBody} components={portableTextComponents} />
           </div>
+        ) : item.contentType?.description ? (
+          <p className={iconBodyClasses}>{item.contentType.description}</p>
         ) : null}
-        {!featureBody && item.contentType?.description ? (
-          <p className={featureDescriptionClasses}>
+      </article>
+    );
+  }
+
+  if (isFeatureType) {
+    return (
+      <article className={joinClassNames(...preset.card, className)}>
+        <div className={joinClassNames(...preset.mediaWrapper)}>
+          {item.imageUrl ? (
+            <Image
+              src={item.imageUrl}
+              alt={imageAlt}
+              fill
+              sizes="(min-width: 1024px) 320px, (min-width: 768px) 45vw, 90vw"
+              className="h-full w-full object-cover"
+              priority={false}
+            />
+          ) : (
+            <div className={joinClassNames(...preset.mediaFallback)}>
+              <span>{fallbackMediaLabel}</span>
+            </div>
+          )}
+        </div>
+        <h3 className={joinClassNames(...preset.title)}>{item.title}</h3>
+        {portableBody ? (
+          <div
+            className={joinClassNames(
+              gmTypography["gm-typography-body-base"],
+              gmColors["gm-color-text-muted"],
+            )}
+          >
+            <PortableText value={portableBody} components={portableTextComponents} />
+          </div>
+        ) : item.contentType?.description ? (
+          <p
+            className={joinClassNames(
+              gmTypography["gm-typography-body-base"],
+              gmColors["gm-color-text-muted"],
+            )}
+          >
             {item.contentType.description}
           </p>
         ) : null}

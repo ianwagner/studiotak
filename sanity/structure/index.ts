@@ -39,6 +39,10 @@ const groups: GroupConfig[] = [
     ],
   },
   {
+    title: 'Marketing',
+    types: [{schemaType: 'form', title: 'Forms'}],
+  },
+  {
     title: 'Taxonomies',
     types: [
       {schemaType: 'industry', title: 'Industries'},

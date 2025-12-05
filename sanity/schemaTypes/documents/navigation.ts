@@ -210,8 +210,20 @@ const createNavigationItemFields = (includeChildren: boolean) => {
     defineField({
       name: 'icon',
       title: 'Icon',
-      type: 'string',
-      description: 'Optional icon token from the design system.',
+      type: 'image',
+      description: 'Optional icon displayed to the left of the navigation label.',
+      options: {
+        hotspot: false,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt text',
+          type: 'string',
+          description: 'Describe the icon for screen readers. Leave blank if decorative.',
+          validation: (Rule) => Rule.max(120),
+        }),
+      ],
     }),
   ]
 

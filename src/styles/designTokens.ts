@@ -3,11 +3,16 @@ import type { BlockTheme } from "@/lib/sanity/types";
 const shellInlinePadding = "px-3 sm:px-4 lg:px-5 xl:px-6 2xl:px-8";
 const shellBlockPadding = "py-12 sm:py-16";
 const blockInlinePadding = "px-6 sm:px-8 lg:px-12";
+const inlinePaddingNone = "px-0";
+const heroFrameInlinePadding = "px-4 sm:px-6";
 const shellStackSpacing = "space-y-6";
 const shellContainerBase = "mx-auto w-full";
 const shellContainerMax = "max-w-[110rem]";
 const blockContainerBase = "mx-auto w-[90%]";
 const blockContainerMax = "max-w-[75rem]";
+const heroMaxWidth = "max-w-none";
+const heroCardPadding = "px-10 py-12 sm:px-20 sm:py-20";
+const heroFrameBlockPadding = "py-6 sm:py-8";
 
 export const gmColors = {
   "gm-color-text-primary": "text-foreground",
@@ -26,7 +31,7 @@ export const gmColors = {
   "gm-color-surface-accent-soft": "bg-accent/10",
   "gm-color-surface-tag": "bg-accent/10",
   "gm-color-surface-chip": "bg-accent/10",
-  "gm-color-surface-raised": "bg-background/80",
+  "gm-color-surface-raised": "bg-content/80",
   "gm-color-border-subtle": "border-foreground/10",
   "gm-color-border-strong": "border-foreground/20",
   "gm-color-border-accent": "border-accent",
@@ -50,12 +55,17 @@ export const gmSpacing = {
   "gm-spacing-grid-tight": "gap-2",
   "gm-spacing-grid": "gap-3",
   "gm-spacing-grid-relaxed": "gap-4",
+  "gm-spacing-grid-spacious": "gap-y-10 gap-x-16",
   "gm-spacing-shell-inline": shellInlinePadding,
   "gm-spacing-section-inline": shellInlinePadding,
   "gm-spacing-block-inline": blockInlinePadding,
+  "gm-spacing-inline-none": inlinePaddingNone,
+  "gm-spacing-hero-frame-inline": heroFrameInlinePadding,
   "gm-spacing-shell-block": shellBlockPadding,
   "gm-spacing-section-block": shellBlockPadding,
   "gm-spacing-block-none": "py-0",
+  "gm-spacing-hero-frame-block": heroFrameBlockPadding,
+  "gm-spacing-hero-card": heroCardPadding,
   "gm-spacing-page-bottom": "pb-12",
   "gm-spacing-page-bottom-lg": "pb-16",
   "gm-spacing-card": "p-4",
@@ -101,6 +111,7 @@ export const gmLayout = {
   "gm-layout-shell-max": shellContainerMax,
   "gm-layout-block": blockContainerBase,
   "gm-layout-block-max": blockContainerMax,
+  "gm-layout-hero-max": heroMaxWidth,
 } as const;
 
 export const gmBreakpoints = {
@@ -113,22 +124,41 @@ export const gmEffects = {
   "gm-effect-opacity-subdued": "opacity-40",
 } as const;
 
+const LIGHT_BACKGROUND = "#ffffff";
+const LIGHT_FOREGROUND = "#171717";
+const SYSTEM_BACKGROUND = "var(--surface-default)";
+const SYSTEM_FOREGROUND = "var(--text-default)";
+const DARK_BACKGROUND = "#0a0a0a";
+const DARK_FOREGROUND = "#ededed";
+const BRAND_BACKGROUND = "#f7dac6";
+const BRAND_FOREGROUND = "#ff700b";
+const BRAND_ACCENT = "#ff700b";
+const BRAND_ACCENT_FOREGROUND = "#ffffff";
+
 type ThemeVariableMap = {
   "--background": string;
   "--foreground": string;
+  "--accent"?: string;
+  "--accent-foreground"?: string;
 };
 
 export const blockThemeVariables: Record<BlockTheme, ThemeVariableMap> = {
   light: {
-    "--background": "var(--surface-default)",
-    "--foreground": "var(--text-default)",
+    "--background": LIGHT_BACKGROUND,
+    "--foreground": LIGHT_FOREGROUND,
   },
   dark: {
-    "--background": "#0a0a0a",
-    "--foreground": "#ededed",
+    "--background": DARK_BACKGROUND,
+    "--foreground": DARK_FOREGROUND,
   },
   brand: {
-    "--background": "#f5f3ff",
-    "--foreground": "#4c1d95",
+    "--background": BRAND_BACKGROUND,
+    "--foreground": BRAND_FOREGROUND,
+    "--accent": BRAND_ACCENT,
+    "--accent-foreground": BRAND_ACCENT_FOREGROUND,
+  },
+  system: {
+    "--background": SYSTEM_BACKGROUND,
+    "--foreground": SYSTEM_FOREGROUND,
   },
 } as const;
