@@ -13,7 +13,13 @@ export default async function NotFound() {
   const iconImage = buildSanityImage(errorPage.icon, { width: 360, height: 360, quality: 95, fit: "max" });
   const backgroundPalette = blockThemeVariables[errorPage.backgroundTheme];
   const contentPalette = blockThemeVariables[errorPage.theme];
-  const themeStyle: CSSProperties = {
+  type ThemeVars = CSSProperties & {
+    "--background": string;
+    "--foreground": string;
+    "--content-background": string;
+    "--content-foreground": string;
+  };
+  const themeStyle: ThemeVars = {
     "--background": backgroundPalette["--background"],
     "--foreground": contentPalette["--foreground"],
     "--content-background": contentPalette["--background"],
