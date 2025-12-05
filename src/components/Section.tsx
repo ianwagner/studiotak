@@ -3,11 +3,7 @@ import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import type { BlockLayoutSettings, BlockTheme } from "@/lib/sanity/types";
 import { blockThemeVariables, gmLayout, gmSpacing } from "@/styles/designTokens";
 
-// Allow Section to render common semantic containers (including header for the site nav)
-type SectionElement = keyof Pick<
-  JSX.IntrinsicElements,
-  "section" | "div" | "article" | "aside" | "header" | "nav"
->;
+type SectionElement = keyof Pick<JSX.IntrinsicElements, "section" | "div" | "article" | "aside">;
 
 type SectionProps = HTMLAttributes<HTMLElement> & {
   as?: SectionElement;
