@@ -26,7 +26,7 @@ export async function authenticate(
     username === authConfig.VALID_USERNAME &&
     password === authConfig.VALID_PASSWORD
   ) {
-    cookies().set(authConfig.AUTH_COOKIE_NAME, authConfig.AUTH_COOKIE_VALUE, {
+    (await cookies()).set(authConfig.AUTH_COOKIE_NAME, authConfig.AUTH_COOKIE_VALUE, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
