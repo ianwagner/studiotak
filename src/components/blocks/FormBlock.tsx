@@ -313,8 +313,6 @@ export function FormBlock({ block }: FormBlockProps) {
           formId,
           target: `#${formContainerId}`,
           cssClass: "hubspot-form",
-          // keep HubSpot from injecting light-mode defaults; empty css disables their defaults
-          css: "",
           inlineMessage,
           onFormReady: () => {
             if (!cancelled) {
