@@ -1,7 +1,7 @@
 export const ROUTE_PRODUCT_OPTIONS = [
   {title: 'Campfire', value: 'campfire'},
   {title: 'Marketing Site', value: 'marketing'},
-] as const;
+] satisfies Array<{title: string; value: string}>;
 
 export const ROUTE_PATH_PATTERN = /^[^\s/]+$/;
 
