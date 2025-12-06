@@ -292,7 +292,7 @@ function normalizeItems(items?: NavigationItemDocument[] | null): NavigationItem
     return [];
   }
 
-  return items
+  const normalized = items
     .map((item) => {
       const destination = resolveDestination(item);
       const label = sanitizeLabel(item.label);
@@ -313,7 +313,9 @@ function normalizeItems(items?: NavigationItemDocument[] | null): NavigationItem
         children,
       } satisfies NavigationItem;
     })
-    .filter((item): item is NavigationItem => Boolean(item));
+    .filter(Boolean) as NavigationItem[];
+
+  return normalized;
 }
 
 function normalizeNavigation(doc: NavigationDocument | null): NavigationData | null {
@@ -364,7 +366,7 @@ export async function fetchNavigation(): Promise<NavigationData> {
     return navigationFallback;
   }
 
-  const { isEnabled } = draftMode();
+  const { isEnabled } = await draftMode();
 
   if (isEnabled) {
     const preview = await fetchNavigationFromSanity("previewDrafts");

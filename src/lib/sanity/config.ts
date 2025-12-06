@@ -24,8 +24,10 @@ const isConfigured = Boolean(projectId && dataset);
 
 export const sanityClient = isConfigured ? createClient(baseConfig) : null;
 
-export function hasSanityClient(): sanityClient is NonNullable<typeof sanityClient> {
-  return isConfigured && Boolean(sanityClient);
+export function hasSanityClient(
+  client: typeof sanityClient = sanityClient,
+): client is NonNullable<typeof sanityClient> {
+  return isConfigured && Boolean(client);
 }
 
 export function requireSanityClient(): NonNullable<typeof sanityClient> {

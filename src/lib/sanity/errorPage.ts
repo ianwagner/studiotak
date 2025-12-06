@@ -179,7 +179,7 @@ export async function fetchErrorPage(): Promise<ErrorPageData> {
     return errorPageFallback;
   }
 
-  const { isEnabled } = draftMode();
+  const { isEnabled } = await draftMode();
 
   if (isEnabled) {
     const preview = await fetchErrorPageFromSanity("previewDrafts");

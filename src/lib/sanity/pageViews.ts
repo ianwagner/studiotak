@@ -406,6 +406,7 @@ const normalizeBlockMeta = <T extends ThemedBlockDoc>(block: T): T & {
   theme: BlockTheme;
   backgroundTheme: BlockTheme;
   layout: BlockLayoutSettings;
+  density: BlockDensity;
 } => {
   const { background, content } = resolveBlockThemeSettings(block.theme);
 
@@ -587,7 +588,7 @@ const normalizeFeaturedSets = (
         description: set.description ?? undefined,
       } satisfies FeaturedSetSummary;
     })
-    .filter((value): value is FeaturedSetSummary => Boolean(value));
+    .filter(Boolean) as FeaturedSetSummary[];
 };
 
 type Perspective = 'published' | 'previewDrafts';
@@ -644,7 +645,7 @@ async function getDefaultFooterBlocks(): Promise<SanityBlock[]> {
     return [];
   }
 
-  const { isEnabled } = draftMode();
+  const { isEnabled } = await draftMode();
 
   if (isEnabled) {
     return fetchDefaultFooterBlocks("previewDrafts");
@@ -726,7 +727,7 @@ export async function getHomepage(options?: {page?: number}): Promise<HomepageDa
     return homepageFallbackWithFooter();
   }
 
-  const {isEnabled} = draftMode();
+  const {isEnabled} = await draftMode();
   const pageOverrides =
     typeof options?.page === 'number'
       ? {[GLOBAL_PAGE_KEY]: normalizePageNumber(options.page)}
@@ -1151,7 +1152,7 @@ async function resolveInlineDisplay({
 
   const inlineBlock: DisplayBlockDoc = {
     _type: "displayBlock",
-    _key: parent._key ? `${parent._key}-display` : undefined,
+    _key: parent._key ? `${parent._key}-display` : "inline-display",
     anchor: undefined,
     layout: parent.layout,
     theme: parent.theme,
@@ -1766,6 +1767,7 @@ async function buildGeneratedBlocks({
         setType: "generated" as const,
         items: result.items,
         theme: DEFAULT_BLOCK_THEME,
+        backgroundTheme: DEFAULT_BLOCK_THEME,
         density: DEFAULT_DENSITY,
       } satisfies SetBlockView;
     }),

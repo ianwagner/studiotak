@@ -324,7 +324,7 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
     return fallbackSiteSettings;
   }
 
-  const { isEnabled } = draftMode();
+  const { isEnabled } = await draftMode();
 
   if (isEnabled) {
     const preview = await fetchSiteSettingsFromSanity("previewDrafts");
