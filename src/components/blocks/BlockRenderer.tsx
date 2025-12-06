@@ -31,13 +31,12 @@ type BlockComponentProps<T extends SanityBlock = SanityBlock> = {
   block: T;
 };
 
-type BlockComponent<T extends SanityBlock = SanityBlock> = (
-  props: BlockComponentProps<T>,
-) => ReactNode;
+type BlockComponent<T extends SanityBlock = SanityBlock> = (props: BlockComponentProps<T>) => ReactNode;
+type BlockComponentAny = (props: BlockComponentProps<SanityBlock>) => ReactNode;
 
 export type BlockRendererProps = {
   blocks?: SanityBlock[] | null;
-  components?: Record<string, BlockComponent>;
+  components?: Record<string, BlockComponentAny>;
 };
 
 const extractPortableTextValue = (block: SanityBlock): PortableTextValue | null => {
@@ -104,7 +103,7 @@ const FooterBlockComponent: BlockComponent<FooterBlockData> = ({ block }) => {
   return <FooterBlock block={block} />;
 };
 
-const defaultComponents: Record<string, BlockComponent> = {
+const defaultComponents: Record<string, BlockComponentAny> = {
   portableText: PortableTextBlock,
   richText: PortableTextBlock,
   blockContent: PortableTextBlock,
