@@ -39,7 +39,9 @@ export default async function RootLayout({
   const pathname = pathnameHeader ? new URL(pathnameHeader, "http://localhost").pathname : "";
   const isAuthed =
     (await cookies()).get(authConfig.AUTH_COOKIE_NAME)?.value === authConfig.AUTH_COOKIE_VALUE;
-  const hideChrome = pathname === authConfig.LOGIN_PATH && !isAuthed;
+  const isLoginPage = pathname === authConfig.LOGIN_PATH && !isAuthed;
+  const isStudioRoute = pathname.startsWith("/studio");
+  const hideChrome = isLoginPage || isStudioRoute;
   const [navigation, siteSettings] = await Promise.all([fetchNavigation(), fetchSiteSettings()]);
 
   return (
