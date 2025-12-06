@@ -57,12 +57,8 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
     "ThirdsBlock.eyebrow",
   );
 
-  const textStack = resolveSpacingToken(
-    block.textStackToken,
-    "gm-spacing-relaxed-stack",
-    density,
-    "ThirdsBlock.text",
-  );
+  const textStackToken = typeof block.textStackToken === "string" ? block.textStackToken : undefined;
+  const textStack = resolveSpacingToken(textStackToken, "gm-spacing-relaxed-stack", density, "ThirdsBlock.text");
   const bodyStack = resolveSpacingToken(
     "gm-spacing-compact-stack",
     "gm-spacing-compact-stack",

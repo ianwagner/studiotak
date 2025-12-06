@@ -147,12 +147,12 @@ function normalizeSocialLinks(links: FooterSocialLink[] | undefined): Normalized
 export function FooterBlock({ block }: FooterBlockProps) {
   const density: BlockDensity = block.density ?? "default";
   const headingClass = resolveTypographyToken(
-    block.headingStyle,
+    typeof block.headingStyle === "string" ? block.headingStyle : undefined,
     "gm-typography-section-heading",
     "FooterBlock.heading",
   );
   const bodyClass = resolveTypographyToken(
-    block.bodyStyle,
+    typeof block.bodyStyle === "string" ? block.bodyStyle : undefined,
     "gm-typography-body-base",
     "FooterBlock.body",
   );
@@ -162,18 +162,10 @@ export function FooterBlock({ block }: FooterBlockProps) {
     "FooterBlock.columnHeading",
   );
 
-  const contentStack = resolveSpacingToken(
-    block.contentStackToken,
-    "gm-spacing-shell-stack",
-    density,
-    "FooterBlock.contentStack",
-  );
-  const navigationGridGap = resolveSpacingToken(
-    block.gridSpacingToken,
-    "gm-spacing-grid",
-    density,
-    "FooterBlock.navigationGrid",
-  );
+  const contentStackToken = typeof block.contentStackToken === "string" ? block.contentStackToken : undefined;
+  const contentStack = resolveSpacingToken(contentStackToken, "gm-spacing-shell-stack", density, "FooterBlock.contentStack");
+  const gridSpacingToken = typeof block.gridSpacingToken === "string" ? block.gridSpacingToken : undefined;
+  const navigationGridGap = resolveSpacingToken(gridSpacingToken, "gm-spacing-grid", density, "FooterBlock.navigationGrid");
   const baseCardPadding = resolveSpacingToken(
     "gm-spacing-card-lg",
     "gm-spacing-card-lg",

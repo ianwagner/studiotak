@@ -87,12 +87,8 @@ export function LogoGridBlock({ block }: LogoGridBlockProps) {
     density,
     "LogoGrid.intro",
   );
-  const gridGap = resolveSpacingToken(
-    block.gridSpacingToken,
-    "gm-spacing-grid-tight",
-    density,
-    "LogoGrid.grid",
-  );
+  const gridGapToken = typeof block.gridSpacingToken === "string" ? block.gridSpacingToken : undefined;
+  const gridGap = resolveSpacingToken(gridGapToken, "gm-spacing-grid-tight", density, "LogoGrid.grid");
   const tilePadding = resolveSpacingToken(
     "gm-spacing-card",
     "gm-spacing-card",
@@ -101,12 +97,12 @@ export function LogoGridBlock({ block }: LogoGridBlockProps) {
   );
 
   const headingClass = resolveTypographyToken(
-    block.headingStyle,
+    typeof block.headingStyle === "string" ? block.headingStyle : undefined,
     "gm-typography-section-heading",
     "LogoGrid.heading",
   );
   const bodyClass = resolveTypographyToken(
-    block.bodyStyle,
+    typeof block.bodyStyle === "string" ? block.bodyStyle : undefined,
     "gm-typography-body-base",
     "LogoGrid.body",
   );

@@ -65,12 +65,12 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
   const density: BlockDensity = block.density ?? "default";
 
   const headingClass = resolveTypographyToken(
-    block.headingStyle,
+    typeof block.headingStyle === "string" ? block.headingStyle : undefined,
     "gm-typography-section-heading",
     "FeaturesBlock.heading",
   );
   const bodyClass = resolveTypographyToken(
-    block.bodyStyle,
+    typeof block.bodyStyle === "string" ? block.bodyStyle : undefined,
     "gm-typography-body-base",
     "FeaturesBlock.body",
   );
@@ -86,30 +86,18 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
     density,
     "FeaturesBlock.section",
   );
-  const headerStack = resolveSpacingToken(
-    block.headerStackToken,
-    "gm-spacing-relaxed-stack",
-    density,
-    "FeaturesBlock.header",
-  );
+  const headerStackToken = typeof block.headerStackToken === "string" ? block.headerStackToken : undefined;
+  const headerStack = resolveSpacingToken(headerStackToken, "gm-spacing-relaxed-stack", density, "FeaturesBlock.header");
   const introStack = resolveSpacingToken(
     "gm-spacing-compact-stack",
     "gm-spacing-compact-stack",
     density,
     "FeaturesBlock.intro",
   );
-  const gridGap = resolveSpacingToken(
-    block.gridSpacingToken,
-    "gm-spacing-grid",
-    density,
-    "FeaturesBlock.grid",
-  );
-  const cardStack = resolveSpacingToken(
-    block.cardSpacingToken,
-    "gm-spacing-compact-stack",
-    density,
-    "FeaturesBlock.cardStack",
-  );
+  const gridGapToken = typeof block.gridSpacingToken === "string" ? block.gridSpacingToken : undefined;
+  const gridGap = resolveSpacingToken(gridGapToken, "gm-spacing-grid", density, "FeaturesBlock.grid");
+  const cardStackToken = typeof block.cardSpacingToken === "string" ? block.cardSpacingToken : undefined;
+  const cardStack = resolveSpacingToken(cardStackToken, "gm-spacing-compact-stack", density, "FeaturesBlock.cardStack");
   const cardPadding = resolveSpacingToken(
     "gm-spacing-card",
     "gm-spacing-card",

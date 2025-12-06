@@ -124,12 +124,12 @@ export function SplitBlock({ block }: SplitBlockProps) {
   const isMediaLeft = layoutVariant === "mediaLeft";
 
   const headlineClass = resolveTypographyToken(
-    block.headingStyle,
+    typeof block.headingStyle === "string" ? block.headingStyle : undefined,
     "gm-typography-section-heading",
     "SplitBlock.heading",
   );
   const bodyClass = resolveTypographyToken(
-    block.bodyStyle,
+    typeof block.bodyStyle === "string" ? block.bodyStyle : undefined,
     "gm-typography-body-base",
     "SplitBlock.body",
   );
@@ -139,12 +139,8 @@ export function SplitBlock({ block }: SplitBlockProps) {
     "SplitBlock.eyebrow",
   );
 
-  const textStack = resolveSpacingToken(
-    block.textStackToken,
-    "gm-spacing-relaxed-stack",
-    density,
-    "SplitBlock.text",
-  );
+  const textStackToken = typeof block.textStackToken === "string" ? block.textStackToken : undefined;
+  const textStack = resolveSpacingToken(textStackToken, "gm-spacing-relaxed-stack", density, "SplitBlock.text");
   const bodyStack = resolveSpacingToken(
     "gm-spacing-compact-stack",
     "gm-spacing-compact-stack",
