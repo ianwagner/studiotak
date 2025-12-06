@@ -37,7 +37,8 @@ export default async function RootLayout({
   const headerList = await headers();
   const pathnameHeader = headerList.get("x-studiotak-pathname") ?? headerList.get("next-url");
   const pathname = pathnameHeader ? new URL(pathnameHeader, "http://localhost").pathname : "";
-  const isAuthed = cookies().get(authConfig.AUTH_COOKIE_NAME)?.value === authConfig.AUTH_COOKIE_VALUE;
+  const isAuthed =
+    (await cookies()).get(authConfig.AUTH_COOKIE_NAME)?.value === authConfig.AUTH_COOKIE_VALUE;
   const hideChrome = pathname === authConfig.LOGIN_PATH && !isAuthed;
   const [navigation, siteSettings] = await Promise.all([fetchNavigation(), fetchSiteSettings()]);
 
