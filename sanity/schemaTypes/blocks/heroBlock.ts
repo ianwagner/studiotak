@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
+import type {NumberOptions} from 'sanity'
 
 import {blockMetaFields, bodyStyleField, createTokenField, headingStyleField} from './base'
 import {stackSpacingTokenOptions} from './tokens'
@@ -213,7 +214,7 @@ export const heroBlockType = defineType({
       initialValue: 100,
       validation: (Rule) => Rule.min(0).max(100),
       // Sanity supports range sliders for numbers; cast to satisfy the current types.
-      options: {range: {min: 0, max: 100, step: 5}} as unknown,
+      options: {range: {min: 0, max: 100, step: 5}} as NumberOptions,
     }),
     defineField({
       name: 'backgroundImageBlur',
@@ -222,7 +223,7 @@ export const heroBlockType = defineType({
       description: 'Apply a blur (in pixels) to soften the background image.',
       initialValue: 0,
       validation: (Rule) => Rule.min(0).max(40),
-      options: {range: {min: 0, max: 40, step: 1}} as unknown,
+      options: {range: {min: 0, max: 40, step: 1}} as NumberOptions,
     }),
     defineField({
       name: 'backgroundColor',

@@ -1,4 +1,5 @@
 import {defineField, defineType} from 'sanity'
+import type {NumberOptions} from 'sanity'
 
 import {ADVANCED_GROUP, ESSENTIALS_GROUP, editorialGroups} from '../utils/editorialGroups'
 import {portableTextBlock} from '../utils/portableText'
@@ -101,7 +102,7 @@ export const industryPageType = defineType({
           description: '0 hides the background image, 100 keeps it fully visible.',
           initialValue: 100,
           validation: (Rule) => Rule.min(0).max(100),
-          options: {range: {min: 0, max: 100, step: 5}} as unknown,
+          options: {range: {min: 0, max: 100, step: 5}} as NumberOptions,
         }),
         defineField({
           name: 'backgroundImageBlur',
@@ -110,7 +111,7 @@ export const industryPageType = defineType({
           description: 'Blur radius (in pixels) applied to the hero background image.',
           initialValue: 0,
           validation: (Rule) => Rule.min(0).max(40),
-          options: {range: {min: 0, max: 40, step: 1}} as unknown,
+          options: {range: {min: 0, max: 40, step: 1}} as NumberOptions,
         }),
       ],
       group: ESSENTIALS_GROUP,
