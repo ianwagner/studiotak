@@ -51,10 +51,11 @@ const extractPortableTextValue = (block: SanityBlock): PortableTextValue | null 
   }
 
   const isValid = candidate.every(
-    (item) => item && typeof item === "object" && typeof (item as Record<string, unknown>)._type === "string",
+    (item): item is PortableTextBlock =>
+      Boolean(item) && typeof item === "object" && "_type" in item && typeof (item as { _type: unknown })._type === "string",
   );
 
-  return isValid ? (candidate as PortableTextValue) : null;
+  return isValid ? candidate : null;
 };
 
 const PortableTextBlock: BlockComponent = ({ block }) => {
