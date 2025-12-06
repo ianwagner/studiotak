@@ -7,12 +7,8 @@ export const revalidate = 60;
 
 type PageParams = { slug: string };
 
-type PageProps = {
-  params: PageParams | Promise<PageParams>;
-};
-
-export default async function GenericPage({ params }: PageProps) {
-  const { slug } = await Promise.resolve(params);
+export default async function GenericPage({ params }: { params: PageParams }) {
+  const { slug } = params;
 
   const data = await fetchPageBySlug(slug);
 
