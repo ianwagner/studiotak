@@ -119,7 +119,8 @@ export const homepageType = defineType({
             return true
           }
 
-          return blocks[0]?._type === 'heroBlock'
+          const first = blocks[0] as {_type?: string} | undefined
+          return first?._type === 'heroBlock'
             ? true
             : 'Start the homepage with a Hero block so visitors immediately understand the story.'
         }).warning('Start the homepage with a Hero block so visitors immediately understand the story.'),
