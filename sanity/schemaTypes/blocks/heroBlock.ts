@@ -78,7 +78,8 @@ const heroMediaField = ({
         ],
         validation: (Rule) =>
           Rule.custom((value, context) => {
-            if (context.parent?.kind === 'image') {
+            const parent = context?.parent as {kind?: string} | undefined
+            if (parent?.kind === 'image') {
               return value ? true : 'Add an image.'
             }
 
@@ -104,7 +105,8 @@ const heroMediaField = ({
         ],
         validation: (Rule) =>
           Rule.custom((value, context) => {
-            if (context.parent?.kind === 'video') {
+            const parent = context?.parent as {kind?: string} | undefined
+            if (parent?.kind === 'video') {
               return value ? true : 'Add a video.'
             }
 
