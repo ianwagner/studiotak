@@ -1,9 +1,10 @@
-import type { CSSProperties, HTMLAttributes, JSX, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
 import type { BlockLayoutSettings, BlockTheme } from "@/lib/sanity/types";
 import { blockThemeVariables, gmLayout, gmSpacing } from "@/styles/designTokens";
 
-type SectionElement = keyof JSX.IntrinsicElements;
+// Restrict to standard HTML elements (not SVG) to keep DOM event typings aligned.
+type SectionElement = keyof HTMLElementTagNameMap;
 
 type SectionProps = HTMLAttributes<HTMLElement> & {
   as?: SectionElement;
