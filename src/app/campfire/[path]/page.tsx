@@ -18,8 +18,8 @@ type CampfireSearchParams = {
 };
 
 type PageProps = {
-  params: PageParams | Promise<PageParams>;
-  searchParams?: CampfireSearchParams | Promise<CampfireSearchParams>;
+  params: Promise<PageParams>;
+  searchParams?: Promise<CampfireSearchParams>;
 };
 
 function parsePageParam(value: string | undefined): number | undefined {
@@ -32,8 +32,8 @@ function parsePageParam(value: string | undefined): number | undefined {
 }
 
 export default async function CampfireRoutePage({ params, searchParams }: PageProps) {
-  const { path } = await Promise.resolve(params);
-  const resolvedSearch = (await Promise.resolve(searchParams)) ?? {};
+  const { path } = await params;
+  const resolvedSearch = (await searchParams) ?? {};
   const page = parsePageParam(resolvedSearch.page);
 
   const routeResolution = await resolveRoute({ product: "campfire", path });
