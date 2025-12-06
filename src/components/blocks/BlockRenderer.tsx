@@ -1,4 +1,5 @@
 import { PortableText } from "@portabletext/react";
+import type { PortableTextBlock } from "@portabletext/types";
 import type { ReactNode } from "react";
 
 import { Section } from "@/components/Section";
@@ -24,7 +25,7 @@ import type { SplitBlockData } from "./SplitBlock";
 import { ThirdsBlock } from "./ThirdsBlock";
 import type { ThirdsBlockData } from "./ThirdsBlock";
 
-type PortableTextValue = Array<Record<string, unknown>>;
+type PortableTextValue = PortableTextBlock[];
 
 type BlockComponentProps<T extends SanityBlock = SanityBlock> = {
   block: T;
@@ -49,7 +50,11 @@ const extractPortableTextValue = (block: SanityBlock): PortableTextValue | null 
     return null;
   }
 
-  return candidate;
+  const isValid = candidate.every(
+    (item) => item && typeof item === "object" && typeof (item as Record<string, unknown>)._type === "string",
+  );
+
+  return isValid ? (candidate as PortableTextValue) : null;
 };
 
 const PortableTextBlock: BlockComponent = ({ block }) => {
