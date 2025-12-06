@@ -1,4 +1,5 @@
 import {defineField, defineType} from 'sanity'
+import type {DocumentOptions} from 'sanity'
 
 import {blockThemeField} from '../fields/blockTheme'
 import {ESSENTIALS_GROUP, ADVANCED_GROUP, editorialGroups} from '../utils/editorialGroups'
@@ -10,7 +11,7 @@ export const errorPageType = defineType({
   groups: editorialGroups,
   options: {
     singleton: true,
-  },
+  } as DocumentOptions,
   fields: [
     defineField({
       name: 'title',
