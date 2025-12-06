@@ -1,5 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
-import type {DocumentOptions} from 'sanity'
+import type {DocumentOptions, ArrayOptions} from 'sanity'
 
 import {anchorField, createTokenField, densityField, layoutField} from '../blocks/base'
 import {
@@ -243,10 +243,7 @@ const createNavigationItemFields = (includeChildren: boolean) => {
             preview: navigationItemPreview,
           }),
         ],
-        options: {
-          collapsible: true,
-          collapsed: true,
-        } as {collapsible: boolean; collapsed: boolean},
+        options: {collapsible: true, collapsed: true} as unknown as ArrayOptions,
         validation: (Rule) =>
           Rule.custom((children, context) => {
             if (Array.isArray(children) && (context?.parent as NavigationItemValue)?.isCta) {
