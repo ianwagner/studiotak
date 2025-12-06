@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Rubik, Geist_Mono } from "next/font/google";
+import { cookies, headers } from "next/headers";
 
 import { Header } from "@/components/Header";
+import { authConfig } from "@/lib/auth";
 import { fetchNavigation } from "@/lib/sanity/navigation";
 import { fetchSiteSettings } from "@/lib/sanity/siteSettings";
 
@@ -32,6 +34,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerList = headers();
+  const pathnameHeader = headerList.get("x-studiotak-pathname") ?? headerList.get("next-url");
+  const pathname = pathnameHeader ? new URL(pathnameHeader, "http://localhost").pathname : "";
+  const isAuthed = cookies().get(authConfig.AUTH_COOKIE_NAME)?.value === authConfig.AUTH_COOKIE_VALUE;
+  const hideChrome = pathname === authConfig.LOGIN_PATH && !isAuthed;
   const [navigation, siteSettings] = await Promise.all([fetchNavigation(), fetchSiteSettings()]);
 
   return (
@@ -60,9 +67,9 @@ export default async function RootLayout({
       <body
         className={`${rubik.className} ${rubik.variable} ${geistMono.variable} bg-background text-foreground antialiased`}
       >
-        <div className="flex min-h-screen flex-col">
-          <Header navigation={navigation} siteSettings={siteSettings} />
-          <main className="flex-1">
+        <div className={hideChrome ? "min-h-screen" : "flex min-h-screen flex-col"}>
+          {hideChrome ? null : <Header navigation={navigation} siteSettings={siteSettings} />}
+          <main className={hideChrome ? "min-h-screen" : "flex-1"}>
             <div className="flex flex-col gap-0">{children}</div>
           </main>
         </div>
