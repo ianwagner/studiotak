@@ -42,12 +42,12 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
   const isMediaLeft = layoutVariant === "mediaLeft";
 
   const headlineClass = resolveTypographyToken(
-    block.headingStyle,
+    typeof block.headingStyle === "string" ? block.headingStyle : undefined,
     "gm-typography-section-heading",
     "ThirdsBlock.heading",
   );
   const bodyClass = resolveTypographyToken(
-    block.bodyStyle,
+    typeof block.bodyStyle === "string" ? block.bodyStyle : undefined,
     "gm-typography-body-base",
     "ThirdsBlock.body",
   );
