@@ -47,6 +47,9 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
   const layoutVariant = block.layoutVariant ?? "mediaRight";
   const isMediaLeft = layoutVariant === "mediaLeft";
 
+  const eyebrowText = typeof block.eyebrow === "string" ? block.eyebrow : null;
+  const headlineText = typeof block.headline === "string" ? block.headline : null;
+
   const headlineClass = resolveTypographyToken(
     typeof block.headingStyle === "string" ? block.headingStyle : undefined,
     "gm-typography-section-heading",
@@ -148,12 +151,12 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
   return (
     <div className={rootClasses}>
       <div className={textColumnClasses}>
-        {block.eyebrow ? (
+        {eyebrowText ? (
           <p className={[eyebrowClass, gmColors["gm-color-text-subtle"], "uppercase"].join(" ")}>
-            {block.eyebrow}
+            {eyebrowText}
           </p>
         ) : null}
-        {block.headline ? <h2 className={headlineClass}>{block.headline}</h2> : null}
+        {headlineText ? <h2 className={headlineClass}>{headlineText}</h2> : null}
         {bodyValue ? (
           <div className={[bodyStack, bodyClass, gmColors["gm-color-text-secondary"]].join(" ")}>
             <PortableText value={bodyValue} components={portableTextComponents} />
