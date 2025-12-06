@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
+import type {DocumentOptions} from 'sanity'
 
 import {ADVANCED_GROUP, ESSENTIALS_GROUP, editorialGroups} from '../utils/editorialGroups'
 
@@ -20,7 +21,7 @@ export const siteSettingsType = defineType({
   groups: editorialGroups,
   options: {
     singleton: true,
-  },
+  } as DocumentOptions,
   fields: [
     defineField({
       name: 'logoSet',

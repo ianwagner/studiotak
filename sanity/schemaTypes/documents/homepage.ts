@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
+import type {DocumentOptions} from 'sanity'
 
 import {createTokenField, densityField} from '../blocks/base'
 import {stackSpacingTokenOptions, typographyTokenOptions} from '../blocks/tokens'
@@ -20,7 +21,7 @@ export const homepageType = defineType({
   groups: editorialGroups,
   options: {
     singleton: true,
-  },
+  } as DocumentOptions,
   initialValue: {
     slug: {
       current: 'home',

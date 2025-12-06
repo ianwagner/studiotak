@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
+import type {DocumentOptions} from 'sanity'
 
 import {anchorField, createTokenField, densityField, layoutField} from '../blocks/base'
 import {
@@ -307,7 +308,7 @@ export const navigationType = defineType({
   type: 'document',
   options: {
     singleton: true,
-  },
+  } as DocumentOptions,
   initialValue: NAVIGATION_INITIAL_VALUE,
   groups: editorialGroups,
   fields: [
