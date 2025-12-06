@@ -17,7 +17,7 @@ type ThirdsPoint = {
   body?: string;
 };
 
-export type ThirdsBlockData = Omit<SplitBlockData, "_type"> & {
+export type ThirdsBlockData = (SanityBlock & Omit<SplitBlockData, "_type" | "_key">) & {
   _type: "thirdsBlock";
 };
 
