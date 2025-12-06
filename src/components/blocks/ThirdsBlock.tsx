@@ -5,7 +5,7 @@ import Link from "next/link";
 import { portableTextComponents } from "@/components/portableText/components";
 import { getButtonClassName } from "@/styles/buttons";
 import { gmColors } from "@/styles/designTokens";
-import type { SanityBlock } from "@/lib/sanity/types";
+import type { BlockDensity, SanityBlock } from "@/lib/sanity/types";
 
 import type { SplitBlockData } from "./SplitBlock";
 import { SplitMediaContent } from "./SplitBlock";
