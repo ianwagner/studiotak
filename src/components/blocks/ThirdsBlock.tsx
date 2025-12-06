@@ -1,4 +1,5 @@
 import { PortableText } from "@portabletext/react";
+import type { PortableTextBlock } from "@portabletext/types";
 import Link from "next/link";
 
 import { portableTextComponents } from "@/components/portableText/components";
@@ -9,7 +10,16 @@ import type { SplitBlockData } from "./SplitBlock";
 import { SplitMediaContent } from "./SplitBlock";
 import { resolveSpacingToken, resolveTypographyToken } from "./tokenUtils";
 
-type PortableTextValue = Array<Record<string, unknown>>;
+type PortableTextValue = PortableTextBlock[];
+
+function normalizePortableTextValue(value: unknown): PortableTextValue | null {
+  if (!Array.isArray(value)) return null;
+  const filtered = value.filter(
+    (item): item is PortableTextBlock =>
+      Boolean(item) && typeof item === "object" && "_type" in item && typeof (item as { _type: unknown })._type === "string",
+  );
+  return filtered.length > 0 ? filtered : null;
+}
 
 type ThirdsPoint = {
   _key?: string;
@@ -93,8 +103,7 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
   const points = Array.isArray(block.points)
     ? (block.points as ThirdsPoint[]).filter((point) => point?.title || point?.body)
     : [];
-  const bodyValue =
-    Array.isArray(block.body) && block.body.length > 0 ? (block.body as PortableTextValue) : null;
+  const bodyValue = normalizePortableTextValue(block.body);
   const cta = block.cta && typeof block.cta === "object" ? block.cta : null;
   const ctaLabel = typeof cta?.label === "string" ? cta.label.trim() : "";
   const ctaHref = typeof cta?.href === "string" ? cta.href : "";
