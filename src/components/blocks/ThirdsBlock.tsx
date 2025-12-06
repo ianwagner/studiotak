@@ -37,7 +37,7 @@ export type ThirdsBlockProps = {
 };
 
 export function ThirdsBlock({ block }: ThirdsBlockProps) {
-  const density = block.density ?? "default";
+  const density: BlockDensity = block.density === "compact" ? "compact" : "default";
   const layoutVariant = block.layoutVariant ?? "mediaRight";
   const isMediaLeft = layoutVariant === "mediaLeft";
 
@@ -58,12 +58,11 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
   );
 
   const textStackToken = typeof block.textStackToken === "string" ? block.textStackToken : undefined;
-  const safeDensity: BlockDensity = density === "compact" ? "compact" : "default";
-  const textStack = resolveSpacingToken(textStackToken, "gm-spacing-relaxed-stack", safeDensity, "ThirdsBlock.text");
+  const textStack = resolveSpacingToken(textStackToken, "gm-spacing-relaxed-stack", density, "ThirdsBlock.text");
   const bodyStack = resolveSpacingToken(
     "gm-spacing-compact-stack",
     "gm-spacing-compact-stack",
-    safeDensity,
+    density,
     "ThirdsBlock.bodyStack",
   );
   const pointStack = resolveSpacingToken(
