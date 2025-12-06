@@ -58,7 +58,7 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
   );
 
   const textStackToken = typeof block.textStackToken === "string" ? block.textStackToken : undefined;
-  const safeDensity: BlockDensity = density && typeof density === "string" ? density : "default";
+  const safeDensity: BlockDensity = density === "compact" ? "compact" : "default";
   const textStack = resolveSpacingToken(textStackToken, "gm-spacing-relaxed-stack", safeDensity, "ThirdsBlock.text");
   const bodyStack = resolveSpacingToken(
     "gm-spacing-compact-stack",
