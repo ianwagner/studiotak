@@ -189,7 +189,7 @@ export function FeaturesBlock({ block }: FeaturesBlockProps) {
               .filter(Boolean)
               .join(" ");
 
-            const mediaImageStyle =
+            const mediaImageStyle: React.CSSProperties =
               mediaDisplay === "icon"
                 ? {
                     width: "100%",
