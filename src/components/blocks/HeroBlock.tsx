@@ -405,7 +405,7 @@ export function HeroBlock({ block }: HeroBlockProps) {
     "HeroBlock.cardPadding",
   );
 
-  const normalizedBackgroundColor = normalizeHexColor(block.backgroundColor);
+  const normalizedBackgroundColor = normalizeHexColor(block.backgroundColor) || undefined;
   const hasCustomBackgroundColor = Boolean(normalizedBackgroundColor);
 
   const rawOpacity = typeof block.backgroundImageOpacity === "number" ? block.backgroundImageOpacity : null;
@@ -415,7 +415,7 @@ export function HeroBlock({ block }: HeroBlockProps) {
   const normalizedBlur = rawBlur !== null ? clampNumber(rawBlur, 0, 40) : 0;
 
   const containerStyle: CSSProperties | undefined = hasCustomBackgroundColor
-    ? { backgroundColor: normalizedBackgroundColor }
+    ? { backgroundColor: normalizedBackgroundColor! }
     : undefined;
 
   const imageStyle: CSSProperties = {
