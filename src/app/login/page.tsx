@@ -4,11 +4,12 @@ import { sanitizeRedirectPath } from "@/lib/auth";
 import { LoginForm } from "./LoginForm";
 
 type LoginPageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default function LoginPage({ searchParams }: LoginPageProps) {
-  const rawRedirect = searchParams?.redirect;
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const resolvedSearch = (await searchParams) ?? {};
+  const rawRedirect = resolvedSearch.redirect;
   const redirectValue = Array.isArray(rawRedirect) ? rawRedirect[0] : rawRedirect;
   const redirectPath = sanitizeRedirectPath(redirectValue);
 

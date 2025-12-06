@@ -15,13 +15,13 @@ type PersonaPageSearchParams = {
 };
 
 type PageProps = {
-  params: PageParams | Promise<PageParams>;
-  searchParams?: PersonaPageSearchParams | Promise<PersonaPageSearchParams>;
+  params: Promise<PageParams>;
+  searchParams?: Promise<PersonaPageSearchParams>;
 };
 
 export default async function PersonaPage({ params, searchParams }: PageProps) {
-  const { slug } = await Promise.resolve(params);
-  const resolvedSearch = (await Promise.resolve(searchParams)) ?? {};
+  const { slug } = await params;
+  const resolvedSearch = (await searchParams) ?? {};
   const parsedPage = resolvedSearch.page ? Number.parseInt(resolvedSearch.page, 10) : undefined;
   const page = typeof parsedPage === "number" && Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : undefined;
 
