@@ -63,7 +63,7 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
   const bodyStack = resolveSpacingToken(
     "gm-spacing-compact-stack",
     "gm-spacing-compact-stack",
-    density,
+    safeDensity,
     "ThirdsBlock.bodyStack",
   );
   const pointStack = resolveSpacingToken(
