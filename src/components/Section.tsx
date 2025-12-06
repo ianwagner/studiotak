@@ -1,9 +1,9 @@
-import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, JSX, ReactNode } from "react";
 
 import type { BlockLayoutSettings, BlockTheme } from "@/lib/sanity/types";
 import { blockThemeVariables, gmLayout, gmSpacing } from "@/styles/designTokens";
 
-type SectionElement = keyof Pick<JSX.IntrinsicElements, "section" | "div" | "article" | "aside" | "header" | "footer" | "main" | "nav">;
+type SectionElement = keyof JSX.IntrinsicElements;
 
 type SectionProps = HTMLAttributes<HTMLElement> & {
   as?: SectionElement;
