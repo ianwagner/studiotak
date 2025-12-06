@@ -28,6 +28,12 @@ type ThirdsPoint = {
   body?: string;
 };
 
+type ThirdsBlockCta = SplitBlockData["cta"];
+
+function isThirdsBlockCta(value: unknown): value is ThirdsBlockCta {
+  return Boolean(value) && typeof value === "object";
+}
+
 export type ThirdsBlockData = (SanityBlock & Omit<SplitBlockData, "_type" | "_key">) & {
   _type: "thirdsBlock";
 };
@@ -101,7 +107,7 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
     ? (block.points as ThirdsPoint[]).filter((point) => point?.title || point?.body)
     : [];
   const bodyValue = normalizePortableTextValue(block.body);
-  const cta = block.cta && typeof block.cta === "object" ? block.cta : null;
+  const cta = isThirdsBlockCta(block.cta) ? block.cta : null;
   const ctaLabel = typeof cta?.label === "string" ? cta.label.trim() : "";
   const ctaHref = typeof cta?.href === "string" ? cta.href : "";
   const hasCta = ctaLabel.length > 0 && ctaHref.length > 0;
