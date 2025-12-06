@@ -62,10 +62,10 @@ export function Section({
   const contentPalette = blockThemeVariables[theme];
   const accent = contentPalette["--accent"];
   const accentForeground = contentPalette["--accent-foreground"];
-  const themeStyle: CSSProperties & Record<
+  const themeStyle: CSSProperties & Partial<Record<
     "--background" | "--foreground" | "--content-background" | "--content-foreground" | "--accent" | "--accent-foreground",
     string
-  > = {
+  >> = {
     "--background": backgroundPalette["--background"],
     "--foreground": contentPalette["--foreground"],
     "--content-background": contentPalette["--background"],
