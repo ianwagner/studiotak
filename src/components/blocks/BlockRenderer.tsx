@@ -103,19 +103,22 @@ const FooterBlockComponent: BlockComponent<FooterBlockData> = ({ block }) => {
   return <FooterBlock block={block} />;
 };
 
+const adaptBlockComponent = <T extends SanityBlock>(component: BlockComponent<T>): BlockComponentAny =>
+  ((props: BlockComponentProps<SanityBlock>) => component(props as BlockComponentProps<T>)) as BlockComponentAny;
+
 const defaultComponents: Record<string, BlockComponentAny> = {
-  portableText: PortableTextBlock,
-  richText: PortableTextBlock,
-  blockContent: PortableTextBlock,
-  heroBlock: HeroBlockComponent,
-  splitBlock: SplitBlockComponent,
-  thirdsBlock: ThirdsBlockComponent,
-  featuresBlock: FeaturesBlockComponent,
-  formBlock: FormBlockComponent,
-  logoGridBlock: LogoGridBlockComponent,
-  footerBlock: FooterBlockComponent,
-  setBlock: SetBlockComponent,
-  displayBlock: DisplayBlockComponent,
+  portableText: adaptBlockComponent(PortableTextBlock),
+  richText: adaptBlockComponent(PortableTextBlock),
+  blockContent: adaptBlockComponent(PortableTextBlock),
+  heroBlock: adaptBlockComponent(HeroBlockComponent),
+  splitBlock: adaptBlockComponent(SplitBlockComponent),
+  thirdsBlock: adaptBlockComponent(ThirdsBlockComponent),
+  featuresBlock: adaptBlockComponent(FeaturesBlockComponent),
+  formBlock: adaptBlockComponent(FormBlockComponent),
+  logoGridBlock: adaptBlockComponent(LogoGridBlockComponent),
+  footerBlock: adaptBlockComponent(FooterBlockComponent),
+  setBlock: adaptBlockComponent(SetBlockComponent),
+  displayBlock: adaptBlockComponent(DisplayBlockComponent),
 };
 
 const FallbackBlock: BlockComponent = ({ block }) => (
