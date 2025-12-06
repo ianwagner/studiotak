@@ -138,7 +138,7 @@ const heroMediaField = ({
         hidden: ({parent}) => parent?.kind !== 'video',
         initialValue: true,
       }),
-    ].filter(Boolean),
+    ].filter((field): field is ReturnType<typeof defineField> => Boolean(field)),
   })
 
 export const heroBlockType = defineType({
