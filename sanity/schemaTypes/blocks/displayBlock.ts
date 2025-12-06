@@ -61,7 +61,7 @@ export const displayContentFields = [
   splayGapField,
   setField,
   fallbackSetField,
-] as const;
+] satisfies Array<ReturnType<typeof defineField>>;
 
 export const displayBlockType = defineType({
   name: 'displayBlock',

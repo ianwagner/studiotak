@@ -17,15 +17,31 @@ type NavigationItemValue = {
   children?: NavigationItemValue[]
 }
 
+type NavigationSeedItem = {
+  label: string
+  destination: {
+    externalUrl?: string
+    route?: {path?: string; product?: string} | null
+  }
+  isCta?: boolean
+  children?: NavigationSeedItem[]
+}
+
 const DEFAULT_LAYOUT_TOKENS = {
   container: 'gm-layout-shell',
   maxWidth: 'gm-layout-shell-max',
   inlinePadding: 'gm-spacing-shell-inline',
   blockPadding: 'gm-spacing-shell-block',
   stackSpacing: 'gm-spacing-shell-stack',
-} as const
+} satisfies {
+  container: string
+  maxWidth: string
+  inlinePadding: string
+  blockPadding: string
+  stackSpacing: string
+}
 
-const NAVIGATION_SAMPLE_ITEMS = [
+const NAVIGATION_SAMPLE_ITEMS: NavigationSeedItem[] = [
   {
     label: 'Home',
     destination: {
@@ -71,9 +87,20 @@ const NAVIGATION_SAMPLE_ITEMS = [
     },
     isCta: true,
   },
-] as const
+] ;
 
-const NAVIGATION_INITIAL_VALUE = {
+const NAVIGATION_INITIAL_VALUE: {
+  anchor: string
+  theme: string
+  density: string
+  layout: typeof DEFAULT_LAYOUT_TOKENS
+  itemSpacingToken: string
+  typographyToken: string
+  linkColorToken: string
+  hoverStateToken: string
+  focusRingToken: string
+  items: NavigationSeedItem[]
+} = {
   anchor: 'site-navigation',
   theme: 'light',
   density: 'default',
@@ -84,7 +111,7 @@ const NAVIGATION_INITIAL_VALUE = {
   hoverStateToken: 'gm-color-hover-surface-tint',
   focusRingToken: 'gm-color-border-accent',
   items: NAVIGATION_SAMPLE_ITEMS,
-} as const
+}
 
 const countCtas = (items: NavigationItemValue[] = []): number =>
   items.reduce((total, item) => {
