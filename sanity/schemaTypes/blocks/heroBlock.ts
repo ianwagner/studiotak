@@ -212,9 +212,8 @@ export const heroBlockType = defineType({
       description: 'Controls how opaque the background image is. 0 hides it, 100 keeps it fully visible.',
       initialValue: 100,
       validation: (Rule) => Rule.min(0).max(100),
-      options: {
-        range: {min: 0, max: 100, step: 5},
-      },
+      // Sanity supports range sliders for numbers; cast to satisfy the current types.
+      options: {range: {min: 0, max: 100, step: 5}} as unknown,
     }),
     defineField({
       name: 'backgroundImageBlur',
@@ -223,9 +222,7 @@ export const heroBlockType = defineType({
       description: 'Apply a blur (in pixels) to soften the background image.',
       initialValue: 0,
       validation: (Rule) => Rule.min(0).max(40),
-      options: {
-        range: {min: 0, max: 40, step: 1},
-      },
+      options: {range: {min: 0, max: 40, step: 1}} as unknown,
     }),
     defineField({
       name: 'backgroundColor',
