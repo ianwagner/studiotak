@@ -180,7 +180,7 @@ const createDestinationField = () =>
   })
 
 const createNavigationItemFields = (includeChildren: boolean) => {
-  const fields = [
+  const fields: Array<ReturnType<typeof defineField>> = [
     defineField({
       name: 'label',
       title: 'Label',
@@ -188,7 +188,7 @@ const createNavigationItemFields = (includeChildren: boolean) => {
       validation: (Rule) => Rule.required().max(60),
       description: 'Text displayed in the navigation menu.',
     }),
-    createDestinationField(),
+    createDestinationField() as ReturnType<typeof defineField>,
     defineField({
       name: 'audience',
       title: 'Audience Filter',
