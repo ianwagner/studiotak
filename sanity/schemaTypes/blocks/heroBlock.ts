@@ -22,8 +22,21 @@ const heroMediaField = ({
   title: string
   description?: string
   allowPoster?: boolean
-}) =>
-  defineField({
+}) => {
+  const posterField = allowPoster
+    ? defineField({
+        name: 'posterImage',
+        title: 'Poster Image',
+        type: 'image',
+        description: 'Optional fallback image shown while the video loads.',
+        options: {
+          hotspot: true,
+        },
+        hidden: ({parent}) => parent?.kind !== 'video',
+      })
+    : null
+
+  return defineField({
     name,
     title,
     description,
@@ -98,18 +111,7 @@ const heroMediaField = ({
             return true
           }),
       }),
-      allowPoster
-        ? defineField({
-            name: 'posterImage',
-            title: 'Poster Image',
-            type: 'image',
-            description: 'Optional fallback image shown while the video loads.',
-            options: {
-              hotspot: true,
-            },
-            hidden: ({parent}) => parent?.kind !== 'video',
-          })
-        : null,
+      ...(posterField ? [posterField] : []),
       defineField({
         name: 'autoplay',
         title: 'Autoplay',
@@ -138,8 +140,9 @@ const heroMediaField = ({
         hidden: ({parent}) => parent?.kind !== 'video',
         initialValue: true,
       }),
-    ].filter((field): field is ReturnType<typeof defineField> => Boolean(field)),
+    ],
   })
+}
 
 export const heroBlockType = defineType({
   name: 'heroBlock',
