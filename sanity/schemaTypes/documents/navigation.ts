@@ -246,7 +246,7 @@ const createNavigationItemFields = (includeChildren: boolean) => {
         options: {
           collapsible: true,
           collapsed: true,
-        },
+        } as {collapsible: boolean; collapsed: boolean},
         validation: (Rule) =>
           Rule.custom((children, context) => {
             if (Array.isArray(children) && (context?.parent as NavigationItemValue)?.isCta) {
