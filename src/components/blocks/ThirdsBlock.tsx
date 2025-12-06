@@ -29,8 +29,18 @@ type ThirdsPoint = {
 };
 
 type ThirdsBlockCta = SplitBlockData["cta"];
+type ThirdsBlockMedia = SplitBlockData["media"];
+type ThirdsBlockCustomMedia = SplitBlockData["customMedia"];
 
 function isThirdsBlockCta(value: unknown): value is ThirdsBlockCta {
+  return Boolean(value) && typeof value === "object";
+}
+
+function isThirdsBlockMedia(value: unknown): value is ThirdsBlockMedia {
+  return Boolean(value) && typeof value === "object";
+}
+
+function isThirdsBlockCustomMedia(value: unknown): value is ThirdsBlockCustomMedia {
   return Boolean(value) && typeof value === "object";
 }
 
@@ -115,6 +125,8 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
   const ctaHref = typeof cta?.href === "string" ? cta.href : "";
   const hasCta = ctaLabel.length > 0 && ctaHref.length > 0;
   const ctaClassName = getButtonClassName("primary", ["self-start"]);
+  const media = isThirdsBlockMedia(block.media) ? block.media : null;
+  const customMedia = isThirdsBlockCustomMedia(block.customMedia) ? block.customMedia : null;
 
   const rootClasses = [
     "grid",
@@ -203,9 +215,9 @@ export function ThirdsBlock({ block }: ThirdsBlockProps) {
       </div>
       <div className={mediaColumnClasses}>
         <SplitMediaContent
-          media={block.media}
-          customMedia={block.customMedia}
-          altFallback={block.headline}
+          media={media}
+          customMedia={customMedia}
+          altFallback={headlineText ?? undefined}
         />
       </div>
     </div>
