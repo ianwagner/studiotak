@@ -34,7 +34,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headerList = headers();
+  const headerList = await headers();
   const pathnameHeader = headerList.get("x-studiotak-pathname") ?? headerList.get("next-url");
   const pathname = pathnameHeader ? new URL(pathnameHeader, "http://localhost").pathname : "";
   const isAuthed = cookies().get(authConfig.AUTH_COOKIE_NAME)?.value === authConfig.AUTH_COOKIE_VALUE;
