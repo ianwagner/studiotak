@@ -10,6 +10,10 @@
   --font-size-h3: clamp(1.6rem, 1.5vw + 1rem, 2.2rem);
   --font-size-h4: clamp(1.25rem, 1vw + 0.9rem, 1.7rem);
   --max-width: 1200px;
+  --eyebrow-size: 12px;
+  --eyebrow-color: var(--accent);
+  --eyebrow-letter-spacing: 0.04em;
+  --eyebrow-weight: 600;
   --bg: #f6f7f9;
   --surface: #ffffff;
   --muted-surface: #eef2f6;
@@ -145,6 +149,7 @@ body {
   background: var(--surface);
   color: var(--text);
   font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
+  line-height: 1.5;
   min-height: 100%;
 }
 
@@ -256,16 +261,23 @@ main {
   backdrop-filter: blur(8px);
 }
 
+.thirds-block {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
 .tag {
   display: inline-flex;
   align-items: center;
   padding: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  color: var(--eyebrow-color);
+  font-weight: var(--eyebrow-weight);
+  font-size: var(--eyebrow-size);
+  letter-spacing: var(--eyebrow-letter-spacing);
   text-transform: uppercase;
 }
 
@@ -567,6 +579,8 @@ code {
   display: grid;
   gap: 6px;
   min-width: 260px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
 }
 
 [data-footer-sections] {

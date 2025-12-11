@@ -9,13 +9,22 @@ export function AnimatedSection({
   index = 0,
   className,
   style,
-  animated = true
-}: PropsWithChildren<{ index?: number; className?: string; style?: CSSProperties; animated?: boolean }>) {
+  animated = true,
+  variant = "card"
+}: PropsWithChildren<{
+  index?: number;
+  className?: string;
+  style?: CSSProperties;
+  animated?: boolean;
+  variant?: "card" | "plain";
+}>) {
   const preset = animationPresets[defaultAnimationPreset];
+  const baseClass = variant === "card" ? "card" : "";
+  const composedClassName = [baseClass, className].filter(Boolean).join(" ");
 
   if (!animated) {
     return (
-      <section className={`card${className ? ` ${className}` : ""}`} style={style}>
+      <section className={composedClassName} style={style}>
         {children}
       </section>
     );
@@ -23,7 +32,7 @@ export function AnimatedSection({
 
   return (
     <motion.section
-      className={`card${className ? ` ${className}` : ""}`}
+      className={composedClassName}
       style={style}
       variants={preset.item}
       initial="hidden"
@@ -66,26 +75,7 @@ export function SectionHeading({
 }
 
 export function Pill({ children }: PropsWithChildren) {
-  return (
-    <span
-      style={{
-        padding: 0,
-        borderRadius: 0,
-        background: "transparent",
-        border: "none",
-        fontSize: 14,
-        color: "var(--muted)",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        letterSpacing: "0.04em",
-        textTransform: "uppercase",
-        fontWeight: 600
-      }}
-    >
-      {children}
-    </span>
-  );
+  return <span className="tag">{children}</span>;
 }
 
 export function Stat({ label, value }: { label: string; value: string }) {

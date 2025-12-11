@@ -335,9 +335,16 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     : {
         ...fullBleedHeroStyle,
         boxShadow: "none",
+        background: isCompact ? "transparent" : undefined,
         border: isCompact || removeStroke ? "none" : undefined,
         borderColor: isCompact || removeStroke ? "transparent" : undefined
       };
+  if (isCompact) {
+    heroStyle.background = "transparent";
+    heroStyle.border = "none";
+    heroStyle.boxShadow = "none";
+    heroStyle.backdropFilter = "none";
+  }
   const overlay = hasBackground ? (
     <div
       aria-hidden
@@ -359,7 +366,7 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     ...(hasBackground ? { padding: isCompact ? 26 : 32, position: "relative", zIndex: 1 } : {}),
     ...(isCompact && !hasBackground ? { padding: "0 12px" } : {})
   };
-  const headingSize = isCompact ? 40 : 48;
+  const headingSize = isCompact ? 48 : 64;
   const subtitleSize = isCompact ? 16 : 18;
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;
@@ -386,8 +393,29 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
   );
 
   if (block.alignment === "centered" || !media) {
+    if (isCompact) {
+      return (
+        <section
+          key={block.id ?? index}
+          style={{ ...heroStyle, position: hasBackground ? "relative" : heroStyle.position }}
+          className="thirds-block"
+        >
+          {overlay}
+          <div className="grid" style={{ gap: layoutGap, alignItems: "center", ...innerStyle }}>
+            {content}
+            {media}
+          </div>
+        </section>
+      );
+    }
     return (
-      <AnimatedSection key={block.id ?? index} index={index} style={heroStyle} animated={false}>
+      <AnimatedSection
+        key={block.id ?? index}
+        index={index}
+        style={heroStyle}
+        animated={false}
+        variant={isCompact ? "plain" : "card"}
+      >
         {overlay}
         <div className="grid" style={{ gap: layoutGap, alignItems: "center", ...innerStyle }}>
           {content}
@@ -399,8 +427,38 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
 
   const mediaFirst = block.alignment === "image_left";
 
+  if (isCompact) {
+    return (
+      <section
+        key={block.id ?? index}
+        style={{ ...heroStyle, position: hasBackground ? "relative" : heroStyle.position }}
+        className="thirds-block"
+      >
+        {overlay}
+        <div
+          className="grid"
+          style={{
+            ...(innerStyle ?? {}),
+            gap: isCompact ? 16 : 20,
+            alignItems: "center",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))"
+          }}
+        >
+          {mediaFirst ? media : content}
+          {mediaFirst ? content : media}
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <AnimatedSection key={block.id ?? index} index={index} style={heroStyle} animated={false}>
+    <AnimatedSection
+      key={block.id ?? index}
+      index={index}
+      style={heroStyle}
+      animated={false}
+      variant={isCompact ? "plain" : "card"}
+    >
       {overlay}
       <div
         className="grid"
@@ -606,6 +664,7 @@ const FeaturesBlockSection = ({
   componentsMap: Record<string, ComponentRecord>;
 }) => {
   const paddingX = 16;
+  const minSidePadding = 15;
   const items = (block.items ?? [])
     .map((item) => mergeComponentFields(item, componentsMap))
     .slice(0, 3);
@@ -646,8 +705,8 @@ const FeaturesBlockSection = ({
               gridAutoColumns: "minmax(260px, 380px)",
               gap: 16,
               justifyContent: "center",
-              paddingLeft: `calc((100vw - var(--max-width)) / 2 + ${paddingX}px)`,
-              paddingRight: `calc((100vw - var(--max-width)) / 2 + ${paddingX}px)`
+              paddingLeft: `max(${minSidePadding}px, calc((100vw - var(--max-width)) / 2 + ${paddingX}px))`,
+              paddingRight: `max(${minSidePadding}px, calc((100vw - var(--max-width)) / 2 + ${paddingX}px))`
             }}
             variants={galleryPreset.container}
             initial="hidden"
@@ -681,17 +740,91 @@ const ScrollGalleryBlockSection = ({
   headerHeight: number;
   componentsMap: Record<string, ComponentRecord>;
 }) => {
-  const paddingX = 16;
+  const ChevronLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width={18}
+      height={18}
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+      {...props}
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+
+  const ChevronRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width={18}
+      height={18}
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+      {...props}
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+
+  const navButtonStyle: CSSProperties = {
+    width: 44,
+    height: 44,
+    padding: 0,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "var(--surface)",
+    color: "var(--text)",
+    border: "1px solid var(--border-strong)"
+  };
+
+  const contentPaddingX = 12;
+  const bleedContentStyle: CSSProperties = {
+    width: "calc(100vw - 30px)",
+    maxWidth: "calc(100vw - 30px)",
+    marginLeft: "calc(50% - 50vw + 15px)",
+    marginRight: "calc(50% - 50vw + 15px)",
+    display: "grid",
+    justifyContent: "center"
+  };
+  const constrainedInnerStyle: CSSProperties = {
+    width: "100%",
+    maxWidth: "var(--max-width)"
+  };
   const fullBleedStyle: CSSProperties = {
     width: "100vw",
     maxWidth: "100vw",
     marginLeft: "calc(50% - 50vw)",
     marginRight: "calc(50% - 50vw)",
     padding: "36px 0 42px",
-    minHeight: `calc(100vh - ${headerHeight}px - 32px)`,
     display: "flex",
     alignItems: "center",
     overflow: "hidden"
+  };
+  const fadeWidth = 72;
+  const [fadeState, setFadeState] = useState({ hasOverflow: false, left: false, right: false });
+  const edgeFadeMask =
+    fadeState.left || fadeState.right
+      ? `linear-gradient(90deg, ${fadeState.left ? `transparent 0, #000 ${fadeWidth}px` : "#000 0"}, #000 calc(100% - ${fadeState.right ? fadeWidth : 0}px), ${fadeState.right ? "transparent 100%" : "#000 100%"})`
+      : "linear-gradient(90deg, #000 0, #000 100%)";
+  const updateFadeState = (el: HTMLElement | null) => {
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const hasOverflow = scrollWidth - clientWidth > 4;
+    const left = hasOverflow && scrollLeft > 4;
+    const right = hasOverflow && scrollLeft + clientWidth < scrollWidth - 4;
+    setFadeState((prev) => {
+      if (prev.hasOverflow === hasOverflow && prev.left === left && prev.right === right) return prev;
+      return { hasOverflow, left, right };
+    });
   };
 
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -712,46 +845,67 @@ const ScrollGalleryBlockSection = ({
 
   const resolvedItems = (block.items ?? []).map((item) => mergeComponentFields(item, componentsMap));
 
+  useEffect(() => {
+    const scroller = scrollContainerRef.current;
+    if (!scroller) return;
+    const handle = () => updateFadeState(scroller);
+    handle();
+    scroller.addEventListener("scroll", handle, { passive: true });
+    window.addEventListener("resize", handle);
+    return () => {
+      scroller.removeEventListener("scroll", handle);
+      window.removeEventListener("resize", handle);
+    };
+  }, []);
+
+  useEffect(() => {
+    updateFadeState(scrollContainerRef.current);
+  }, [resolvedItems.length]);
+
   return (
     <section key={block.id ?? index} style={fullBleedStyle}>
-      <div style={{ width: "100%", display: "grid", gap: 18 }}>
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "var(--max-width)",
-            margin: "0 auto",
-            padding: `0 ${paddingX}px`,
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 16,
-            flexWrap: "wrap"
-          }}
-        >
-          <div style={{ display: "grid", gap: 10, maxWidth: "min(820px, 90vw)" }}>
-            {block.eyebrow ? <Pill>{block.eyebrow}</Pill> : null}
-            <h2 style={{ margin: 0, fontSize: 52, lineHeight: 1, fontWeight: 600 }}>{block.heading}</h2>
-            {block.body ? <p style={{ margin: 0, color: "var(--muted)", maxWidth: 780, fontSize: 18 }}>{block.body}</p> : null}
+      <div style={{ ...bleedContentStyle, gap: 18 }}>
+        <div style={{ ...constrainedInnerStyle, padding: `0 ${contentPaddingX}px`, display: "flex", alignItems: "flex-end", justifyContent: "flex-start", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 320px", minWidth: 260 }}>
+            <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} />
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" className="btn secondary" aria-label="Previous" onClick={() => scrollByCards("prev")}>
-              ←
+          <div style={{ display: "flex", gap: 10, marginLeft: "auto", alignSelf: "flex-end" }}>
+            <button
+              type="button"
+              className="btn secondary"
+              aria-label="Previous"
+              onClick={() => scrollByCards("prev")}
+              style={navButtonStyle}
+            >
+              <ChevronLeftIcon />
             </button>
-            <button type="button" className="btn secondary" aria-label="Next" onClick={() => scrollByCards("next")}>
-              →
+            <button
+              type="button"
+              className="btn secondary"
+              aria-label="Next"
+              onClick={() => scrollByCards("next")}
+              style={navButtonStyle}
+            >
+              <ChevronRightIcon />
             </button>
           </div>
         </div>
-        <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
+        <div style={{ position: "relative", width: "100%", ...constrainedInnerStyle, overflow: "hidden" }}>
           <div
             ref={scrollContainerRef}
             style={{
               overflowX: "auto",
               paddingBottom: 12,
-              paddingLeft: `calc((100vw - var(--max-width)) / 2)`,
-              paddingRight: `${paddingX}px`,
+              paddingLeft: `${contentPaddingX}px`,
+              paddingRight: `${contentPaddingX}px`,
               scrollbarWidth: "none",
-              msOverflowStyle: "none"
+              msOverflowStyle: "none",
+              WebkitMaskImage: edgeFadeMask,
+              maskImage: edgeFadeMask,
+              WebkitMaskSize: "100% 100%",
+              maskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat"
             }}
           >
             <style>{`
@@ -767,7 +921,7 @@ const ScrollGalleryBlockSection = ({
                 gridAutoFlow: "column",
                 gridAutoColumns: "minmax(320px, 480px)",
                 gap: 16,
-                padding: `0 ${paddingX}px 16px 0`,
+                padding: `0 ${contentPaddingX + 48}px 16px 0`,
                 scrollSnapType: "x mandatory"
               }}
               variants={galleryPreset.container}
@@ -814,7 +968,7 @@ const ShowcaseBlockSection = ({
   index: number;
   headerHeight: number;
 }) => {
-  const basePaddingX = 18;
+  const basePaddingX = 0;
   const frameRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const stackRef = useRef<HTMLDivElement | null>(null);
@@ -948,7 +1102,6 @@ const ShowcaseBlockSection = ({
   const rotations = [-6, -2.5, 3.5, 1, -4.5, 5, -1.5];
 
   const sectionPadding = isNarrow ? "0" : "40px 0 52px";
-  const sectionMinHeight = shouldScroll && !isNarrow ? `calc(100vh - ${headerHeight}px - 24px)` : "auto";
 
   return (
     <section
@@ -959,7 +1112,6 @@ const ShowcaseBlockSection = ({
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
         padding: sectionPadding,
-        minHeight: sectionMinHeight,
         display: "flex",
         alignItems: isNarrow ? "flex-start" : "center",
         overflow: "visible"
@@ -969,7 +1121,7 @@ const ShowcaseBlockSection = ({
         ref={frameRef}
         style={{
           width: "100%",
-          maxWidth: "calc(var(--max-width) + 320px)",
+          maxWidth: "var(--max-width)",
           margin: "0 auto",
           padding: `0 ${paddingX}px`,
           display: "grid",
