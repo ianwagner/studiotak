@@ -7,6 +7,7 @@ import {
   onAuthStateChanged,
   PhoneAuthProvider,
   PhoneMultiFactorGenerator,
+  type PhoneMultiFactorInfo,
   RecaptchaVerifier,
   signInWithEmailAndPassword,
   signOut,
@@ -38,8 +39,7 @@ type AdminAuthGateProps = {
 
 export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   const disableAppVerificationFlag = process.env.NEXT_PUBLIC_DISABLE_PHONE_APP_VERIFICATION === "true";
-  // We keep app verification ON even if the flag is set, because disabling it breaks real numbers.
-  const allowAppVerificationBypass = false;
+  const allowAppVerificationBypass = disableAppVerificationFlag && process.env.NODE_ENV !== "production";
   const [state, setState] = useState<AuthState>({
     loading: true,
     user: null,
@@ -58,6 +58,32 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
   const recaptchaInitPromise = useRef<Promise<RecaptchaVerifier> | null>(null);
   const recaptchaContainerId = "admin-mfa-recaptcha";
+  const recaptchaContainerRef = useRef<HTMLElement | null>(null);
+  const recaptchaRenderCounter = useRef(0);
+
+  const ensureRecaptchaContainer = (forceFresh = false) => {
+    if (typeof document === "undefined") throw new Error("reCAPTCHA container not available");
+    if (!forceFresh && recaptchaContainerRef.current && document.body.contains(recaptchaContainerRef.current)) {
+      return recaptchaContainerRef.current;
+    }
+
+    const old = document.getElementById(recaptchaContainerId);
+    if (old && old.parentNode) {
+      old.parentNode.removeChild(old);
+    }
+
+    const container = document.createElement("div");
+    container.id = recaptchaContainerId;
+    container.style.position = "fixed";
+    container.style.right = "12px";
+    container.style.bottom = "12px";
+    container.style.zIndex = "1000";
+    container.setAttribute("aria-hidden", "true");
+    document.body.appendChild(container);
+
+    recaptchaContainerRef.current = container;
+    return container;
+  };
 
   // Track the last seen API key to detect mid-session config changes.
   const apiKeyRef = useRef<string | undefined>(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
@@ -68,6 +94,9 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
     } catch (e) {
       // ignore
     }
+    if (recaptchaContainerRef.current && recaptchaContainerRef.current.parentNode) {
+      recaptchaContainerRef.current.parentNode.removeChild(recaptchaContainerRef.current);
+    }
     recaptchaRef.current = null;
     recaptchaInitPromise.current = null;
   };
@@ -75,17 +104,7 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   useEffect(() => {
     // Ensure the container exists once and is never removed during runtime (even on re-renders).
     if (typeof document !== "undefined") {
-      let container = document.getElementById(recaptchaContainerId) as HTMLElement | null;
-      if (!container) {
-        container = document.createElement("div");
-        container.id = recaptchaContainerId;
-        container.style.position = "fixed";
-        container.style.right = "12px";
-        container.style.bottom = "12px";
-        container.style.zIndex = "1000";
-        container.setAttribute("aria-hidden", "true");
-        document.body.appendChild(container);
-      }
+      ensureRecaptchaContainer();
     }
     return () => {
       try {
@@ -100,12 +119,10 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   }, []);
 
   useEffect(() => {
-    if (disableAppVerificationFlag) {
-      console.warn(
-        "NEXT_PUBLIC_DISABLE_PHONE_APP_VERIFICATION=true is ignored to keep real SMS challenges working. Leave it unset unless you only use Firebase test phone numbers."
-      );
+    if (allowAppVerificationBypass) {
+      console.warn("Phone app verification is disabled (NEXT_PUBLIC_DISABLE_PHONE_APP_VERIFICATION=true). Use only with Firebase test numbers.");
     }
-  }, [disableAppVerificationFlag]);
+  }, [allowAppVerificationBypass]);
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
@@ -136,28 +153,41 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
 
     if (typeof document === "undefined") throw new Error("reCAPTCHA container not available");
 
-    let container = document.getElementById(recaptchaContainerId);
-    if (!container) {
-      container = document.createElement("div");
-      container.id = recaptchaContainerId;
-      container.style.position = "fixed";
-      container.style.right = "12px";
-      container.style.bottom = "12px";
-      container.style.zIndex = "1000";
-      container.setAttribute("aria-hidden", "true");
-      document.body.appendChild(container);
-    }
+    const container = ensureRecaptchaContainer(forceFresh);
+    const slot = document.createElement("div");
+    const innerId = `${recaptchaContainerId}-${recaptchaRenderCounter.current++}`;
+    slot.id = innerId;
+    container.appendChild(slot);
 
     const auth = getAuth(getFirebaseApp());
-    const buildVerifier = () => new RecaptchaVerifier(auth, recaptchaContainerId, { size: "invisible" });
+    const buildVerifier = () => new RecaptchaVerifier(auth, slot, { size: "invisible" });
 
     const init = (async () => {
-      try {
+      const renderVerifier = async () => {
         const verifier = buildVerifier();
         recaptchaRef.current = verifier;
         await verifier.render();
         return verifier;
-      } catch (error) {
+      };
+
+      try {
+        return await renderVerifier();
+      } catch (error: any) {
+        const message: string = error?.message ?? "";
+        // If the SDK complains about an existing render, nuke the container and retry once.
+        if (message.toLowerCase().includes("already been rendered")) {
+          resetRecaptcha();
+          const fresh = ensureRecaptchaContainer(true);
+          const slotRetry = document.createElement("div");
+          const innerIdRetry = `${recaptchaContainerId}-${recaptchaRenderCounter.current++}`;
+          slotRetry.id = innerIdRetry;
+          fresh.appendChild(slotRetry);
+          const retryVerifier = new RecaptchaVerifier(getAuth(getFirebaseApp()), slotRetry, { size: "invisible" });
+          recaptchaRef.current = retryVerifier;
+          await retryVerifier.render();
+          return retryVerifier;
+        }
+
         // If the SDK cannot find or render into the container, rebuild it once and retry.
         recaptchaRef.current = null;
         if (!document.getElementById(recaptchaContainerId)) {
@@ -171,10 +201,7 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
           document.body.appendChild(freshContainer);
         }
 
-        const verifier = buildVerifier();
-        recaptchaRef.current = verifier;
-        await verifier.render();
-        return verifier;
+        return await renderVerifier();
       }
     })();
 
@@ -185,7 +212,9 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   };
 
   const startMfaChallenge = async (resolver: MultiFactorResolver, allowRetryOnCaptcha = true) => {
-    const phoneHint = resolver.hints.find((hint) => hint.factorId === PhoneMultiFactorGenerator.FACTOR_ID);
+    const phoneHint = resolver.hints.find(
+      (hint): hint is PhoneMultiFactorInfo => hint.factorId === PhoneMultiFactorGenerator.FACTOR_ID
+    );
     if (!phoneHint) {
       setMfaState({
         resolver: null,
@@ -216,8 +245,8 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
       }
 
       const auth = getAuth(getFirebaseApp());
-      // Never disable app verification; disabling only works with Firebase test numbers and causes real SMS to fail.
-      auth.settings.appVerificationDisabledForTesting = false;
+      // Only bypass app verification locally when explicitly requested for Firebase test numbers.
+      auth.settings.appVerificationDisabledForTesting = allowAppVerificationBypass;
       const phoneAuthProvider = new PhoneAuthProvider(auth);
 
       // Always rebuild verifier before starting a challenge to avoid stale app credentials.
@@ -244,12 +273,15 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
       setMfaState((s) => ({
         ...s,
         sending: false,
-        error:
-          code === "auth/captcha-check-failed"
-            ? "reCAPTCHA check failed. Make sure this domain is authorized in Firebase Auth and try again."
-            : error?.code && error?.message
-              ? `${error.code}: ${error.message}`
-              : error?.message ?? "Failed to send verification code. Try again."
+        error: (() => {
+          if (code === "auth/captcha-check-failed") {
+            return "reCAPTCHA check failed. Make sure this domain is authorized in Firebase Auth and try again.";
+          }
+          if (code === "auth/invalid-app-credential" || code === "auth/missing-app-credential") {
+            return "App verification failed. Confirm this domain is in Firebase Auth authorized domains and reload to refresh reCAPTCHA.";
+          }
+          return error?.code && error?.message ? `${error.code}: ${error.message}` : error?.message ?? "Failed to send verification code. Try again.";
+        })()
       }));
     } finally {
       setState((s) => ({ ...s, loading: false }));

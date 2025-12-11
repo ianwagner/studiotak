@@ -6,6 +6,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { addDoc, collection, getDocs, getFirestore, limit, query, serverTimestamp } from "firebase/firestore";
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import type { ComponentRecord } from "@/lib/admin/components";
+import type { Route } from "next";
 import Link from "next/link";
 import { MediaSelect, type MediaOption } from "./MediaSelect";
 
@@ -15,7 +16,7 @@ type ComponentFormProps = {
   initialState: ComponentFormState;
   onSubmit: (values: ComponentFormState) => Promise<void>;
   isSubmitting: boolean;
-  backHref: string;
+  backHref: Route;
   heading?: string;
   intro?: string;
   submitLabel: { idle: string; loading: string };
@@ -74,7 +75,7 @@ export function ComponentForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await onSubmit({ ...formState, kind: "feature", updatedAt: new Date().toISOString() });
+    await onSubmit({ ...formState, kind: "feature" });
   };
 
   const handleIconUpload = async (file: File) => {

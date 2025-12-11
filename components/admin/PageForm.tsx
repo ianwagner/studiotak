@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useList } from "@refinedev/core";
 import { useEffect, useMemo, useState } from "react";
 import type {
@@ -15,7 +16,8 @@ import type {
   ScrollGalleryBlock,
   ShowcaseBlock,
   SplitBlock,
-  ThirdsBlock
+  ThirdsBlock,
+  BlockMedia
 } from "@/lib/admin/pages";
 import { animationPresets, defaultAnimationPreset, type AnimationPresetName } from "@/components/sections/animationPresets";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
@@ -23,6 +25,7 @@ import { addDoc, collection, getDocs, getFirestore, limit, query, serverTimestam
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import { getAuth } from "firebase/auth";
 import type { ComponentRecord } from "@/lib/admin/components";
+import type { RedirectRule } from "@/lib/admin/pages";
 import { MediaSelect, type MediaOption } from "./MediaSelect";
 
 type PendingBlock = {
@@ -45,7 +48,7 @@ type PageFormProps = {
   initialState: PageFormState;
   onSubmit: (values: PageFormState) => Promise<void>;
   isSubmitting: boolean;
-  backHref: string;
+  backHref: Route;
   heading?: string;
   intro?: string;
   submitLabel: SubmitLabel;
@@ -366,12 +369,20 @@ export function PageForm({
     setFormState((prev) => (prev ? { ...prev, internalLinks: links } : prev));
   };
 
-  const handleRedirectChange = (idx: number, field: "from" | "to" | "type", value: string) => {
+  const handleRedirectChange = (idx: number, field: "from" | "to", value: string) => {
     setFormState((prev) => {
       if (!prev) return prev;
-      const redirects = prev.redirects ?? [];
-      const next = [...redirects];
+      const next: RedirectRule[] = [...(prev.redirects ?? [])];
       next[idx] = { ...next[idx], [field]: value };
+      return { ...prev, redirects: next };
+    });
+  };
+
+  const handleRedirectTypeChange = (idx: number, value: RedirectRule["type"]) => {
+    setFormState((prev) => {
+      if (!prev) return prev;
+      const next: RedirectRule[] = [...(prev.redirects ?? [])];
+      next[idx] = { ...next[idx], type: value };
       return { ...prev, redirects: next };
     });
   };
@@ -379,7 +390,7 @@ export function PageForm({
   const addRedirect = () => {
     setFormState((prev) => {
       if (!prev) return prev;
-      const next = [...(prev.redirects ?? []), { from: "", to: "", type: "permanent" }];
+      const next: RedirectRule[] = [...(prev.redirects ?? []), { from: "", to: "", type: "permanent" }];
       return { ...prev, redirects: next };
     });
   };
@@ -464,7 +475,7 @@ export function PageForm({
   const handleHeroFieldChange = (
     idx: number,
     field: keyof Omit<HeroLikeBlock, "id" | "type" | "media" | "alignment" | "background">,
-    value: string
+    value: string | boolean
   ) => {
     updateBlock(idx, (block) => (isHeroLikeBlock(block) ? { ...block, [field]: value } : block));
   };
@@ -476,7 +487,7 @@ export function PageForm({
   const handleStoryFieldChange = (
     idx: number,
     field: keyof Omit<StoryBlock, "id" | "type" | "media" | "variant" | "sections">,
-    value: string
+    value: StoryBlock[keyof Omit<StoryBlock, "id" | "type" | "media" | "variant" | "sections">]
   ) => {
     updateBlock(idx, (block) => (isStoryBlock(block) ? { ...block, [field]: value } : block));
   };
@@ -501,14 +512,18 @@ export function PageForm({
     updateBlock(idx, (block) => (isAnimatedHeadlineBlock(block) ? { ...block, [field]: value } : block));
   };
 
-  const handleFeaturesFieldChange = (idx: number, field: keyof Omit<FeaturesBlock, "id" | "type" | "items">, value: string | number) => {
+  const handleFeaturesFieldChange = (
+    idx: number,
+    field: keyof Omit<FeaturesBlock, "id" | "type" | "items">,
+    value: FeaturesBlock[keyof Omit<FeaturesBlock, "id" | "type" | "items">]
+  ) => {
     updateBlock(idx, (block) => (isFeaturesBlock(block) ? { ...block, [field]: value } : block));
   };
 
   const handleScrollGalleryFieldChange = (
     idx: number,
     field: keyof Omit<ScrollGalleryBlock, "id" | "type" | "items">,
-    value: string
+    value: ScrollGalleryBlock[keyof Omit<ScrollGalleryBlock, "id" | "type" | "items">]
   ) => {
     updateBlock(idx, (block) => (isScrollGalleryBlock(block) ? { ...block, [field]: value } : block));
   };
@@ -604,7 +619,11 @@ export function PageForm({
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
 
-      const updatedMedia = { url, alt: file.name, type: isVideo ? "video" : "image" };
+      const updatedMedia: BlockMedia = {
+        url,
+        alt: file.name,
+        type: isVideo ? "video" : "image"
+      };
       updateBlock(idx, (current) => {
         if (target === "background" && isHeroLikeBlock(current)) {
           return { ...current, background: updatedMedia };
@@ -800,7 +819,7 @@ export function PageForm({
     color: "var(--foreground)"
   } as const;
 
-  const renderMediaThumb = (media?: { url?: string; type?: string; alt?: string }, loading?: boolean) => {
+  const renderMediaThumb = (media?: { url?: string; type?: string; alt?: string } | null, loading?: boolean) => {
     if (!media?.url) {
       return (
         <div
@@ -1185,7 +1204,7 @@ export function PageForm({
                   onClear={() =>
                     updateBlock(idx, (current) => ({
                       ...current,
-                      media: null
+                      media: undefined
                     }))
                   }
                 />
@@ -1205,7 +1224,7 @@ export function PageForm({
                   onClear={() =>
                     updateBlock(idx, (current) => ({
                       ...current,
-                      background: null
+                      background: undefined
                     }))
                   }
                 />
@@ -1292,7 +1311,7 @@ export function PageForm({
                   onClear={() =>
                     updateBlock(idx, (current) => ({
                       ...current,
-                      media: null
+                      media: undefined
                     }))
                   }
                 />
@@ -1829,7 +1848,7 @@ export function PageForm({
                   onClear={() =>
                     updateBlock(idx, (current) => ({
                       ...current,
-                      media: null
+                      media: undefined
                     }))
                   }
                 />
@@ -2239,7 +2258,7 @@ export function PageForm({
                         </div>
                         <div className="field-group">
                           <label>Type</label>
-                          <select value={redirect.type ?? "permanent"} onChange={(e) => handleRedirectChange(idx, "type", e.target.value)}>
+                          <select value={redirect.type ?? "permanent"} onChange={(e) => handleRedirectTypeChange(idx, e.target.value as RedirectRule["type"])}>
                             <option value="permanent">301 Permanent</option>
                             <option value="temporary">302 Temporary</option>
                           </select>

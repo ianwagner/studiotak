@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import type { NavigationItemRecord } from "@/lib/admin/navigation";
 import { getNavigationItems } from "@/lib/navigation";
 
@@ -48,7 +49,7 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
                             {children.map((child) => (
                               <Link
                                 key={child.id}
-                                href={child.href}
+                                href={child.href as Route}
                                 target={child.isExternal ? "_blank" : undefined}
                                 rel={child.isExternal ? "noreferrer noopener" : undefined}
                               >

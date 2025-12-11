@@ -160,7 +160,8 @@ export function AnimatedHeadline({
   const containerRef = useRef<HTMLElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const freezeEnabled = freezeOnScroll;
-  const scrollOffsets = freezeEnabled ? ["start 90%", "end start"] : ["start 80%", "end 30%"];
+  const scrollOffsets: NonNullable<Parameters<typeof useScroll>[0]>["offset"] =
+    freezeEnabled ? ["start 90%", "end start"] : ["start 80%", "end 30%"];
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: scrollOffsets

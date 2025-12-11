@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Script from "next/script";
+import type { Route } from "next";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import { motion, useInView } from "framer-motion";
@@ -234,7 +234,7 @@ const FeatureCard = ({
         </div>
         <p style={{ margin: 0, color: "var(--muted)", fontSize: 15 }}>{item.body}</p>
         {item.href ? (
-          <Link href={item.href} className="nav-link" style={{ width: "fit-content" }}>
+          <Link href={item.href as Route} className="nav-link" style={{ width: "fit-content" }}>
             Learn more
             </Link>
           ) : null}
@@ -270,7 +270,7 @@ const FeatureCard = ({
         </div>
         <p style={{ margin: 0, color: "var(--muted)" }}>{item.body}</p>
         {item.href ? (
-          <Link href={item.href} className="nav-link" style={{ width: "fit-content" }}>
+          <Link href={item.href as Route} className="nav-link" style={{ width: "fit-content" }}>
             Learn more
           </Link>
         ) : null}
@@ -321,7 +321,7 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
   const isCompact = block.type === "thirds";
   const fullBleedHeroStyle = getFullBleedHeroStyle(headerHeight, isCompact);
   const removeStroke = !!block.media?.url;
-  const heroStyle = hasBackground
+  const heroStyle: CSSProperties = hasBackground
     ? {
         ...fullBleedHeroStyle,
         position: "relative",
@@ -372,12 +372,12 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
       ) : null}
       <div style={{ display: "flex", gap: isCompact ? 10 : 12, flexWrap: "wrap" }}>
         {block.primaryCtaLabel && block.primaryCtaHref ? (
-          <Link className="btn" href={block.primaryCtaHref}>
+          <Link className="btn" href={block.primaryCtaHref as Route}>
             {block.primaryCtaLabel}
           </Link>
         ) : null}
         {block.secondaryCtaLabel && block.secondaryCtaHref ? (
-          <Link className="btn secondary" href={block.secondaryCtaHref}>
+          <Link className="btn secondary" href={block.secondaryCtaHref as Route}>
             {block.secondaryCtaLabel}
           </Link>
         ) : null}
@@ -532,7 +532,7 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
       <SectionHeading eyebrow={block.eyebrow} title={block.heading} />
       {block.body ? <p style={{ margin: 0, color: "var(--muted)", fontSize: 16 }}>{block.body}</p> : null}
       {block.ctaLabel && block.ctaHref ? (
-        <Link className="btn" href={block.ctaHref} style={{ width: "fit-content" }}>
+        <Link className="btn" href={block.ctaHref as Route} style={{ width: "fit-content" }}>
           {block.ctaLabel}
         </Link>
       ) : null}
@@ -990,7 +990,7 @@ const ShowcaseBlockSection = ({
             padding: `0 ${paddingX}px`
           }}
         >
-          <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.subhead} align="center" />
+          <SectionHeading eyebrow={block.eyebrow} title={block.heading ?? "Showcase"} kicker={block.subhead} align="center" />
         </div>
         <div
           ref={scrollRef}
@@ -1155,11 +1155,7 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
   return (
     <>
       {shouldForceDarkOnLoad ? (
-        <Script
-          id="initial-theme-shift"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: initialThemeScript }}
-        />
+        <script id="initial-theme-shift" dangerouslySetInnerHTML={{ __html: initialThemeScript }} />
       ) : null}
       <div className="grid" style={{ gap: 24 }}>
         {blocks.map((block, index) => {

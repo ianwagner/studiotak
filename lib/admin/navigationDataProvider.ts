@@ -17,17 +17,19 @@ export const createNavigationDataProvider = (): DataProvider => {
 
   const getIndex = (id: string) => links.findIndex((item) => item.id === id);
 
-  return {
-    getList: async () => ({
-      data: sortNav(links),
+  const getList: DataProvider["getList"] = async () =>
+    ({
+      data: sortNav(links) as any,
       total: links.length
-    }),
-    getOne: async ({ id }) => {
+    }) as any;
+
+  const getOne: DataProvider["getOne"] = async ({ id }) => {
       const index = getIndex(String(id));
       if (index === -1) throw new Error("Navigation link not found");
-      return { data: clone(links[index]) };
-    },
-    create: async ({ variables }) => {
+      return { data: clone(links[index]) as any };
+    };
+
+  const create: DataProvider["create"] = async ({ variables }) => {
       const record: NavigationItemRecord = {
         ...(variables as UpdateVariables),
         id: (variables as any)?.id ?? crypto.randomUUID(),
@@ -39,9 +41,10 @@ export const createNavigationDataProvider = (): DataProvider => {
       };
       links.push(record);
       links = sortNav(links);
-      return { data: clone(record) };
-    },
-    update: async ({ id, variables }) => {
+      return { data: clone(record) as any };
+    };
+
+  const update: DataProvider["update"] = async ({ id, variables }) => {
       const index = getIndex(String(id));
       if (index === -1) throw new Error("Navigation link not found");
       const updated: NavigationItemRecord = {
@@ -53,17 +56,27 @@ export const createNavigationDataProvider = (): DataProvider => {
       };
       links[index] = updated;
       links = sortNav(links);
-      return { data: clone(updated) };
-    },
-    deleteOne: async ({ id }) => {
+      return { data: clone(updated) as any };
+    };
+
+  const deleteOne: DataProvider["deleteOne"] = async ({ id }) => {
       const index = getIndex(String(id));
       if (index === -1) throw new Error("Navigation link not found");
       const [removed] = links.splice(index, 1);
-      return { data: clone(removed) };
-    },
-    getMany: async ({ ids }) => ({
-      data: clone(sortNav(links).filter((link) => ids.map(String).includes(link.id)))
-    }),
+      return { data: clone(removed) as any };
+    };
+
+  const getMany: NonNullable<DataProvider["getMany"]> = async ({ ids }) => ({
+    data: clone(sortNav(links).filter((link) => ids.map(String).includes(link.id))) as any
+  });
+
+  return {
+    getList,
+    getOne,
+    create,
+    update,
+    deleteOne,
+    getMany,
     getApiUrl: () => "navigation-memory"
   };
 };

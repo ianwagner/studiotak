@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { NavigationItemRecord } from "@/lib/admin/navigation";
+import type { Route } from "next";
 
 export type NavigationFormState = Omit<NavigationItemRecord, "id" | "updatedAt"> & { id?: string };
 
@@ -10,7 +11,7 @@ type NavigationFormProps = {
   initialState: NavigationFormState;
   onSubmit: (values: NavigationFormState) => Promise<void>;
   isSubmitting: boolean;
-  backHref: string;
+  backHref: Route;
   heading?: string;
   intro?: string;
   placementNote?: string;
@@ -32,13 +33,11 @@ export function NavigationForm({
   allLinks = []
 }: NavigationFormProps) {
   const [formState, setFormState] = useState<NavigationFormState>({
-    showInHeader: true,
-    showInFooter: false,
-    footerSection: "",
-    parentId: "",
-    icon: "",
     ...initialState,
+    showInHeader: initialState.showInHeader ?? true,
+    showInFooter: initialState.showInFooter ?? false,
     footerSection: initialState.footerSection ?? "",
+    parentId: initialState.parentId ?? "",
     icon: initialState.icon ?? ""
   });
 

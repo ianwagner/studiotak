@@ -107,7 +107,8 @@ export const createFirestoreDataProvider = (): DataProvider => {
     params: any,
     runner: () => Promise<T>
   ) => {
-    if (firestoreBlocked[resource]) return fallbackMap[resource][operation](params);
+    const delegate = fallbackMap[resource][operation] as (arg: any) => Promise<T>;
+    if (firestoreBlocked[resource]) return delegate(params);
     try {
       return await runner();
     } catch (error) {
@@ -115,7 +116,7 @@ export const createFirestoreDataProvider = (): DataProvider => {
         firestoreBlocked[resource] = true;
       }
       console.warn(`Falling back to seed provider for ${String(operation)}`, error);
-      return fallbackMap[resource][operation](params);
+      return delegate(params);
     }
   };
 
@@ -198,7 +199,8 @@ const resolveResource = (resource?: string): ResourceKey => {
 };
 
 const createDelegatingProvider = (providers: Record<ResourceKey, DataProvider>): DataProvider => {
-  const delegate = (resource: ResourceKey, method: keyof DataProvider, params: any) => providers[resource][method](params);
+  const delegate = (resource: ResourceKey, method: keyof DataProvider, params: any) =>
+    (providers[resource][method] as (arg: any) => Promise<any>)(params);
   return {
     getList: (params) => delegate(resolveResource(params?.resource), "getList", params),
     getOne: (params) => delegate(resolveResource(params?.resource), "getOne", params),
