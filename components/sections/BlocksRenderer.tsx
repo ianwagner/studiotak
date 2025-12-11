@@ -316,6 +316,7 @@ const getFullBleedHeroStyle = (headerHeight: number, compact = false): CSSProper
 });
 
 const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHeight: number) => {
+  const hasMedia = Boolean(block.media?.url);
   const media = renderMedia(block.media);
   const hasBackground = Boolean(block.background?.url);
   const isCompact = block.type === "thirds";
@@ -366,12 +367,15 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     ...(hasBackground ? { padding: isCompact ? 26 : 32, position: "relative", zIndex: 1 } : {}),
     ...(isCompact && !hasBackground ? { padding: "0 12px" } : {})
   };
-  const headingSize = isCompact ? 56 : 76;
+  const textOnlyContentStyle: CSSProperties = hasMedia
+    ? {}
+    : { maxWidth: "min(var(--max-width), 960px)", width: "100%", justifySelf: "start" };
+  const headingSize = isCompact ? "clamp(36px, 8vw, 56px)" : "clamp(44px, 9vw, 76px)";
   const subtitleSize = isCompact ? 16 : 18;
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;
   const content = (
-    <div className="grid" style={{ gap: stackGap }}>
+    <div className="grid" style={{ gap: stackGap, ...textOnlyContentStyle }}>
       {block.eyebrow ? <Pill>{block.eyebrow}</Pill> : null}
       <h1 style={{ fontSize: headingSize, lineHeight: 1.05, margin: 0 }}>{block.title}</h1>
       {block.subtitle ? (
@@ -980,7 +984,8 @@ const ShowcaseBlockSection = ({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const zSeedsRef = useRef<Record<string, number>>({});
   const isNarrow = containerWidth < 720;
-  const paddingX = isNarrow ? 0 : basePaddingX;
+  const mobilePaddingX = 15;
+  const paddingX = isNarrow ? mobilePaddingX : basePaddingX;
   const typeFilter = block.typeFilter?.trim();
   const industryFilter = block.industryFilter?.trim();
   const featuredOnly = Boolean(block.featuredOnly);
@@ -1079,7 +1084,7 @@ const ShowcaseBlockSection = ({
     ? clampNumber(viewportHeight !== null ? viewportHeight - headerHeight - 96 : 560, 260, 660)
     : null;
   const totalWidth = cardCount * cardWidth - overlap * (cardCount - 1);
-  const scrollPaddingX = shouldScroll ? Math.max(paddingX, basePaddingX) : paddingX;
+  const scrollPaddingX = shouldScroll ? 0 : paddingX;
 
   useEffect(() => {
     if (!shouldScroll) return;
@@ -1114,7 +1119,8 @@ const ShowcaseBlockSection = ({
         padding: sectionPadding,
         display: "flex",
         alignItems: isNarrow ? "flex-start" : "center",
-        overflow: "visible"
+        overflowX: "hidden",
+        overflowY: "visible"
       }}
     >
       <div
@@ -1123,7 +1129,7 @@ const ShowcaseBlockSection = ({
           width: "100%",
           maxWidth: "var(--max-width)",
           margin: "0 auto",
-          padding: `0 ${paddingX}px`,
+          padding: 0,
           display: "grid",
           gap: 12,
           position: "relative",
