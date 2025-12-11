@@ -1,0 +1,170 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { getFirebaseApp } from "@/lib/firebaseClient";
+import {
+  getSiteSettings,
+  saveSiteSettings,
+  seedSiteSettings,
+  type SiteSettings,
+  siteSettingsFirebaseReady
+} from "@/lib/siteSettings";
+
+type AssetKey = "faviconUrl" | "touchIconUrl" | "logoUrl" | "notFoundIconUrl";
+
+const assetCopy: Record<AssetKey, { label: string; helper: string }> = {
+  faviconUrl: {
+    label: "Favicon",
+    helper: "Ideal: 32x32 .ico or .png."
+  },
+  touchIconUrl: {
+    label: "Touch icon",
+    helper: "Apple touch icon or PWA icon, typically 180x180 PNG."
+  },
+  logoUrl: {
+    label: "Logo",
+    helper: "Transparent PNG or SVG, used in the header and metadata."
+  },
+  notFoundIconUrl: {
+    label: "404 icon",
+    helper: "Optional illustration for the 404 page. SVG or transparent PNG works best."
+  }
+};
+
+export function SiteSettingsForm() {
+  const [form, setForm] = useState<SiteSettings>(seedSiteSettings);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<Partial<Record<AssetKey, boolean>>>({});
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const settings = await getSiteSettings();
+        setForm(settings);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load settings");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleUpload = async (key: AssetKey, file: File | null) => {
+    if (!file) return;
+    if (!siteSettingsFirebaseReady) {
+      setError("Configure Firebase env vars to upload assets.");
+      return;
+    }
+    setError(null);
+    setMessage(null);
+    setUploading((prev) => ({ ...prev, [key]: true }));
+    try {
+      const app = getFirebaseApp();
+      const storage = getStorage(app);
+      const storageRef = ref(storage, `site-settings/${key}-${Date.now()}-${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      const saved = await saveSiteSettings({ ...form, [key]: url });
+      setForm(saved);
+      setMessage(`${assetCopy[key].label} uploaded & saved`);
+    } catch (err) {
+      console.error(err);
+      setError("Upload failed. Check Firebase Storage permissions.");
+    } finally {
+      setUploading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!siteSettingsFirebaseReady) {
+      setError("Configure Firebase env vars to save settings.");
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const saved = await saveSiteSettings(form);
+      setForm(saved);
+      setMessage(siteSettingsFirebaseReady ? "Saved settings" : "Saved locally (Firebase not configured)");
+    } catch (err) {
+      console.error(err);
+      setError("Unable to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <p>Loading settings…</p>;
+  }
+
+  return (
+    <div className="grid" style={{ gap: 16 }}>
+      <div className="card" style={{ padding: 12 }}>
+        <h1 style={{ margin: "0 0 6px" }}>Site settings</h1>
+        <p style={{ margin: 0, color: "var(--muted)" }}>
+          Manage global assets used across the site. Upload files directly to Firebase from here.
+        </p>
+        {!siteSettingsFirebaseReady ? (
+          <p style={{ margin: "8px 0 0", color: "var(--muted)" }}>
+            Firebase env vars missing—uploads and saves are disabled until configured.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="card" style={{ padding: 12 }}>
+        <form className="grid" style={{ gap: 12 }} onSubmit={handleSubmit}>
+          {message ? <div style={{ color: "var(--accent)" }}>{message}</div> : null}
+          {error ? <div style={{ color: "var(--danger)" }}>{error}</div> : null}
+
+          {(Object.keys(assetCopy) as AssetKey[]).map((key) => (
+            <div className="field-group" key={key}>
+              <label>{assetCopy[key].label}</label>
+              <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>{assetCopy[key].helper}</p>
+              <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                <input
+                  className="input"
+                  type="file"
+                  accept={key === "logoUrl" || key === "notFoundIconUrl" ? "image/*,image/svg+xml" : "image/*"}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    void handleUpload(key, file);
+                    e.target.value = "";
+                  }}
+                  disabled={uploading[key]}
+                />
+                {uploading[key] ? <span style={{ color: "var(--muted)" }}>Uploading…</span> : null}
+                {form[key] ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <img
+                      src={form[key]}
+                      alt={`${assetCopy[key].label} preview`}
+                      style={{ width: 36, height: 36, borderRadius: 6, border: "1px solid var(--border)" }}
+                    />
+                    <span style={{ color: "var(--muted)", fontSize: 12 }}>Preview</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ))}
+
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <button className="btn" type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save settings"}
+            </button>
+            {form.updatedAt ? (
+              <span style={{ color: "var(--muted)", fontSize: 13 }}>Last updated {form.updatedAt}</span>
+            ) : null}
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

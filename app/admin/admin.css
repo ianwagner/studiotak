@@ -1,0 +1,67 @@
+.admin-shell {
+  background: var(--bg);
+}
+
+.admin-layout {
+  grid-template-columns: 220px 1fr;
+}
+
+.admin-sidebar {
+  padding: 16px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.admin-sidebar .nav-link {
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.admin-content {
+  padding: 16px 16px 28px;
+  max-width: 1100px;
+}
+
+.admin-shell .card {
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  box-shadow: none;
+  border-radius: 8px;
+}
+
+.admin-shell fieldset {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 10px;
+  box-shadow: none;
+}
+
+.admin-shell legend {
+  padding: 0;
+  color: var(--muted);
+}
+
+.admin-shell .btn {
+  box-shadow: none;
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
+.admin-shell form {
+  gap: 12px;
+}
+
+.admin-shell .field-group {
+  gap: 6px;
+}
+
+.admin-auth {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}

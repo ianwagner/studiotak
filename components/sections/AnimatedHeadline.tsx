@@ -1,0 +1,298 @@
+"use client";
+
+import { animate, motion, useInView, useMotionValue, useMotionValueEvent, useScroll, useSpring } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import type { AnimatedHeadlineBlock } from "@/lib/admin/pages";
+import { useDarkModeShift } from "./useDarkModeShift";
+
+type TextAnimationVariant = AnimatedHeadlineBlock["animationStyle"];
+type AnimationMode = AnimatedHeadlineBlock["animationMode"];
+
+const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+
+const getStaggerProgress = (index: number, total: number, progress: number) => {
+  if (total <= 1) return clamp01(progress);
+  const step = 1 / total;
+  const start = step * index;
+  const end = start + step;
+  return clamp01((progress - start) / (end - start));
+};
+
+const scrambleChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@";
+
+const getScrambledChar = (index: number, tick: number) => {
+  const seeded = Math.abs(Math.sin(index * 13.37 + tick * 0.7));
+  const nextIndex = Math.floor(seeded * scrambleChars.length) % scrambleChars.length;
+  return scrambleChars[nextIndex];
+};
+
+function AnimatedText({
+  text,
+  variant,
+  progress,
+  align = "center"
+}: {
+  text: string;
+  variant: TextAnimationVariant;
+  progress: number;
+  align?: "left" | "center" | "right";
+}) {
+  const words = useMemo(() => text.split(" "), [text]);
+  const letters = useMemo(() => text.split(""), [text]);
+  const justifyContent = align === "center" ? "center" : align === "right" ? "flex-end" : "flex-start";
+
+  if (variant === "typewriter") {
+    const visibleCharacters = Math.floor(progress * (text.length + 2));
+    const displayText = text.slice(0, visibleCharacters);
+    const caretVisible = visibleCharacters <= text.length;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", justifyContent, gap: 6, minHeight: "1em" }}>
+        <span>{displayText}</span>
+        {caretVisible ? (
+          <motion.span
+            aria-hidden
+            animate={{ opacity: [0.2, 1, 0.2] }}
+            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              width: 10,
+              height: "1em",
+              background: "currentColor",
+              borderRadius: 4,
+              display: "inline-block"
+            }}
+          />
+        ) : null}
+      </span>
+    );
+  }
+
+  if (variant === "scramble") {
+    const revealedCount = Math.floor(progress * (text.length + 4));
+    const tick = Math.floor(progress * 40);
+    return (
+      <span style={{ display: "inline-flex", flexWrap: "wrap", justifyContent, gap: 2 }}>
+        {letters.map((char, index) => {
+          const revealed = index <= revealedCount;
+          const isSpace = char === " ";
+          const displayChar = revealed || isSpace ? (isSpace ? "\u00A0" : char) : getScrambledChar(index, tick);
+          const localProgress = getStaggerProgress(index, letters.length, progress);
+          const opacity = revealed ? 1 : Math.max(0.3, localProgress);
+          return (
+            <span
+              key={`${char}-${index}`}
+              style={{
+                display: "inline-block",
+                minWidth: isSpace ? 6 : undefined,
+                opacity,
+                filter: revealed ? "none" : "blur(0.4px)",
+                transition: "opacity 0.12s linear"
+              }}
+            >
+              {displayChar}
+            </span>
+          );
+        })}
+      </span>
+    );
+  }
+
+  if (variant === "slide_by_letter") {
+    return (
+      <span style={{ display: "inline-flex", flexWrap: "wrap", justifyContent }}>
+        {letters.map((letter, index) => {
+          const localProgress = getStaggerProgress(index, letters.length, progress);
+          const y = (1 - localProgress) * 24;
+          const opacity = localProgress;
+          return (
+            <span
+              key={`${letter}-${index}`}
+              style={{
+                display: "inline-block",
+                transform: `translateY(${y}px)`,
+                opacity,
+                transition: "transform 0.18s ease, opacity 0.16s ease",
+                willChange: "transform"
+              }}
+            >
+              {letter === " " ? "\u00A0" : letter}
+            </span>
+          );
+        })}
+      </span>
+    );
+  }
+
+  return (
+    <span style={{ display: "inline-flex", flexWrap: "wrap", gap: 10, justifyContent }}>
+      {words.map((word, index) => {
+        const localProgress = getStaggerProgress(index, words.length, progress);
+        const y = (1 - localProgress) * 16;
+        const opacity = localProgress;
+        return (
+          <span
+            key={`${word}-${index}`}
+            style={{
+              display: "inline-block",
+              transform: `translateY(${y}px)`,
+              opacity,
+              transition: "transform 0.16s ease, opacity 0.16s ease"
+            }}
+          >
+            {word}
+            {index < words.length - 1 ? <span style={{ width: 8, display: "inline-block" }} /> : null}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+export function AnimatedHeadline({
+  block,
+  headerOffset = 0
+}: {
+  block: AnimatedHeadlineBlock;
+  headerOffset?: number;
+}) {
+  const { headline, subtext, animationMode, animationStyle, freezeOnScroll, enableDarkModeOnScroll } = block;
+  const enableThemeShift = !!enableDarkModeOnScroll;
+  const containerRef = useRef<HTMLElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const freezeEnabled = freezeOnScroll;
+  const scrollOffsets = freezeEnabled ? ["start 90%", "end start"] : ["start 80%", "end 30%"];
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: scrollOffsets
+  });
+  const springProgress = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
+  const manualProgress = useMotionValue(0);
+  const inView = useInView(containerRef, { margin: "-20% 0px", amount: 0.35, once: true });
+  const themeSectionInView = useInView(containerRef, { margin: "-10% 0px", amount: 0.1 });
+  const [progressValue, setProgressValue] = useState(0);
+
+  useEffect(() => {
+    manualProgress.set(0);
+  }, [headline, animationStyle, animationMode, manualProgress]);
+
+  useEffect(() => {
+    if (animationMode !== "viewport") return;
+    if (inView) {
+      const controls = animate(manualProgress, 1, { duration: 0.9, ease: [0.33, 1, 0.68, 1] });
+      return () => controls.stop();
+    }
+  }, [animationMode, inView, manualProgress]);
+
+  const activeProgress = animationMode === "scroll" ? springProgress : manualProgress;
+
+  useMotionValueEvent(activeProgress, "change", (value) => {
+    if (freezeEnabled && animationMode === "scroll") return;
+    setProgressValue(clamp01(value));
+  });
+
+  const minHeight = `calc(100vh - ${headerOffset}px - 30px)`;
+  const freezeTopOffset = headerOffset + 15;
+
+  const containerStyle: CSSProperties = freezeEnabled
+    ? {
+        position: "relative",
+        minHeight: `calc(140vh - ${headerOffset}px - 30px)`,
+        width: "100%",
+        marginTop: 15,
+        marginBottom: 15
+      }
+    : { position: "relative", width: "100%", marginTop: 15, marginBottom: 15 };
+
+  const wrapperStyle: CSSProperties = {
+    width: "calc(100vw - 30px)",
+    maxWidth: "calc(100vw - 30px)",
+    marginLeft: "calc(50% - 50vw + 15px)",
+    marginRight: "calc(50% - 50vw + 15px)",
+    minHeight,
+    padding: "16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    ...(freezeEnabled ? { position: "sticky", top: freezeTopOffset, zIndex: 1 } : {}),
+    overflow: "hidden",
+    borderRadius: "var(--radius)",
+    border: "1px solid var(--border)",
+    boxShadow: "none",
+    background:
+      "radial-gradient(circle at 20% 20%, var(--bg-glow-1), transparent 45%), radial-gradient(circle at 80% 30%, var(--bg-glow-2), transparent 55%), var(--surface)"
+  };
+
+  useEffect(() => {
+    if (!freezeEnabled || animationMode !== "scroll") return;
+    const handleScroll = () => {
+      const container = containerRef.current;
+      const sticky = wrapperRef.current;
+      if (!container || !sticky) return;
+      const containerRect = container.getBoundingClientRect();
+      const stickyRect = sticky.getBoundingClientRect();
+      const available = containerRect.height - stickyRect.height;
+      const viewport = typeof window !== "undefined" ? window.innerHeight || 0 : 0;
+      const startAhead =
+        available > 0
+          ? Math.max(480, viewport * 0.8, available + viewport * 0.35)
+          : Math.max(560, viewport * 0.85);
+      if (available <= 0) {
+        setProgressValue(containerRect.top <= freezeTopOffset ? 1 : 0);
+        return;
+      }
+      const raw = (freezeTopOffset + startAhead - containerRect.top) / (available + startAhead);
+      setProgressValue(clamp01(raw));
+    };
+    const handleScrollWithRaf = () => requestAnimationFrame(handleScroll);
+    handleScroll();
+    window.addEventListener("scroll", handleScrollWithRaf, { passive: true });
+    window.addEventListener("resize", handleScrollWithRaf);
+    return () => {
+      window.removeEventListener("scroll", handleScrollWithRaf);
+      window.removeEventListener("resize", handleScrollWithRaf);
+    };
+  }, [freezeEnabled, animationMode, freezeTopOffset]);
+
+  const contentStyle: CSSProperties = {
+    display: "grid",
+    gap: 16,
+    maxWidth: 960,
+    textAlign: "center",
+    alignItems: "center",
+    justifyItems: "center"
+  };
+
+  const subtextOpacity = clamp01((progressValue - 0.2) / 0.4);
+  const subtextY = (1 - subtextOpacity) * 12;
+
+  const themeActive = enableThemeShift && themeSectionInView && progressValue > 0.32;
+  useDarkModeShift(enableThemeShift, themeActive);
+
+  return (
+    <section ref={containerRef} style={containerStyle} aria-label={headline}>
+      <motion.div ref={wrapperRef} style={wrapperStyle}>
+        <div style={contentStyle}>
+          <h1 style={{ fontSize: 56, lineHeight: 1.05, margin: 0 }}>
+            <AnimatedText text={headline} variant={animationStyle} progress={progressValue} />
+          </h1>
+          {subtext ? (
+            <motion.p
+              style={{
+                margin: 0,
+                maxWidth: 740,
+                color: "var(--muted)",
+                fontSize: 18,
+                transform: `translateY(${subtextY}px)`,
+                opacity: subtextOpacity,
+                transition: "transform 0.2s ease, opacity 0.2s ease"
+              }}
+            >
+              {subtext}
+            </motion.p>
+          ) : null}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
