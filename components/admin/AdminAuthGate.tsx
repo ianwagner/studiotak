@@ -15,6 +15,7 @@ import {
   type User
 } from "firebase/auth";
 import { getFirebaseApp } from "@/lib/firebaseClient";
+import { localAuthBypassEnabled, localDevUser } from "@/lib/localAuthBypass";
 
 type AuthState = {
   loading: boolean;
@@ -41,10 +42,10 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   const disableAppVerificationFlag = process.env.NEXT_PUBLIC_DISABLE_PHONE_APP_VERIFICATION === "true";
   const allowAppVerificationBypass = disableAppVerificationFlag && process.env.NODE_ENV !== "production";
   const [state, setState] = useState<AuthState>({
-    loading: true,
-    user: null,
+    loading: !localAuthBypassEnabled,
+    user: localAuthBypassEnabled ? localDevUser : null,
     error: null,
-    firebaseReady: Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY)
+    firebaseReady: localAuthBypassEnabled || Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY)
   });
   const [onSignOut, setOnSignOut] = useState<(() => void) | null>(null);
   const [mfaState, setMfaState] = useState<MfaState>({
@@ -102,6 +103,7 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   };
 
   useEffect(() => {
+    if (localAuthBypassEnabled) return;
     // Ensure the container exists once and is never removed during runtime (even on re-renders).
     if (typeof document !== "undefined") {
       ensureRecaptchaContainer();
@@ -119,12 +121,18 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   }, []);
 
   useEffect(() => {
+    if (localAuthBypassEnabled) return;
     if (allowAppVerificationBypass) {
       console.warn("Phone app verification is disabled (NEXT_PUBLIC_DISABLE_PHONE_APP_VERIFICATION=true). Use only with Firebase test numbers.");
     }
   }, [allowAppVerificationBypass]);
 
   useEffect(() => {
+    if (localAuthBypassEnabled) {
+      setState({ loading: false, user: localDevUser, error: null, firebaseReady: true });
+      onSignedIn?.(localDevUser);
+      return;
+    }
     if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
       setState((s) => ({ ...s, loading: false }));
       return;
@@ -145,6 +153,9 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   }, [onSignedIn]);
 
   const ensureRecaptcha = async (forceFresh = false) => {
+    if (localAuthBypassEnabled) {
+      throw new Error("reCAPTCHA is disabled in local development.");
+    }
     if (forceFresh) {
       resetRecaptcha();
     }
@@ -212,6 +223,7 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   };
 
   const startMfaChallenge = async (resolver: MultiFactorResolver, allowRetryOnCaptcha = true) => {
+    if (localAuthBypassEnabled) return;
     const phoneHint = resolver.hints.find(
       (hint): hint is PhoneMultiFactorInfo => hint.factorId === PhoneMultiFactorGenerator.FACTOR_ID
     );
@@ -289,6 +301,7 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   };
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    if (localAuthBypassEnabled) return;
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "");
@@ -318,6 +331,7 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   };
 
   const handleSubmitMfa = async (event: React.FormEvent<HTMLFormElement>) => {
+    if (localAuthBypassEnabled) return;
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const code = String(formData.get("code") ?? "").trim();
@@ -349,11 +363,25 @@ export function AdminAuthGate({ children, onSignedIn }: AdminAuthGateProps) {
   };
 
   const handleResendMfa = async () => {
+    if (localAuthBypassEnabled) return;
     if (!mfaState.resolver) return;
     await startMfaChallenge(mfaState.resolver);
   };
 
   const handleLogout = async () => {
+    if (localAuthBypassEnabled) {
+      setState((s) => ({ ...s, user: localDevUser }));
+      setMfaState({
+        resolver: null,
+        phoneNumber: null,
+        verificationId: null,
+        sending: false,
+        verifying: false,
+        error: null
+      });
+      if (onSignOut) onSignOut();
+      return;
+    }
     const auth = getAuth(getFirebaseApp());
     await signOut(auth);
     setMfaState({

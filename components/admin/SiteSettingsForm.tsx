@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { getFirebaseApp } from "@/lib/firebaseClient";
+import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import {
   getSiteSettings,
   saveSiteSettings,
@@ -11,7 +11,7 @@ import {
   siteSettingsFirebaseReady
 } from "@/lib/siteSettings";
 
-type AssetKey = "faviconUrl" | "touchIconUrl" | "logoUrl" | "notFoundIconUrl";
+type AssetKey = "faviconUrl" | "touchIconUrl" | "logoUrl" | "footerLogoUrl" | "notFoundIconUrl";
 
 const assetCopy: Record<AssetKey, { label: string; helper: string }> = {
   faviconUrl: {
@@ -25,6 +25,10 @@ const assetCopy: Record<AssetKey, { label: string; helper: string }> = {
   logoUrl: {
     label: "Logo",
     helper: "Transparent PNG or SVG, used in the header and metadata."
+  },
+  footerLogoUrl: {
+    label: "Footer logo",
+    helper: "Optional alternate logo for the footer. Transparent PNG or SVG works best."
   },
   notFoundIconUrl: {
     label: "404 icon",
@@ -64,6 +68,7 @@ export function SiteSettingsForm() {
     setMessage(null);
     setUploading((prev) => ({ ...prev, [key]: true }));
     try {
+      await ensureFirebaseDevAuth();
       const app = getFirebaseApp();
       const storage = getStorage(app);
       const storageRef = ref(storage, `site-settings/${key}-${Date.now()}-${file.name}`);
@@ -86,6 +91,7 @@ export function SiteSettingsForm() {
       setError("Configure Firebase env vars to save settings.");
       return;
     }
+    await ensureFirebaseDevAuth();
     setSaving(true);
     setMessage(null);
     setError(null);
@@ -132,7 +138,11 @@ export function SiteSettingsForm() {
                 <input
                   className="input"
                   type="file"
-                  accept={key === "logoUrl" || key === "notFoundIconUrl" ? "image/*,image/svg+xml" : "image/*"}
+                  accept={
+                    key === "logoUrl" || key === "footerLogoUrl" || key === "notFoundIconUrl"
+                      ? "image/*,image/svg+xml"
+                      : "image/*"
+                  }
                   onChange={(e) => {
                     const file = e.target.files?.[0] ?? null;
                     void handleUpload(key, file);

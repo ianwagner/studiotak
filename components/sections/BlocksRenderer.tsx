@@ -366,7 +366,7 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     ...(hasBackground ? { padding: isCompact ? 26 : 32, position: "relative", zIndex: 1 } : {}),
     ...(isCompact && !hasBackground ? { padding: "0 12px" } : {})
   };
-  const headingSize = isCompact ? 48 : 64;
+  const headingSize = isCompact ? 56 : 76;
   const subtitleSize = isCompact ? 16 : 18;
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;

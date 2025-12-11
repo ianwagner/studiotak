@@ -5,6 +5,7 @@ export type SiteSettings = {
   faviconUrl: string;
   touchIconUrl: string;
   logoUrl: string;
+  footerLogoUrl: string;
   notFoundIconUrl: string;
   updatedAt?: string;
 };
@@ -13,6 +14,7 @@ export const seedSiteSettings: SiteSettings = {
   faviconUrl: "",
   touchIconUrl: "",
   logoUrl: "",
+  footerLogoUrl: "",
   notFoundIconUrl: ""
 };
 

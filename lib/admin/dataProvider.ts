@@ -34,7 +34,17 @@ export const createPagesDataProvider = (): DataProvider => {
 
   const update: DataProvider["update"] = async ({ id, variables }) => {
       const index = getIndex(String(id));
-      if (index === -1) throw new Error("Page not found");
+      // When Firestore denies writes we fall back to this in-memory provider, so if the
+      // record isn't present (e.g. it only exists in Firestore) treat this as an upsert
+      // instead of crashing the admin with a 404.
+      if (index === -1) {
+        const created: PageRecord = {
+          ...(variables as UpdateVariables),
+          id: String((variables as any)?.id ?? id ?? crypto.randomUUID())
+        } as PageRecord;
+        pages.push(created);
+        return { data: clone(created) as any };
+      }
       const updated: PageRecord = { ...pages[index], ...(variables as UpdateVariables) };
       pages[index] = updated;
       return { data: clone(updated) as any };

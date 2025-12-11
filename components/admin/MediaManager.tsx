@@ -15,8 +15,9 @@ import {
   serverTimestamp,
   updateDoc
 } from "firebase/firestore";
-import { getFirebaseApp } from "@/lib/firebaseClient";
+import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import type { MediaRecord } from "@/lib/admin/media";
+import { localAuthBypassEnabled } from "@/lib/localAuthBypass";
 
 type MediaFormState = {
   files: File[];
@@ -84,6 +85,10 @@ export function MediaManager() {
   };
 
   useEffect(() => {
+    if (localAuthBypassEnabled) {
+      setCurrentUser("local-dev");
+      return;
+    }
     if (!firebaseReady) return;
     const auth = getAuth(getFirebaseApp());
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -114,6 +119,7 @@ export function MediaManager() {
     }
     try {
       setLoading(true);
+      await ensureFirebaseDevAuth();
       const app = getFirebaseApp();
       const storage = getStorage(app);
       const db = getFirestore(app);
@@ -151,6 +157,7 @@ export function MediaManager() {
   const handleFieldChange = async (id: string, field: MediaField, value: string | boolean) => {
     if (!firebaseReady) return;
     try {
+      await ensureFirebaseDevAuth();
       const db = getFirestore(getFirebaseApp());
       const ref = doc(db, "media", id);
       const normalizedValue = field === "featured" ? Boolean(value) : (value as string);
@@ -173,6 +180,7 @@ export function MediaManager() {
   const handleDelete = async (id: string) => {
     if (!firebaseReady) return;
     try {
+      await ensureFirebaseDevAuth();
       const db = getFirestore(getFirebaseApp());
       await deleteDoc(doc(db, "media", id));
       setItems((prev) => prev.filter((item) => item.id !== id));

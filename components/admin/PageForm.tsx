@@ -22,11 +22,12 @@ import type {
 import { animationPresets, defaultAnimationPreset, type AnimationPresetName } from "@/components/sections/animationPresets";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { addDoc, collection, getDocs, getFirestore, limit, query, serverTimestamp, where } from "firebase/firestore";
-import { getFirebaseApp } from "@/lib/firebaseClient";
+import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import { getAuth } from "firebase/auth";
 import type { ComponentRecord } from "@/lib/admin/components";
 import type { RedirectRule } from "@/lib/admin/pages";
 import { MediaSelect, type MediaOption } from "./MediaSelect";
+import { localAuthBypassEnabled } from "@/lib/localAuthBypass";
 
 type PendingBlock = {
   id: string;
@@ -606,11 +607,14 @@ export function PageForm({
         setUploadError("Background images must use image files.");
         return;
       }
+      await ensureFirebaseDevAuth();
       const app = getFirebaseApp();
-      const auth = getAuth(app);
-      if (!auth.currentUser) {
-        setUploadError("Sign in to upload media.");
-        return;
+      if (!localAuthBypassEnabled) {
+        const auth = getAuth(app);
+        if (!auth.currentUser) {
+          setUploadError("Sign in to upload media.");
+          return;
+        }
       }
       const storage = getStorage(app);
       const db = getFirestore(app);
@@ -666,11 +670,14 @@ export function PageForm({
     }
     try {
       setShareUploadBusy(true);
+      await ensureFirebaseDevAuth();
       const app = getFirebaseApp();
-      const auth = getAuth(app);
-      if (!auth.currentUser) {
-        setUploadError("Sign in to upload media.");
-        return;
+      if (!localAuthBypassEnabled) {
+        const auth = getAuth(app);
+        if (!auth.currentUser) {
+          setUploadError("Sign in to upload media.");
+          return;
+        }
       }
       const storage = getStorage(app);
       const db = getFirestore(app);

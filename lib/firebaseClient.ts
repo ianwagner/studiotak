@@ -1,5 +1,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, signInAnonymously } from "firebase/auth";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { localAuthBypassEnabled } from "./localAuthBypass";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,6 +13,7 @@ const firebaseConfig = {
 };
 
 let appCheckInitialized = false;
+let devAuthPromise: Promise<void> | null = null;
 
 function assertConfig() {
   const missing = Object.entries(firebaseConfig)
@@ -24,6 +27,7 @@ function assertConfig() {
 function initAppCheck(app: FirebaseApp) {
   if (appCheckInitialized) return;
   if (typeof window === "undefined") return;
+  if (localAuthBypassEnabled) return;
 
   const debugToken = process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN;
   if (debugToken) {
@@ -51,4 +55,24 @@ export function getFirebaseApp(): FirebaseApp {
   const app = getApp();
   initAppCheck(app);
   return app;
+}
+
+// In local development we bypass the full auth flow for the admin UI, but Firebase Storage
+// still requires a signed-in user to satisfy security rules. This helper signs in anonymously
+// once per session so uploads work when NODE_ENV !== "production".
+export async function ensureFirebaseDevAuth(): Promise<void> {
+  if (!localAuthBypassEnabled) return;
+  if (typeof window === "undefined") return;
+  if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return;
+  if (devAuthPromise) return devAuthPromise;
+
+  devAuthPromise = (async () => {
+    const auth = getAuth(getFirebaseApp());
+    if (auth.currentUser) return;
+    await signInAnonymously(auth);
+  })().finally(() => {
+    devAuthPromise = null;
+  });
+
+  return devAuthPromise;
 }

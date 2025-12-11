@@ -8,6 +8,7 @@ import { createFirestoreDataProvider } from "@/lib/admin/firestoreDataProvider";
 import { AdminAuthGate } from "./AdminAuthGate";
 import { getAuth, sendEmailVerification, signOut, type User } from "firebase/auth";
 import { getFirebaseApp } from "@/lib/firebaseClient";
+import { localAuthBypassEnabled, localDevUser } from "@/lib/localAuthBypass";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const dataProvider = useMemo(() => createFirestoreDataProvider(), []);
@@ -23,6 +24,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }, [currentUser?.uid]);
 
   const handleSendVerification = async () => {
+    if (localAuthBypassEnabled) {
+      setVerificationMessage("Verification skipped in local development.");
+      setVerificationError(null);
+      return;
+    }
     setVerificationMessage(null);
     setVerificationError(null);
     setSendingVerification(true);
@@ -145,6 +151,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     className="btn secondary"
                     type="button"
                     onClick={async () => {
+                      if (localAuthBypassEnabled) {
+                        setCurrentUser(localDevUser);
+                        return;
+                      }
                       const auth = getAuth(getFirebaseApp());
                       await signOut(auth);
                     }}

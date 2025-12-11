@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { addDoc, collection, getDocs, getFirestore, limit, query, serverTimestamp } from "firebase/firestore";
-import { getFirebaseApp } from "@/lib/firebaseClient";
+import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import type { ComponentRecord } from "@/lib/admin/components";
 import type { Route } from "next";
 import Link from "next/link";
 import { MediaSelect, type MediaOption } from "./MediaSelect";
+import { localAuthBypassEnabled } from "@/lib/localAuthBypass";
 
 export type ComponentFormState = Omit<ComponentRecord, "id" | "updatedAt"> & { id?: string };
 
@@ -86,11 +87,14 @@ export function ComponentForm({
     }
     try {
       setUploading(true);
+      await ensureFirebaseDevAuth();
       const app = getFirebaseApp();
-      const auth = getAuth(app);
-      if (!auth.currentUser) {
-        setUploadError("Sign in to upload icons.");
-        return;
+      if (!localAuthBypassEnabled) {
+        const auth = getAuth(app);
+        if (!auth.currentUser) {
+          setUploadError("Sign in to upload icons.");
+          return;
+        }
       }
       const storage = getStorage(app);
       const db = getFirestore(app);

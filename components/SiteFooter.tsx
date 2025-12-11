@@ -2,13 +2,18 @@ import Link from "next/link";
 import type { Route } from "next";
 import type { NavigationItemRecord } from "@/lib/admin/navigation";
 import { getNavigationItems } from "@/lib/navigation";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 type SiteFooterProps = {
   navItems?: NavigationItemRecord[];
 };
 
 export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
-  const navItems = providedNav ?? (await getNavigationItems());
+  const [navItems, settings] = await Promise.all([
+    providedNav ? Promise.resolve(providedNav) : getNavigationItems(),
+    getSiteSettings()
+  ]);
+  const footerLogoUrl = settings.footerLogoUrl || settings.logoUrl;
   const footerLinks = navItems.filter((item) => item.showInFooter);
   const footerChildren = footerLinks.filter((item) => item.parentId);
   const childrenByParent = footerChildren.reduce<Record<string, NavigationItemRecord[]>>((acc, item) => {
@@ -29,7 +34,21 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
     <footer data-site-footer>
       <div className="container footer-shell">
         <div className="footer-brand">
-          <span style={{ fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Studio Tak</span>
+          {footerLogoUrl ? (
+            <img
+              src={footerLogoUrl}
+              alt="Studio Tak footer logo"
+              style={{
+                height: 14,
+                width: "auto",
+                display: "block",
+                objectFit: "contain",
+                marginBottom: 8
+              }}
+            />
+          ) : (
+            <span style={{ fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Studio Tak</span>
+          )}
           <span style={{ color: "var(--muted)", fontSize: 14 }}>Design &amp; Build</span>
           <span style={{ color: "var(--muted)", fontSize: 13 }}>© {year} Studio Tak. All rights reserved.</span>
         </div>
