@@ -17,6 +17,7 @@ import type {
   FeatureItem,
   ScrollGalleryBlock,
   ShowcaseBlock,
+  LogosBlock,
   SplitBlock
 } from "@/lib/admin/pages";
 import { AnimatedSection, SectionHeading, Pill } from "./AnimatedSection";
@@ -346,15 +347,269 @@ const getFullBleedHeroStyle = (headerHeight: number, compact = false): CSSProper
   alignItems: "center"
 });
 
+type HeroMediaItem = {
+  id: string;
+  url: string;
+  alt?: string;
+  mediaType?: "image" | "video";
+  width?: number;
+  height?: number;
+};
+
+const heroPlaceholderPalette = ["#e1e9ff", "#e8f7ff", "#f4e8ff", "#ffeae3", "#eaf3e0", "#f3f1e8"];
+
+const buildHeroPlaceholderMedia = (count: number, seed?: HeroBlock["media"]): HeroMediaItem[] => {
+  if (seed?.url) {
+    const mediaType = seed.type === "video" ? "video" : "image";
+    return Array.from({ length: Math.max(count, 6) }, (_, idx) => ({
+      id: `${seed.url}-${idx}`,
+      url: seed.url,
+      alt: seed.alt ?? `Hero media ${idx + 1}`,
+      mediaType,
+      width: seed.width,
+      height: seed.height
+    }));
+  }
+  return Array.from({ length: Math.max(count, 9) }, (_, idx) => {
+    const color = heroPlaceholderPalette[idx % heroPlaceholderPalette.length];
+    const label = `Media ${idx + 1}`;
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='520' viewBox='0 0 400 520' fill='none'><defs><linearGradient id='g${idx}' x1='0' y1='0' x2='1' y2='1'><stop stop-color='${color}' offset='0%'/><stop stop-color='${color}' stop-opacity='0.7' offset='100%'/></linearGradient></defs><rect width='400' height='520' rx='22' fill='url(%23g${idx})'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Inter, Helvetica, Arial, sans-serif' font-size='42' font-weight='700' fill='%23222' opacity='0.28'>${label}</text></svg>`;
+    return {
+      id: `placeholder-${idx}`,
+      url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
+      alt: label,
+      mediaType: "image",
+      width: 3,
+      height: 4
+    };
+  });
+};
+
+const DynamicHeroColumns = ({
+  block,
+  innerStyle,
+  layoutGap,
+  content,
+  isCompact,
+  gridTemplate
+}: {
+  block: HeroBlock;
+  innerStyle: CSSProperties;
+  layoutGap: number;
+  content: ReactNode;
+  isCompact: boolean;
+  gridTemplate: string;
+}) => {
+  const [items, setItems] = useState<HeroMediaItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const industryTag = block.mediaIndustryTag?.trim();
+  const typeTag = block.mediaTypeTag?.trim();
+  const maxItems = clampNumber(block.mediaLimit ?? 18, 6, 60);
+
+  useEffect(() => {
+    let canceled = false;
+    const load = async () => {
+      if (!industryTag && !typeTag) {
+        setItems([]);
+        return;
+      }
+      if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+        setItems([]);
+        return;
+      }
+      try {
+        setLoading(true);
+        const db = getFirestore(getFirebaseApp());
+        const mediaRef = collection(db, "media");
+        const constraints: QueryConstraint[] = [];
+        if (industryTag) constraints.push(where("industry", "==", industryTag));
+        if (typeTag) constraints.push(where("type", "==", typeTag));
+        constraints.push(limit(maxItems));
+        const q = query(mediaRef, ...constraints);
+        const snapshot = await getDocs(q);
+        if (canceled) return;
+        const results: HeroMediaItem[] = snapshot.docs
+          .map((doc) => {
+            const data = doc.data() as any;
+            const mediaType = data.mediaType ?? data.type ?? "image";
+            return {
+              id: doc.id,
+              url: data.url,
+              alt: data.alt ?? data.name ?? "Hero media",
+              mediaType: mediaType === "video" ? "video" : "image",
+              width: data.width,
+              height: data.height
+            };
+          })
+          .filter((item) => item.url);
+        setItems(results);
+      } catch (error) {
+        console.error("Failed to load hero media", error);
+        if (!canceled) setItems([]);
+      } finally {
+        if (!canceled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [industryTag, typeTag, maxItems]);
+
+  const fallbackItems = useMemo(() => buildHeroPlaceholderMedia(maxItems, block.media), [block.media, maxItems]);
+  const resolvedItems = items.length ? items : fallbackItems;
+  const columns = useMemo(() => {
+    const buckets: HeroMediaItem[][] = [[], [], []];
+    resolvedItems.forEach((item, idx) => {
+      buckets[idx % buckets.length].push(item);
+    });
+    return buckets;
+  }, [resolvedItems]);
+  const statusText =
+    !industryTag && !typeTag
+      ? "Set an industry or type tag to pull media into the hero."
+      : !loading && !items.length
+      ? "No media matched those tags yet."
+      : null;
+  const itemGap = isCompact ? 12 : 14;
+  const columnsGap = isCompact ? 6 : 8;
+  const containerGap = itemGap;
+
+  const renderCell = (item: HeroMediaItem, key: string) => {
+    const isVideo = item.mediaType === "video";
+    const aspectRatio = item.width && item.height ? `${item.width} / ${item.height}` : "9 / 16";
+    return (
+      <div
+        key={key}
+        style={{
+          borderRadius: 18,
+          overflow: "hidden",
+          background: "transparent",
+          boxShadow: "0 10px 24px rgba(0,0,0,0.1)",
+          aspectRatio
+        }}
+      >
+        {isVideo ? (
+          <video
+            src={item.url}
+            autoPlay
+            muted
+            loop
+            playsInline
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          >
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <img
+            src={item.url}
+            alt={item.alt ?? ""}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <style>{`
+        @keyframes hero-column-scroll {
+          from { transform: translateY(0); }
+          to { transform: translateY(-38%); }
+        }
+        @media (max-width: 840px) {
+          [data-hero-columns] {
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          }
+        }
+      `}</style>
+      <div
+        className="grid"
+        style={{
+          gap: containerGap,
+          alignItems: "center",
+          ...innerStyle,
+          gridTemplateColumns: gridTemplate,
+          paddingRight: 10
+        }}
+      >
+        {content}
+        <div className="grid" style={{ gap: columnsGap, height: "100%", justifyItems: "stretch" }}>
+          <div
+            data-hero-columns
+            style={{
+              display: "grid",
+              gap: columnsGap,
+              gridTemplateColumns: "repeat(3, minmax(120px, 190px))",
+              justifyContent: "end",
+              alignItems: "stretch",
+              height: "100%"
+            }}
+          >
+            {columns.map((bucket, colIdx) => {
+              const duration = 26 + colIdx * 3;
+              const direction = colIdx === 1 ? "alternate-reverse" : "alternate";
+              return (
+                <div
+                  key={`hero-col-${colIdx}`}
+                  data-hero-column
+                  style={{
+                    position: "relative",
+                    overflow: "hidden",
+                    borderRadius: 18,
+                    background: "transparent",
+                    padding: 4,
+                    minHeight: isCompact ? 200 : 260,
+                    height: "100%"
+                  }}
+                >
+                  <div
+                    data-hero-track
+                    style={{
+                      display: "grid",
+                      gap: itemGap,
+                      animation: `hero-column-scroll ${duration}s linear infinite`,
+                      animationDirection: direction as CSSProperties["animationDirection"],
+                      gridAutoRows: "minmax(140px, auto)"
+                    }}
+                  >
+                    {bucket.map((item, itemIdx) => renderCell(item, `${item.id}-${itemIdx}`))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {loading ? (
+            <span style={{ color: "var(--muted)", fontSize: 13 }}>Loading tagged media…</span>
+          ) : null}
+          {statusText ? <span style={{ color: "var(--muted)", fontSize: 13 }}>{statusText}</span> : null}
+        </div>
+      </div>
+    </>
+  );
+};
+
 const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHeight: number) => {
-  const hasMedia = Boolean(block.media?.url);
-  const media = renderMedia(block.media);
+  const heroMode = block.mode ?? "static";
+  const isDynamicHero = block.type === "hero" && heroMode === "dynamic";
+  const hasMedia = !isDynamicHero && Boolean(block.media?.url);
+  const media = hasMedia ? renderMedia(block.media) : null;
   const hasBackground = Boolean(block.background?.url);
+  const backgroundIsVideo =
+    block.background?.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(block.background?.url ?? "");
+  const backgroundUrl = block.background?.url ?? "";
+  const overlayStyleChoice = block.overlayStyle ?? "gradient";
+  const overlayImage =
+    overlayStyleChoice === "full"
+      ? `linear-gradient(145deg, var(--hero-overlay-from), var(--hero-overlay-to))${backgroundIsVideo ? "" : `, url(${backgroundUrl})`}`
+      : `${backgroundIsVideo ? "var(--hero-overlay-gradient)" : `var(--hero-overlay-gradient), url(${backgroundUrl})`}`;
   const isCompact = block.type === "thirds";
   const thirdsLayout = block.type === "thirds" ? block.layout ?? "left" : "left";
   const isCenteredThirds = isCompact && thirdsLayout === "centered";
   const fullBleedHeroStyle = getFullBleedHeroStyle(headerHeight, isCompact);
-  const removeStroke = !!block.media?.url;
+  const removeStroke = isDynamicHero || !!block.media?.url;
   const heroStyle: CSSProperties = hasBackground
     ? {
         ...fullBleedHeroStyle,
@@ -380,39 +635,71 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     heroStyle.backdropFilter = "none";
   }
   const overlay = hasBackground ? (
-    <div
-      aria-hidden
-      style={{
-        position: "absolute",
-        inset: 0,
-        backgroundImage: `linear-gradient(145deg, var(--hero-overlay-from), var(--hero-overlay-to)), url(${block.background?.url ?? ""})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        zIndex: 0
-      }}
-    />
+    <>
+      {backgroundIsVideo ? (
+        <video
+          aria-hidden
+          src={backgroundUrl}
+          playsInline
+          autoPlay
+          muted
+          loop
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: 0
+          }}
+        />
+      ) : null}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: overlayImage,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          zIndex: backgroundIsVideo ? 1 : 0
+        }}
+      />
+    </>
   ) : null;
   const innerStyle: CSSProperties = {
     width: "100%",
     maxWidth: "var(--max-width)",
     margin: "0 auto",
-    ...(hasBackground ? { padding: isCompact ? 26 : 32, position: "relative", zIndex: 1 } : {}),
+    ...(hasBackground ? { padding: isCompact ? 26 : 32, position: "relative", zIndex: 2 } : {}),
     ...(isCompact && !hasBackground ? { padding: "0 12px" } : {}),
     ...(isCenteredThirds ? { justifyItems: "center" } : {})
   };
   const textOnlyContentStyle: CSSProperties = hasMedia
     ? {}
-    : { maxWidth: "min(var(--max-width), 960px)", width: "100%", justifySelf: isCenteredThirds ? "center" : "start" };
+    : {
+        maxWidth: isDynamicHero ? "min(var(--max-width), 640px)" : "min(var(--max-width), 600px)",
+        width: "100%",
+        justifySelf: isDynamicHero ? "end" : isCenteredThirds ? "center" : "start",
+        marginLeft: isDynamicHero ? "auto" : undefined
+      };
   const headingSize = isCompact ? "clamp(36px, 8vw, 56px)" : "clamp(44px, 9vw, 76px)";
   const subtitleSize = isCompact ? 16 : 18;
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;
+  const dynamicLayoutGap = isDynamicHero ? 12 : layoutGap;
+  const dynamicStackGap = isDynamicHero ? 6 : stackGap;
+  if (isDynamicHero) {
+    heroStyle.overflow = "hidden";
+    heroStyle.maxHeight = heroStyle.minHeight;
+  }
   const content = (
     <div
       className="grid"
       style={{
-        gap: stackGap,
+        gap: dynamicStackGap,
+        alignSelf: "center",
         ...textOnlyContentStyle,
         ...(isCenteredThirds ? { textAlign: "center", justifyItems: "center", maxWidth: "min(var(--max-width), 820px)" } : {})
       }}
@@ -426,6 +713,7 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
         style={{
           display: "flex",
           gap: isCompact ? 10 : 12,
+          alignItems: "flex-start",
           flexWrap: "wrap",
           justifyContent: isCenteredThirds ? "center" : undefined
         }}
@@ -443,6 +731,39 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
       </div>
     </div>
   );
+
+  const dynamicInnerStyle = isDynamicHero
+    ? {
+        ...innerStyle,
+        maxWidth: "100%",
+        margin: 0,
+        paddingLeft: isCompact ? 22 : 26,
+        paddingRight: 0
+      }
+    : innerStyle;
+
+  if (isDynamicHero && block.type === "hero") {
+    const dynamicGridTemplate = "minmax(460px, 1.1fr) minmax(360px, 0.9fr)";
+    return (
+      <AnimatedSection
+        key={block.id ?? index}
+        index={index}
+        style={heroStyle}
+        animated={false}
+        variant={isCompact ? "plain" : "card"}
+      >
+        {overlay}
+        <DynamicHeroColumns
+          block={block}
+          innerStyle={dynamicInnerStyle}
+          layoutGap={layoutGap}
+          content={content}
+          isCompact={isCompact}
+          gridTemplate={dynamicGridTemplate}
+        />
+      </AnimatedSection>
+    );
+  }
 
   if (isCenteredThirds) {
     return (
@@ -1638,6 +1959,316 @@ const ScrollGalleryBlockSection = ({
   );
 };
 
+type LogoItem = {
+  id: string;
+  url: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  mediaType?: "image" | "video";
+};
+
+const buildPlaceholderLogo = (label: string) =>
+  `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='280' height='120' viewBox='0 0 280 120' fill='none'><rect width='280' height='120' rx='18' fill='%23f8f8f8' /><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Helvetica, Arial, sans-serif' font-size='44' font-weight='700' fill='%23222'>${label}</text></svg>`)}`;
+
+const placeholderLogos: LogoItem[] = ["Northwind", "Aperture", "Lumen", "Scout", "Harbor", "Beacon"].map((name, idx) => ({
+  id: `placeholder-${idx}`,
+  url: buildPlaceholderLogo(name),
+  alt: `${name} placeholder logo`
+}));
+
+const shuffleLogos = (items: LogoItem[]) => {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number }) => {
+  const maxLogos = clampNumber(block.limit ?? 12, 1, 20);
+  const [logos, setLogos] = useState<LogoItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [shuffledPrimary, setShuffledPrimary] = useState<LogoItem[]>([]);
+  const [shuffledSecondary, setShuffledSecondary] = useState<LogoItem[]>([]);
+  const wallRef = useRef<HTMLDivElement | null>(null);
+  const primaryTrackRef = useRef<HTMLDivElement | null>(null);
+  const secondaryTrackRef = useRef<HTMLDivElement | null>(null);
+  const [primaryDistance, setPrimaryDistance] = useState(0);
+  const [secondaryDistance, setSecondaryDistance] = useState(0);
+
+  useEffect(() => {
+    let canceled = false;
+    const load = async () => {
+      if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+        setLogos(shuffleLogos(placeholderLogos.slice(0, maxLogos)));
+        return;
+      }
+      try {
+        setLoading(true);
+        const db = getFirestore(getFirebaseApp());
+        const mediaRef = collection(db, "media");
+        const constraints = [where("type", "in", ["Logo", "logo"]), limit(maxLogos)] as QueryConstraint[];
+        const q = query(mediaRef, ...constraints);
+        const snapshot = await getDocs(q);
+        if (canceled) return;
+        const items: LogoItem[] = snapshot.docs
+          .map((doc) => {
+            const data = doc.data() as any;
+            const mediaType = data.mediaType ?? data.type ?? "image";
+            return {
+              id: doc.id,
+              url: data.url,
+              alt: data.alt ?? data.name ?? "Logo",
+              mediaType: mediaType === "video" ? "video" : "image",
+              width: data.width,
+              height: data.height
+            };
+          })
+          .filter((item) => item.url && item.mediaType !== "video");
+        if (!items.length) {
+          setLogos(shuffleLogos(placeholderLogos.slice(0, maxLogos)));
+        } else {
+          setLogos(shuffleLogos(items));
+        }
+      } catch (error) {
+        console.error("Failed to load logos", error);
+        if (!canceled) setLogos(shuffleLogos(placeholderLogos.slice(0, maxLogos)));
+      } finally {
+        if (!canceled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [maxLogos]);
+
+  useEffect(() => {
+    const rotateLogos = (items: LogoItem[]) => {
+      if (!items.length) return items;
+      const offset = Math.floor(Math.random() * items.length);
+      return [...items.slice(offset), ...items.slice(0, offset)];
+    };
+
+    const resolved = (logos.length ? logos : placeholderLogos).slice(0, maxLogos);
+    const primary = resolved.length ? rotateLogos(shuffleLogos(resolved)) : resolved;
+    const secondary = resolved.length ? rotateLogos(shuffleLogos(resolved)) : resolved;
+    setShuffledPrimary(primary);
+    setShuffledSecondary(secondary);
+  }, [logos, maxLogos]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!root) return;
+    const prefersDark = () => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+    const computeTheme = () => {
+      const attrTheme = root.getAttribute("data-theme") || root.getAttribute("data-base-theme");
+      if (attrTheme === "dark" || attrTheme === "light") {
+        setIsDarkTheme(attrTheme === "dark");
+        return;
+      }
+      setIsDarkTheme(prefersDark());
+    };
+    computeTheme();
+    const observer = new MutationObserver(computeTheme);
+    observer.observe(root, { attributes: true, attributeFilter: ["data-theme", "data-base-theme"] });
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const handleMedia = () => computeTheme();
+    media?.addEventListener?.("change", handleMedia);
+    return () => {
+      observer.disconnect();
+      media?.removeEventListener?.("change", handleMedia);
+    };
+  }, []);
+
+  useEffect(() => {
+    const measure = () => {
+      const wallWidth = wallRef.current?.offsetWidth ?? 0;
+      const primaryWidth = primaryTrackRef.current?.scrollWidth ?? 0;
+      const secondaryWidth = secondaryTrackRef.current?.scrollWidth ?? 0;
+      setPrimaryDistance(Math.max(0, primaryWidth - wallWidth));
+      setSecondaryDistance(Math.max(0, secondaryWidth - wallWidth));
+    };
+
+    const resizeObserver = new ResizeObserver(() => measure());
+    if (wallRef.current) resizeObserver.observe(wallRef.current);
+    if (primaryTrackRef.current) resizeObserver.observe(primaryTrackRef.current);
+    if (secondaryTrackRef.current) resizeObserver.observe(secondaryTrackRef.current);
+    measure();
+    const raf = window.requestAnimationFrame(measure);
+    return () => {
+      resizeObserver.disconnect();
+      window.cancelAnimationFrame(raf);
+    };
+  }, [shuffledPrimary, shuffledSecondary]);
+
+  const loopedPrimary = shuffledPrimary.length ? [...shuffledPrimary, ...shuffledPrimary] : shuffledPrimary;
+  const loopedSecondary = shuffledSecondary.length ? [...shuffledSecondary, ...shuffledSecondary] : shuffledSecondary;
+  const logoCellStyle: CSSProperties = {
+    minWidth: 140,
+    padding: "10px 14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 0,
+    background: "transparent"
+  };
+  const imgStyle: CSSProperties = {
+    maxWidth: 75,
+    maxHeight: 52,
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+    display: "block",
+    transition: "filter 160ms ease, mix-blend-mode 160ms ease"
+  };
+  const logoFilter = isDarkTheme
+    ? "invert(1) grayscale(1) brightness(3.2) contrast(1.35)"
+    : "grayscale(1)";
+  const logoBlendMode = isDarkTheme ? "screen" : "normal";
+  const fadeColor = isDarkTheme ? "rgba(6,6,10,0.92)" : "rgba(255,255,255,0.94)";
+  const wallBackground = "transparent";
+
+  return (
+    <AnimatedSection key={block.id ?? index} index={index} variant="plain" style={{ width: "100%", pointerEvents: "none" }}>
+      <style suppressHydrationWarning>{`
+        [data-logos-track] {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+          width: max-content;
+          will-change: transform;
+        }
+        @media (max-width: 640px) {
+          [data-logos-wall] {
+            padding: 10px 12px 2px;
+          }
+          [data-logos-track] {
+            gap: 12px;
+          }
+        }
+        [data-logos-fade] {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 96px;
+          pointer-events: none;
+          z-index: 2;
+        }
+        [data-logos-fade="left"] {
+          left: 0;
+          background: linear-gradient(90deg, var(--logos-fade-color, var(--surface)) 0%, var(--logos-fade-color, var(--surface)) 18%, transparent 100%);
+        }
+        [data-logos-fade="right"] {
+          right: 0;
+          background: linear-gradient(270deg, var(--logos-fade-color, var(--surface)) 0%, var(--logos-fade-color, var(--surface)) 18%, transparent 100%);
+        }
+      `}</style>
+      <div className="grid" style={{ gap: 14 }}>
+        <div style={{ textAlign: "center", display: "grid", gap: 6 }}>
+          <SectionHeading eyebrow={block.eyebrow} title={block.heading ?? "Partners"} align="center" />
+        </div>
+        <div
+          data-logos-wall
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 0,
+            background: wallBackground,
+            padding: "14px 16px",
+            ["--logos-fade-color" as string]: fadeColor,
+            ["--logos-duration" as string]: "26s"
+          }}
+          ref={wallRef}
+        >
+          <div data-logos-fade="left" aria-hidden />
+          <div data-logos-fade="right" aria-hidden />
+          <div style={{ display: "grid", gap: 12, position: "relative" }}>
+            <div style={{ position: "relative", overflow: "hidden" }}>
+              <motion.div
+                data-logos-track
+                ref={primaryTrackRef}
+                key={`logos-primary-${primaryDistance}-${loopedPrimary.length}`}
+                animate={
+                  primaryDistance > 0
+                    ? { x: [0, -primaryDistance] }
+                    : { x: 0 }
+                }
+                transition={{
+                  duration: Math.max(18, primaryDistance / 24),
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "linear"
+                }}
+              >
+                {loopedPrimary.map((logo, idx) => (
+                  <div key={`${logo.id}-${idx}`} style={logoCellStyle} aria-label={logo.alt ?? "Logo"}>
+                    <img
+                      src={logo.url}
+                      alt={logo.alt ?? ""}
+                      style={{ ...imgStyle, filter: logoFilter, mixBlendMode: logoBlendMode }}
+                      width={logo.width}
+                      height={logo.height}
+                      data-logos-img
+                    />
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+            {loopedSecondary.length > 0 ? (
+              <div style={{ position: "relative", overflow: "hidden" }}>
+                <motion.div
+                  data-logos-track
+                  data-direction="reverse"
+                  data-variation="alt"
+                  ref={secondaryTrackRef}
+                  key={`logos-secondary-${secondaryDistance}-${loopedSecondary.length}`}
+                  animate={
+                    secondaryDistance > 0
+                      ? { x: [-secondaryDistance, 0] }
+                      : { x: 0 }
+                  }
+                  transition={{
+                    duration: Math.max(20, secondaryDistance / 24),
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "linear"
+                  }}
+                >
+                  {loopedSecondary.map((logo, idx) => (
+                    <div key={`${logo.id}-rev-${idx}`} style={logoCellStyle} aria-label={logo.alt ?? "Logo"}>
+                      <img
+                        src={logo.url}
+                        alt={logo.alt ?? ""}
+                        style={{ ...imgStyle, filter: logoFilter, mixBlendMode: logoBlendMode }}
+                        width={logo.width}
+                        height={logo.height}
+                        data-logos-img
+                      />
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        {!logos.length && !loading ? (
+          <p style={{ margin: 0, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+            Add media items with type <code>Logo</code> to replace the placeholders.
+          </p>
+        ) : null}
+        {loading ? (
+          <p style={{ margin: 0, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Loading logos…</p>
+        ) : null}
+      </div>
+    </AnimatedSection>
+  );
+};
+
 type ShowcaseMediaItem = {
   id: string;
   url: string;
@@ -2008,27 +2639,29 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
             element = renderHeroBlock(block, index, headerHeight);
           } else if (block.type === "animated_headline") {
             element = renderAnimatedHeadlineBlock(block, index, headerHeight);
-        } else if (block.type === "scroll_gallery") {
-          element = (
-            <ScrollGalleryBlockSection
-              key={key}
-              block={block}
-              index={index}
-              headerHeight={headerHeight}
-              componentsMap={componentsMap}
-            />
-          );
-        } else if (block.type === "showcase") {
-          element = <ShowcaseBlockSection key={key} block={block} index={index} headerHeight={headerHeight} />;
-        } else if (block.type === "split") {
-          element = renderSplitBlock(block, index);
-        } else if (block.type === "features") {
-          element = <FeaturesBlockSection key={key} block={block} index={index} componentsMap={componentsMap} />;
-        } else if (block.type === "contact") {
-          element = <ContactBlockSection key={key} block={block} index={index} />;
-        } else {
-          element = renderStoryBlock(block, index);
-        }
+          } else if (block.type === "logos") {
+            element = <LogosBlockSection key={key} block={block} index={index} />;
+          } else if (block.type === "scroll_gallery") {
+            element = (
+              <ScrollGalleryBlockSection
+                key={key}
+                block={block}
+                index={index}
+                headerHeight={headerHeight}
+                componentsMap={componentsMap}
+              />
+            );
+          } else if (block.type === "showcase") {
+            element = <ShowcaseBlockSection key={key} block={block} index={index} headerHeight={headerHeight} />;
+          } else if (block.type === "split") {
+            element = renderSplitBlock(block, index);
+          } else if (block.type === "features") {
+            element = <FeaturesBlockSection key={key} block={block} index={index} componentsMap={componentsMap} />;
+          } else if (block.type === "contact") {
+            element = <ContactBlockSection key={key} block={block} index={index} />;
+          } else {
+            element = renderStoryBlock(block, index);
+          }
           const shouldWrap = block.type !== "animated_headline" && block.enableDarkModeOnScroll;
           if (shouldWrap) {
             return (
