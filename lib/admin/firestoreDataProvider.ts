@@ -14,7 +14,7 @@ import {
   where,
   documentId
 } from "firebase/firestore";
-import { getFirebaseApp } from "../firebaseClient";
+import { ensureFirebaseDevAuth, getFirebaseApp } from "../firebaseClient";
 import { normalizePageShape } from "../pageContent";
 import type { PageRecord } from "./pages";
 import { seedPages } from "./pages";
@@ -92,6 +92,7 @@ export const createFirestoreDataProvider = (): DataProvider => {
     const snapshot = await getDocs(q);
     if (!snapshot.empty || resource === "navigation") return snapshot;
     const seeds = seedsMap[resource];
+    await ensureFirebaseDevAuth();
     await Promise.all(seeds.map((record: any) => setDoc(doc(db, collectionMap[resource], record.id), stripUndefined(record))));
     return getDocs(q);
   };
@@ -138,6 +139,7 @@ export const createFirestoreDataProvider = (): DataProvider => {
         if (resourceKey !== "navigation") {
           const seed = (seedsMap[resourceKey] as any[]).find((item) => item.id === id);
           if (seed) {
+            await ensureFirebaseDevAuth();
             await setDoc(ref, seed);
             return { data: seed };
           }
@@ -151,10 +153,12 @@ export const createFirestoreDataProvider = (): DataProvider => {
         const payload = stripUndefined(variables as ResourceRecord);
         if (payload.id) {
           const ref = doc(db, collectionMap[resourceKey], payload.id);
+          await ensureFirebaseDevAuth();
           await setDoc(ref, payload);
           return { data: payload };
         }
         const ref = collection(db, collectionMap[resourceKey]);
+        await ensureFirebaseDevAuth();
         const created = await addDoc(ref, payload);
         const snapshot = await getDoc(created);
         return { data: normalizerMap[resourceKey](snapshot) };
@@ -164,6 +168,7 @@ export const createFirestoreDataProvider = (): DataProvider => {
         const { id, variables, resource } = params;
         const resourceKey = resolveResource(resource);
         const ref = doc(db, collectionMap[resourceKey], String(id));
+        await ensureFirebaseDevAuth();
         await updateDoc(ref, stripUndefined(variables as Partial<ResourceRecord>));
         const snapshot = await getDoc(ref);
         return { data: normalizerMap[resourceKey](snapshot) };
@@ -173,6 +178,7 @@ export const createFirestoreDataProvider = (): DataProvider => {
         const { id, resource } = params;
         const resourceKey = resolveResource(resource);
         const ref = doc(db, collectionMap[resourceKey], String(id));
+        await ensureFirebaseDevAuth();
         const snapshot = await getDoc(ref);
         await deleteDoc(ref);
         return { data: normalizerMap[resourceKey](snapshot) };

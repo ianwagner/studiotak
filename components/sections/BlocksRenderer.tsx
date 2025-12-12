@@ -27,13 +27,32 @@ import { getFirebaseApp } from "@/lib/firebaseClient";
 import { collection, documentId, getDocs, getFirestore, limit, query, where, type QueryConstraint } from "firebase/firestore";
 import { seedComponents, type ComponentRecord } from "@/lib/admin/components";
 import Script from "next/script";
+import Head from "next/head";
 
 declare global {
   interface Window {
-    hbspt?: {
-      forms?: {
-        create?: (config: { portalId: string; formId: string; region?: string; target: string }) => void;
+    REQUIRED_CODE_ERROR_MESSAGE?: string;
+    LOCALE?: string;
+    EMAIL_INVALID_MESSAGE?: string;
+    SMS_INVALID_MESSAGE?: string;
+    REQUIRED_ERROR_MESSAGE?: string;
+    GENERIC_INVALID_MESSAGE?: string;
+    translation?: {
+      common: {
+        selectedList: string;
+        selectedLists: string;
+        selectedOption: string;
+        selectedOptions: string;
       };
+    };
+    AUTOHIDE?: boolean;
+    handleCaptchaResponse?: () => void;
+    grecaptcha?: {
+      render?: (
+        container: HTMLElement | string,
+        params: { sitekey: string; callback?: () => void; theme?: string }
+      ) => void;
+      reset?: (widgetId?: number | string) => void;
     };
   }
 }
@@ -713,6 +732,9 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
 const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: number }) => {
   const hasMedia = !!block.media?.url;
   const isVideo = block.media?.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(block.media?.url ?? "");
+  const [formSuccess, setFormSuccess] = useState(false);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const recaptchaSiteKey = "6Ld_MyksAAAAAMwJusVI9I7wpyxKjnM5i8X9VFpL";
   const media = hasMedia ? (
     <div
       data-contact-media
@@ -743,72 +765,168 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
     </div>
   ) : null;
   const anchorId = block.anchor?.trim();
-  const portalId = block.portalId?.trim() || "244262601";
-  const formId = block.formId?.trim() || "bb99355b-ad00-407a-81e7-882535a3c4be";
-  const region = block.region?.trim() || "na2";
-  const scriptSrc = block.formScriptSrc?.trim() || `https://js-${region}.hsforms.net/forms/embed/${portalId}.js`;
-  const scriptId = `hubspot-form-${portalId}-${formId}`;
   const preset = animationPresets[defaultAnimationPreset];
-  const formContainerId = useMemo(
-    () => `hs-form-${portalId}-${formId}-${block.id ?? index}`,
-    [portalId, formId, block.id, index]
-  );
 
   useEffect(() => {
-    const container = document.getElementById(formContainerId);
-    if (!container) return;
-    let canceled = false;
-    let timeout: number | null = null;
-
-    const ensureScript = () => {
-      const existing = document.querySelector<HTMLScriptElement>(`script[src="${scriptSrc}"]`);
-      if (existing) return existing;
-      const el = document.createElement("script");
-      el.src = scriptSrc;
-      el.async = true;
-      el.defer = true;
-      document.body.appendChild(el);
-      return el;
+    window.REQUIRED_CODE_ERROR_MESSAGE = "Please choose a country code";
+    window.LOCALE = "en";
+    window.EMAIL_INVALID_MESSAGE =
+      "The information provided is invalid. Please review the field format and try again.";
+    window.SMS_INVALID_MESSAGE = window.EMAIL_INVALID_MESSAGE;
+    window.REQUIRED_ERROR_MESSAGE = "This field cannot be left blank.";
+    window.GENERIC_INVALID_MESSAGE =
+      "The information provided is invalid. Please review the field format and try again.";
+    window.translation = {
+      common: {
+        selectedList: "{quantity} list selected",
+        selectedLists: "{quantity} lists selected",
+        selectedOption: "{quantity} selected",
+        selectedOptions: "{quantity} selected"
+      }
     };
+    window.AUTOHIDE = false;
+    window.handleCaptchaResponse = () => {
+      const captcha = document.getElementById("sib-captcha");
+      if (!captcha) return;
+      const event = new Event("captchaChange");
+      captcha.dispatchEvent(event);
+    };
+  }, []);
 
-    const mountForm = () => {
-      if (canceled || !container || container.dataset.loaded === "true") return true;
-      if (window.hbspt?.forms?.create) {
-        window.hbspt.forms.create({
-          portalId,
-          formId,
-          region,
-          target: `#${formContainerId}`
-        });
-        container.dataset.loaded = "true";
+  useEffect(() => {
+    const container = document.getElementById("sib-captcha");
+    if (!container) return;
+
+    const markRenderedIfIframe = () => {
+      if (container.querySelector("iframe")) {
+        container.dataset.rendered = "true";
         return true;
       }
       return false;
     };
 
-    const script = ensureScript();
-    const tryMount = () => {
-      if (mountForm()) return;
-      timeout = window.setTimeout(tryMount, 250);
+    const renderCaptcha = () => {
+      if (container.dataset.rendered === "true") return true;
+      if (markRenderedIfIframe()) return true;
+      if (window.grecaptcha?.render) {
+        try {
+          window.grecaptcha.render(container, {
+            sitekey: recaptchaSiteKey,
+            callback: window.handleCaptchaResponse,
+            theme: "light"
+          });
+          container.dataset.rendered = "true";
+          return true;
+        } catch (err) {
+          // If already rendered, just mark and continue.
+          if (String(err).toLowerCase().includes("already been rendered")) {
+            container.dataset.rendered = "true";
+            return true;
+          }
+        }
+      }
+      return false;
     };
 
-    if (script) {
-      script.addEventListener("load", tryMount);
-    }
-    tryMount();
+    let timer: number | null = null;
+    const tryRender = () => {
+      if (renderCaptcha()) return;
+      timer = window.setTimeout(tryRender, 200);
+    };
+    tryRender();
 
     return () => {
-      canceled = true;
-      if (script) script.removeEventListener("load", tryMount);
-      if (timeout) window.clearTimeout(timeout);
+      if (timer) window.clearTimeout(timer);
     };
-  }, [formContainerId, formId, portalId, region, scriptSrc]);
+  }, [recaptchaSiteKey]);
+
+  useEffect(() => {
+    const emailInput = document.getElementById("EMAIL") as HTMLInputElement | null;
+    const form = document.getElementById("sib-form") as HTMLFormElement | null;
+    const errorLabel = emailInput?.closest(".sib-input")?.querySelector<HTMLElement>(".entry__error") ?? null;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const validateEmail = () => {
+      if (!emailInput || !errorLabel) return;
+      const value = emailInput.value.trim();
+      if (!value) {
+        errorLabel.textContent = "";
+        emailInput.setCustomValidity("");
+        return;
+      }
+      if (!emailPattern.test(value)) {
+        errorLabel.textContent = "Please enter a valid email address.";
+        emailInput.setCustomValidity("invalid email");
+      } else {
+        errorLabel.textContent = "";
+        emailInput.setCustomValidity("");
+      }
+    };
+
+    const handleSubmit = async (evt: Event) => {
+      const currentScroll = window.scrollY;
+      evt.preventDefault();
+      evt.stopPropagation();
+      // Prevent other listeners from allowing navigation/scroll.
+      // @ts-ignore
+      if (evt.stopImmediatePropagation) evt.stopImmediatePropagation();
+      validateEmail();
+      const captchaError = form?.querySelector<HTMLElement>(".sib-captcha .entry__error");
+      const recaptchaValue =
+        (form?.querySelector<HTMLTextAreaElement>('textarea[name="g-recaptcha-response"]')?.value || "").trim();
+      if (emailInput && !emailInput.checkValidity()) {
+        emailInput.reportValidity();
+        return;
+      }
+      if (!recaptchaValue) {
+        if (captchaError) captchaError.textContent = "Please complete the captcha.";
+        return;
+      }
+      if (captchaError) captchaError.textContent = "";
+      if (!form) return;
+
+      try {
+        setFormSubmitting(true);
+        const formData = new FormData(form);
+        await fetch(form.action, {
+          method: "POST",
+          body: formData,
+          mode: "no-cors"
+        });
+        setFormSuccess(true);
+        form.reset();
+        const errorEls = form.querySelectorAll<HTMLElement>(".entry__error");
+        errorEls.forEach((el) => (el.textContent = ""));
+        window.grecaptcha?.reset?.();
+        window.scrollTo({ top: currentScroll, behavior: "instant" as ScrollBehavior });
+      } catch (err) {
+        if (captchaError) captchaError.textContent = "Something went wrong. Please try again.";
+      } finally {
+        setFormSubmitting(false);
+      }
+    };
+
+    emailInput?.addEventListener("input", validateEmail);
+    emailInput?.addEventListener("blur", validateEmail);
+    form?.addEventListener("submit", handleSubmit, { capture: true });
+    validateEmail();
+
+    return () => {
+      emailInput?.removeEventListener("input", validateEmail);
+      emailInput?.removeEventListener("blur", validateEmail);
+      form?.removeEventListener("submit", handleSubmit, { capture: true } as EventListenerOptions);
+    };
+  }, []);
 
   return (
     <AnimatedSection key={block.id ?? index} index={index} variant="plain" animated={false}>
-      <Script id={scriptId} src={scriptSrc} strategy="lazyOnload" />
+      <Head>
+        <link rel="stylesheet" href="https://sibforms.com/forms/end-form/build/sib-styles.css" />
+      </Head>
+      <Script id="brevo-form-main" src="https://sibforms.com/forms/end-form/build/main.js" strategy="afterInteractive" />
+      <Script id="brevo-form-recaptcha" src="https://www.google.com/recaptcha/api.js?hl=en" strategy="afterInteractive" />
       <div id={anchorId || undefined} data-contact-block style={{ position: "relative" }}>
-        <style>{`
+        <style suppressHydrationWarning>{`
           [data-contact-block] {
             width: 100%;
           }
@@ -821,6 +939,205 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             gap: 18px;
             align-items: center;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          }
+          [data-brevo-form] * {
+            font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
+          }
+          [data-brevo-form] {
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-strong);
+            background: var(--input-bg);
+            box-shadow: none;
+          }
+          [data-brevo-form] .sib-form {
+            text-align: left;
+          }
+          [data-brevo-form] .sib-form-container {
+            display: grid;
+            gap: 12px;
+          }
+          [data-brevo-form] .sib-form-message-panel {
+            display: none;
+            border-radius: 12px;
+            padding: 10px 12px;
+            border: 1px solid transparent;
+            font-size: 14px;
+          }
+          [data-brevo-form] .sib-form-message-panel svg {
+            width: 18px;
+            height: 18px;
+          }
+          [data-brevo-form] #error-message {
+            color: var(--danger);
+            background: rgba(214, 54, 54, 0.08);
+            border-color: rgba(214, 54, 54, 0.28);
+          }
+          [data-brevo-form] #success-message {
+            color: var(--text);
+            background: var(--accent-soft);
+            border-color: var(--accent);
+          }
+          [data-brevo-form] .sib-form-message-panel.sib-form-message-panel--visible {
+            display: block;
+          }
+          [data-brevo-form] .sib-container--large {
+            border: none;
+            background: transparent;
+            padding: 0;
+          }
+          [data-brevo-form] form {
+            display: grid;
+            gap: 14px;
+          }
+          [data-brevo-form] .sib-form-block {
+            width: 100%;
+          }
+          [data-brevo-form] .sib-form-block + .sib-form-block {
+            margin-top: 4px;
+          }
+          [data-brevo-form] [data-name-row] {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+          }
+          [data-brevo-form] [data-name-row] .sib-form-block {
+            margin-top: 0;
+          }
+          [data-brevo-form] .sib-input .form__entry,
+          [data-brevo-form] .sib-optin .form__entry,
+          [data-brevo-form] .sib-captcha .form__entry {
+            display: grid;
+            gap: 6px;
+          }
+          [data-brevo-form] .entry__label {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--muted);
+          }
+          [data-brevo-form] .entry__field,
+          [data-brevo-form] .entry__choice {
+            display: grid;
+            gap: 6px;
+          }
+          [data-brevo-form] .entry__error {
+            color: var(--danger);
+            background: rgba(214, 54, 54, 0.08);
+            border: 1px solid rgba(214, 54, 54, 0.28);
+            border-radius: 10px;
+            padding: 6px 10px;
+            font-size: 13px;
+            min-height: 1.25rem;
+            display: block !important;
+            opacity: 1 !important;
+          }
+          [data-brevo-form] .entry__error:empty {
+            display: none !important;
+          }
+          [data-brevo-form] .entry__specification {
+            color: var(--muted);
+            font-size: 12px;
+            margin: 0;
+          }
+          [data-brevo-form] .input,
+          [data-brevo-form] textarea,
+          [data-brevo-form] select {
+            width: 100%;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            padding: 10px 12px;
+          }
+          [data-brevo-form] .input:focus,
+          [data-brevo-form] textarea:focus,
+          [data-brevo-form] select:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 112, 11, 0.16);
+          }
+          [data-brevo-form] textarea {
+            min-height: 120px;
+            resize: vertical;
+          }
+          [data-brevo-form] .sib-optin label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text);
+          }
+          [data-brevo-form] .sib-optin input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            appearance: none;
+            -webkit-appearance: none;
+            position: relative;
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            background: var(--input-bg);
+            display: grid;
+            place-content: center;
+            transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+          }
+          [data-brevo-form] .sib-optin input[type="checkbox"]:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 112, 11, 0.16);
+          }
+          [data-brevo-form] .sib-optin input[type="checkbox"]:checked::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 12px 12px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 13 9 17 19 7'/%3E%3C/svg%3E");
+          }
+          [data-brevo-form] .sib-form-block__button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            text-align: left;
+            font-weight: 700;
+            font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
+            color: #ffffff;
+            background: var(--accent);
+            border-radius: 12px;
+            border-width: 0px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+          }
+          [data-brevo-form] .sib-form-block__button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+            background: var(--accent-strong);
+          }
+          [data-brevo-form] .sib-form-block__button:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+          }
+          [data-brevo-form] .progress-indicator__icon {
+            display: none;
+          }
+          [data-brevo-success] {
+            padding: 18px;
+            border-radius: 14px;
+            border: 1px solid var(--border-strong);
+            background: var(--accent-soft);
+            color: var(--text);
+            font-size: 18px;
+            line-height: 1.6;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            animation: brevoSuccessFade 300ms ease;
+          }
+          @keyframes brevoSuccessFade {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
           }
           @media (max-width: 900px) {
             [data-contact-media] {
@@ -837,57 +1154,6 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             [data-contact-grid] {
               grid-template-columns: 1fr !important;
             }
-          }
-          [data-contact-form] .hs-form {
-            display: grid !important;
-            gap: 10px;
-          }
-          [data-contact-form] .hs-form label {
-            color: var(--muted);
-            font-size: 14px;
-            margin-bottom: 2px;
-            display: block;
-          }
-          [data-contact-form] input,
-          [data-contact-form] textarea,
-          [data-contact-form] select {
-            width: 100% !important;
-            background: var(--input-bg) !important;
-            color: var(--text) !important;
-            border: 1px solid var(--border-strong) !important;
-            border-radius: 12px !important;
-            padding: 10px 12px !important;
-            box-shadow: none !important;
-          }
-          [data-contact-form] textarea {
-            min-height: 120px;
-            resize: vertical;
-          }
-          [data-contact-form] .hs-error-msgs {
-            color: var(--accent);
-            font-size: 13px;
-            margin: 2px 0 4px;
-            padding: 0;
-          }
-          [data-contact-form] .hs-button {
-            background: var(--accent) !important;
-            color: #fff !important;
-            border: none !important;
-            border-radius: 12px !important;
-            padding: 12px 16px !important;
-            font-weight: 600 !important;
-            cursor: pointer;
-            transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-          }
-          [data-contact-form] .hs-button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 18px rgba(0,0,0,0.16);
-            background: var(--accent-strong) !important;
-          }
-          [data-contact-form] .hs-button:focus {
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
           }
         `}</style>
         <motion.section
@@ -907,26 +1173,167 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             <div className="grid" style={{ gap: 12 }}>
               <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} />
               <div
-                data-hubspot-form-wrapper
                 data-contact-form
-                style={{
-                  padding: 12,
-                  borderRadius: 12,
-                  border: "1px solid var(--border-strong)",
-                  background: "var(--input-bg)",
-                  boxShadow: "none"
-                }}
+                data-brevo-form
               >
-                <div
-                  id={formContainerId}
-                  className="hs-form-frame"
-                  data-region={region}
-                  data-form-id={formId}
-                  data-portal-id={portalId}
-                />
+                {formSuccess ? (
+                  <div data-brevo-success aria-live="polite">Thank you! We&apos;ll reach out soon.</div>
+                ) : (
+                  <div className="sib-form" data-type="subscription">
+                    <div id="sib-form-container" className="sib-form-container">
+                    <div id="error-message" className="sib-form-message-panel">
+                      <div className="sib-form-message-panel__text sib-form-message-panel__text--center">
+                        <svg viewBox="0 0 512 512" className="sib-icon sib-notification__icon">
+                          <path d="M256 40c118.621 0 216 96.075 216 216 0 119.291-96.61 216-216 216-119.244 0-216-96.562-216-216 0-119.203 96.602-216 216-216m0-32C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm-11.49 120h22.979c6.823 0 12.274 5.682 11.99 12.5l-7 168c-.268 6.428-5.556 11.5-11.99 11.5h-8.979c-6.433 0-11.722-5.073-11.99-11.5l-7-168c-.283-6.818 5.167-12.5 11.99-12.5zM256 340c-15.464 0-28 12.536-28 28s12.536 28 28 28 28-12.536 28-28-12.536-28-28-28z" />
+                        </svg>
+                        <span className="sib-form-message-panel__inner-text">
+                          Your submission could not be saved. Please try again.
+                        </span>
+                      </div>
+                    </div>
+                    <div id="success-message" className="sib-form-message-panel">
+                      <div className="sib-form-message-panel__text sib-form-message-panel__text--center">
+                        <svg viewBox="0 0 512 512" className="sib-icon sib-notification__icon">
+                          <path d="M256 8C119.033 8 8 119.033 8 256s111.033 248 248 248 248-111.033 248-248S392.967 8 256 8zm0 464c-118.664 0-216-96.055-216-216 0-118.663 96.055-216 216-216 118.664 0 216 96.055 216 216 0 118.663-96.055 216-216 216zm141.63-274.961L217.15 376.071c-4.705 4.667-12.303 4.637-16.97-.068l-85.878-86.572c-4.667-4.705-4.637-12.303.068-16.97l8.52-8.451c4.705-4.667 12.303-4.637 16.97.068l68.976 69.533 163.441-162.13c4.705-4.667 12.303-4.637 16.97.068l8.451 8.52c4.668 4.705 4.637 12.303-.068 16.97z" />
+                        </svg>
+                        <span className="sib-form-message-panel__inner-text">
+                          Your submission has been successful.
+                        </span>
+                      </div>
+                    </div>
+                    <div id="sib-container" className="sib-container--large sib-container--vertical">
+                      <form
+                        id="sib-form"
+                        method="POST"
+                        action="https://bd3a921f.sibforms.com/serve/MUIFAHM-9ERG7aYtvQaKLgylvX7RO_ew2aPPC9v8M5QsEKgnSYunibbCbINAijwJdD-UUk4scmuXwqt11zysNEc4WIoCfb-PE3WTUnLw8ltAF2rq5bGjQLCoRQZ7yC5zAu8399v1xnGYK0rbWLrgm2u9pY6qZoke25S2n4GtQc4vnGY5qWEkj4Tk-u99e_uKQQ_wAyzrE2Led8NM6w=="
+                        data-type="subscription"
+                        noValidate
+                      >
+                        <div className="sib-input sib-form-block">
+                          <div className="form__entry entry_block">
+                            <div className="form__label-row">
+                              <label className="entry__label" htmlFor="EMAIL" data-required="*">
+                                Enter your email address
+                              </label>
+                              <div className="entry__field">
+                                <input
+                                  className="input"
+                                  type="email"
+                                  id="EMAIL"
+                                  name="EMAIL"
+                                  autoComplete="email"
+                                  placeholder="Email"
+                                  data-required="true"
+                                  required
+                                />
+                              </div>
+                            </div>
+                            <label className="entry__error entry__error--primary" />
+                          </div>
+                        </div>
+                        <div className="name-row" data-name-row>
+                          <div className="sib-input sib-form-block">
+                            <div className="form__entry entry_block">
+                              <div className="form__label-row">
+                                <label className="entry__label" htmlFor="FIRSTNAME" data-required="*">
+                                  Enter your first name
+                                </label>
+                                <div className="entry__field">
+                                  <input
+                                    className="input"
+                                    maxLength={200}
+                                    type="text"
+                                    id="FIRSTNAME"
+                                    name="FIRSTNAME"
+                                    autoComplete="given-name"
+                                    placeholder="First name"
+                                    data-required="true"
+                                    required
+                                  />
+                                </div>
+                              </div>
+                              <label className="entry__error entry__error--primary" />
+                            </div>
+                          </div>
+                          <div className="sib-input sib-form-block">
+                            <div className="form__entry entry_block">
+                              <div className="form__label-row">
+                                <label className="entry__label" htmlFor="LASTNAME" data-required="*">
+                                  Enter your last name
+                                </label>
+                                <div className="entry__field">
+                                  <input
+                                    className="input"
+                                    maxLength={200}
+                                    type="text"
+                                    id="LASTNAME"
+                                    name="LASTNAME"
+                                    autoComplete="family-name"
+                                    placeholder="Last name"
+                                    data-required="true"
+                                    required
+                                  />
+                                </div>
+                              </div>
+                              <label className="entry__error entry__error--primary" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="sib-captcha sib-form-block">
+                          <div className="form__entry entry_block">
+                            <div className="form__label-row">
+                              <div
+                                className="g-recaptcha sib-visible-recaptcha"
+                                id="sib-captcha"
+                                data-sitekey="6Ld_MyksAAAAAMwJusVI9I7wpyxKjnM5i8X9VFpL"
+                                data-callback="handleCaptchaResponse"
+                                style={{ direction: "ltr" }}
+                              />
+                            </div>
+                            <label className="entry__error entry__error--primary" />
+                          </div>
+                        </div>
+                        <div className="sib-optin sib-form-block" data-required="true">
+                          <div className="form__entry entry_mcq">
+                            <div className="form__label-row">
+                              <label className="entry__label" htmlFor="OPT_IN" data-required="*">
+                                Opt-in
+                              </label>
+                              <div className="entry__choice">
+                                <label className="opt-in-label">
+                                  <input type="checkbox" className="input_replaced" value="1" id="OPT_IN" name="OPT_IN" required />
+                                  <span className="opt-in-copy">I agree to receive communications from Studio Tak.</span>
+                                </label>
+                              </div>
+                            </div>
+                            <label className="entry__error entry__error--primary" />
+                            <p className="entry__specification">
+                              You may unsubscribe at any time using the link in our emails.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="sib-form-block" style={{ textAlign: "left" }}>
+                          <button
+                            className="sib-form-block__button sib-form-block__button-with-loader"
+                            form="sib-form"
+                            type="submit"
+                          >
+                            <svg className="icon clickable__icon progress-indicator__icon sib-hide-loader-icon" viewBox="0 0 512 512">
+                              <path d="M460.116 373.846l-20.823-12.022c-5.541-3.199-7.54-10.159-4.663-15.874 30.137-59.886 28.343-131.652-5.386-189.946-33.641-58.394-94.896-95.833-161.827-99.676C261.028 55.961 256 50.751 256 44.352V20.309c0-6.904 5.808-12.337 12.703-11.982 83.556 4.306 160.163 50.864 202.11 123.677 42.063 72.696 44.079 162.316 6.031 236.832-3.14 6.148-10.75 8.461-16.728 5.01z" />
+                            </svg>
+                            Submit
+                          </button>
+                        </div>
+                        <input type="hidden" name="email_address_check" value="" aria-hidden="true" />
+                        <input type="hidden" name="locale" value="en" />
+                      </form>
+                    </div>
+                  </div>
+                </div>
+                )}
               </div>
               <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
-                Powered by HubSpot. We typically reply within one business day.
+                We typically reply within one business day.
               </p>
             </div>
           </div>

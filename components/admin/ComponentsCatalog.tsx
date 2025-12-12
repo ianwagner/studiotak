@@ -22,7 +22,7 @@ const componentEntries: ComponentEntry[] = [
     id: "thirds",
     title: "Thirds",
     summary: "Hero-like layout with a shorter height and the same CTA/media options.",
-    fields: ["Eyebrow", "Title + subtitle", "Primary / secondary CTA", "Media or background image/video", "Alignment: centered, image left/right"],
+    fields: ["Eyebrow", "Title + subtitle", "Primary / secondary CTA", "Media or background image/video", "Layout: Left or Centered"],
     usage: "Great for mid-page intros or CTA banners when you want the hero look without a full viewport height."
   },
   {
@@ -52,6 +52,13 @@ const componentEntries: ComponentEntry[] = [
     summary: "Overlapping stack of media pulled straight from the Media library.",
     fields: ["Type filter", "Optional industry filter", "Result limit", "Animation preset"],
     usage: "Great for mood boards or quick reels of work—no captions, just visuals in a messy horizontal stack."
+  },
+  {
+    id: "contact",
+    title: "Contact",
+    summary: "Two-column layout pairing a HubSpot embed with optional media.",
+    fields: ["Eyebrow + heading + body copy", "Anchor ID for #contact links", "HubSpot portal + form + region", "Optional media"],
+    usage: "Use for lead capture or inquiries. Drop near the end of a page so CTAs can jump visitors into the form."
   }
 ];
 
