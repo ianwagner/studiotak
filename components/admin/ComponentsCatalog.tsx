@@ -40,6 +40,13 @@ const componentEntries: ComponentEntry[] = [
     usage: "Pair with hero/story for capability lists. Keep copy concise; badges can flag status like New or Beta."
   },
   {
+    id: "logos",
+    title: "Logos",
+    summary: "Step-and-repeat logo wall sourced from the media library.",
+    fields: ["Eyebrow + headline", "Max logos (1-20)", "Pulls media with type: Logo"],
+    usage: "Use for social proof. Upload media items tagged as Logo to auto-populate a looping marquee."
+  },
+  {
     id: "scroll_gallery",
     title: "Scroll gallery",
     summary: "Full-bleed, full-height horizontal track of cards.",

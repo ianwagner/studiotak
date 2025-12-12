@@ -26,7 +26,12 @@ export type HeroBlock = {
   media?: BlockMedia;
   background?: BlockMedia;
   alignment: "image_left" | "image_right" | "centered";
+  overlayStyle?: "full" | "gradient";
   enableDarkModeOnScroll?: boolean;
+  mode?: "static" | "dynamic";
+  mediaIndustryTag?: string;
+  mediaTypeTag?: string;
+  mediaLimit?: number;
 };
 
 export type ThirdsBlock = Omit<HeroBlock, "type"> & {
@@ -110,6 +115,16 @@ export type ScrollGalleryBlock = {
   enableDarkModeOnScroll?: boolean;
 };
 
+export type LogosBlock = {
+  id: string;
+  type: "logos";
+  adminLabel?: string;
+  eyebrow?: string;
+  heading?: string;
+  limit?: number;
+  enableDarkModeOnScroll?: boolean;
+};
+
 export type ShowcaseBlock = {
   id: string;
   type: "showcase";
@@ -150,6 +165,7 @@ export type BlockRecord =
   | AnimatedHeadlineBlock
   | ScrollGalleryBlock
   | ShowcaseBlock
+  | LogosBlock
   | ContactBlock;
 
 export type RedirectRule = {

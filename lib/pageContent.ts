@@ -17,7 +17,9 @@ const buildHeroFromLegacy = (page: any): HeroBlock => ({
   primaryCtaHref: page.ctaHref,
   secondaryCtaLabel: page.secondaryCtaLabel,
   secondaryCtaHref: page.secondaryCtaHref,
-  alignment: "centered"
+  alignment: "centered",
+  overlayStyle: "gradient",
+  mode: "static"
 });
 
 const buildStoryFromLegacy = (page: any): StoryBlock => ({

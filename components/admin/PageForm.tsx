@@ -15,6 +15,7 @@ import type {
   FeatureItem,
   ScrollGalleryBlock,
   ShowcaseBlock,
+  LogosBlock,
   SplitBlock,
   ThirdsBlock,
   ContactBlock,
@@ -89,6 +90,7 @@ const isSplitBlock = (block: EditableBlock): block is SplitBlock => block.type =
 const isFeaturesBlock = (block: EditableBlock): block is FeaturesBlock => block.type === "features";
 const isScrollGalleryBlock = (block: EditableBlock): block is ScrollGalleryBlock => block.type === "scroll_gallery";
 const isShowcaseBlock = (block: EditableBlock): block is ShowcaseBlock => block.type === "showcase";
+const isLogosBlock = (block: EditableBlock): block is LogosBlock => block.type === "logos";
 const isContactBlock = (block: EditableBlock): block is ContactBlock => block.type === "contact";
 const isFeatureItemsBlock = (block: EditableBlock): block is FeaturesBlock | ScrollGalleryBlock =>
   isFeaturesBlock(block) || isScrollGalleryBlock(block);
@@ -158,7 +160,12 @@ const newHeroBlock = (): HeroBlock => ({
   secondaryCtaHref: "",
   alignment: "centered",
   background: undefined,
-  enableDarkModeOnScroll: false
+  overlayStyle: "gradient",
+  enableDarkModeOnScroll: false,
+  mode: "static",
+  mediaIndustryTag: "",
+  mediaTypeTag: "",
+  mediaLimit: 18
 });
 
 const newThirdsBlock = (): ThirdsBlock => ({
@@ -218,6 +225,16 @@ const newFeaturesBlock = (): FeaturesBlock => ({
     { title: "Feature 2", body: "Another concise highlight with context." },
     { title: "Feature 3", body: "Keep these tight; 2–3 sentences max." }
   ],
+  enableDarkModeOnScroll: false
+});
+
+const newLogosBlock = (): LogosBlock => ({
+  id: crypto.randomUUID(),
+  type: "logos",
+  adminLabel: "Logos block",
+  eyebrow: "Logos",
+  heading: "Trusted by teams that ship bold stories",
+  limit: 12,
   enableDarkModeOnScroll: false
 });
 
@@ -462,6 +479,8 @@ export function PageForm({
           return newSplitBlock();
         case "features":
           return newFeaturesBlock();
+        case "logos":
+          return newLogosBlock();
         case "scroll_gallery":
           return newScrollGalleryBlock();
         case "showcase":
@@ -502,7 +521,7 @@ export function PageForm({
   const handleHeroFieldChange = (
     idx: number,
     field: keyof Omit<HeroLikeBlock, "id" | "type" | "media" | "alignment" | "background">,
-    value: string | boolean
+    value: HeroLikeBlock[keyof Omit<HeroLikeBlock, "id" | "type" | "media" | "alignment" | "background">]
   ) => {
     updateBlock(idx, (block) => (isHeroLikeBlock(block) ? { ...block, [field]: value } : block));
   };
@@ -557,6 +576,14 @@ export function PageForm({
     value: ScrollGalleryBlock[keyof Omit<ScrollGalleryBlock, "id" | "type" | "items">]
   ) => {
     updateBlock(idx, (block) => (isScrollGalleryBlock(block) ? { ...block, [field]: value } : block));
+  };
+
+  const handleLogosFieldChange = (
+    idx: number,
+    field: keyof Omit<LogosBlock, "id" | "type">,
+    value: LogosBlock[keyof Omit<LogosBlock, "id" | "type">]
+  ) => {
+    updateBlock(idx, (block) => (isLogosBlock(block) ? { ...block, [field]: value } : block));
   };
 
   const handleShowcaseFieldChange = (
@@ -641,10 +668,6 @@ export function PageForm({
     try {
       setUploadingBlock(uploadKey);
       const isVideo = file.type.startsWith("video");
-      if (target === "background" && isVideo) {
-        setUploadError("Background images must use image files.");
-        return;
-      }
       await ensureFirebaseDevAuth();
       const app = getFirebaseApp();
       if (!localAuthBypassEnabled) {
@@ -1068,6 +1091,8 @@ export function PageForm({
         ? "Scroll gallery"
         : block.type === "showcase"
         ? "Showcase"
+        : block.type === "logos"
+        ? "Logos block"
         : block.type === "contact"
         ? "Contact block"
         : "Animated headline";
@@ -1075,6 +1100,8 @@ export function PageForm({
       const blockId = block.id ?? `block-${idx}`;
       const isOpen = openBlocks.has(blockId);
       const thirdsLayout = block.type === "thirds" ? block.layout ?? "left" : "left";
+      const heroMode = isHeroLikeBlock(block) ? block.mode ?? "static" : "static";
+      const showDynamicHeroMode = block.type === "hero";
       return (
         <div
           key={block.id ?? idx}
@@ -1134,6 +1161,7 @@ export function PageForm({
                 <option value="story">Story / Text</option>
                 <option value="split">Split</option>
                 <option value="features">Features</option>
+                <option value="logos">Logos</option>
                 <option value="scroll_gallery">Scroll gallery</option>
                 <option value="showcase">Showcase</option>
                 <option value="contact">Contact</option>
@@ -1172,6 +1200,66 @@ export function PageForm({
                   <span style={{ color: "var(--muted)", fontSize: 13 }}>
                     Thirds keeps the hero layout but uses a shorter, partial-height frame.
                   </span>
+                </div>
+              ) : null}
+              {showDynamicHeroMode ? (
+                <div className="grid" style={{ gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                  <div className="field-group">
+                    <label>Hero media mode</label>
+                    <select
+                      value={heroMode}
+                      onChange={(e) => handleHeroFieldChange(idx, "mode", e.target.value as HeroBlock["mode"])}
+                    >
+                      <option value="static">Static</option>
+                      <option value="dynamic">Dynamic (tagged media)</option>
+                    </select>
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>
+                      Switch to dynamic to auto-fill the hero with media that matches your tag filters below.
+                    </span>
+                  </div>
+                  {heroMode === "dynamic" ? (
+                    <>
+                      <div className="field-group">
+                        <label>Industry tag</label>
+                        <input
+                          className="input"
+                          value={block.mediaIndustryTag ?? ""}
+                          onChange={(e) => handleHeroFieldChange(idx, "mediaIndustryTag", e.target.value)}
+                          placeholder="Fintech, SaaS"
+                        />
+                        <span style={{ color: "var(--muted)", fontSize: 12 }}>
+                          Matches the Industry tag set on uploaded media.
+                        </span>
+                      </div>
+                      <div className="field-group">
+                        <label>Type tag</label>
+                        <input
+                          className="input"
+                          value={block.mediaTypeTag ?? ""}
+                          onChange={(e) => handleHeroFieldChange(idx, "mediaTypeTag", e.target.value)}
+                          placeholder="Logo, Product"
+                        />
+                        <span style={{ color: "var(--muted)", fontSize: 12 }}>
+                          Optional. Further narrow results using the Type tag.
+                        </span>
+                      </div>
+                      <div className="field-group">
+                        <label>Max items</label>
+                        <input
+                          className="input"
+                          type="number"
+                          min={6}
+                          max={60}
+                          value={block.mediaLimit ?? 18}
+                          onChange={(e) => handleHeroFieldChange(idx, "mediaLimit", Number(e.target.value) || 0)}
+                          placeholder="18"
+                        />
+                        <span style={{ color: "var(--muted)", fontSize: 12 }}>
+                          Pulls up to this many matches to animate in the columns.
+                        </span>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               ) : null}
               {block.type === "thirds" ? (
@@ -1252,25 +1340,27 @@ export function PageForm({
                 </div>
               </div>
               <MediaRow>
-                <MediaField
-                  blockId={blockId}
-                  blockIdx={idx}
-                  media={block.media}
-                  uploading={uploadingBlock === `${blockId}-media`}
-                  uploadError={uploadError}
-                  onUpload={handleMediaUpload}
-                  onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target, filterType })}
-                  target="media"
-                  showAlignment={block.type === "hero" || (block.type === "thirds" && thirdsLayout === "left")}
-                  alignment={block.alignment}
-                  onAlignmentChange={(next) => handleHeroAlignmentChange(idx, next)}
-                  onClear={() =>
-                    updateBlock(idx, (current) => ({
-                      ...current,
-                      media: undefined
-                    }))
-                  }
-                />
+                {heroMode === "static" ? (
+                  <MediaField
+                    blockId={blockId}
+                    blockIdx={idx}
+                    media={block.media}
+                    uploading={uploadingBlock === `${blockId}-media`}
+                    uploadError={uploadError}
+                    onUpload={handleMediaUpload}
+                    onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target, filterType })}
+                    target="media"
+                    showAlignment={block.type === "hero" || (block.type === "thirds" && thirdsLayout === "left")}
+                    alignment={block.alignment}
+                    onAlignmentChange={(next) => handleHeroAlignmentChange(idx, next)}
+                    onClear={() =>
+                      updateBlock(idx, (current) => ({
+                        ...current,
+                        media: undefined
+                      }))
+                    }
+                  />
+                ) : null}
                 <MediaField
                   blockId={blockId}
                   blockIdx={idx}
@@ -1280,10 +1370,9 @@ export function PageForm({
                   onUpload={handleMediaUpload}
                   onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target, filterType })}
                   target="background"
-                  label="Background image"
-                  helperText="Optional. Adds a backdrop behind the hero content."
-                  accept="image/*"
-                  pickerFilter="image"
+                  label="Background media"
+                  helperText="Optional. Adds a backdrop behind the hero content. Supports images or video."
+                  accept="image/*,video/*"
                   onClear={() =>
                     updateBlock(idx, (current) => ({
                       ...current,
@@ -1292,6 +1381,19 @@ export function PageForm({
                   }
                 />
               </MediaRow>
+              <div className="field-group">
+                <label>Overlay style</label>
+                <select
+                  value={block.overlayStyle ?? "gradient"}
+                  onChange={(e) => handleHeroFieldChange(idx, "overlayStyle", e.target.value)}
+                >
+                  <option value="gradient">Gradient</option>
+                  <option value="full">Full</option>
+                </select>
+                <span style={{ color: "var(--muted)", fontSize: 13 }}>
+                  Choose between the gradient overlay (clearer on the right) or a full overlay for maximum contrast.
+                </span>
+              </div>
               <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <input
                   type="checkbox"
@@ -1661,6 +1763,60 @@ export function PageForm({
                 <strong style={{ display: "block", marginBottom: 4 }}>Showcase pulls straight from Media</strong>
                 <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
                   Matching items animate in as overlapping cards. The block hides media titles and tags—only the visuals show.
+                </p>
+              </div>
+            </div>
+          ) : isLogosBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => handleLogosFieldChange(idx, "eyebrow", e.target.value)}
+                    placeholder="Trusted by"
+                  />
+                </div>
+              </div>
+              <div className="field-group">
+                <label>Headline</label>
+                <input
+                  className="input"
+                  value={block.heading ?? ""}
+                  onChange={(e) => handleLogosFieldChange(idx, "heading", e.target.value)}
+                  placeholder="Teams that trust us"
+                />
+              </div>
+              <div className="field-group">
+                <label>Max logos (1-20)</label>
+                <input
+                  className="input"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={block.limit ?? 12}
+                  onChange={(e) =>
+                    handleLogosFieldChange(idx, "limit", Math.min(20, Math.max(1, Number(e.target.value) || 0)))
+                  }
+                  placeholder="12"
+                />
+                <span style={{ color: "var(--muted)", fontSize: 12 }}>
+                  Pulls any media with type <code>Logo</code>. Logos are capped at 20 and shown in a looping wall.
+                </span>
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!block.enableDarkModeOnScroll}
+                  onChange={(e) => handleLogosFieldChange(idx, "enableDarkModeOnScroll", e.target.checked)}
+                />
+                <span>Trigger dark mode while this block is in view</span>
+              </label>
+              <div className="card" style={{ padding: 12, border: "1px dashed var(--border-strong)" }}>
+                <strong style={{ display: "block", marginBottom: 4 }}>Step-and-repeat logos</strong>
+                <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
+                  Dynamically fetches up to 20 media items tagged as Logo and lays them out in a repeating marquee.
                 </p>
               </div>
             </div>

@@ -149,6 +149,17 @@ const useComponentsMap = (componentIds: string[]) => {
   return map;
 };
 
+const useViewportWidth = () => {
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const update = () => setWidth(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  return width;
+};
+
 const renderMedia = (media?: HeroBlock["media"]) => {
   if (!media?.url) return null;
   const isVideo = media.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(media.url);
@@ -391,7 +402,8 @@ const DynamicHeroColumns = ({
   layoutGap,
   content,
   isCompact,
-  gridTemplate
+  gridTemplate,
+  hideColumns
 }: {
   block: HeroBlock;
   innerStyle: CSSProperties;
@@ -399,6 +411,7 @@ const DynamicHeroColumns = ({
   content: ReactNode;
   isCompact: boolean;
   gridTemplate: string;
+  hideColumns: boolean;
 }) => {
   const [items, setItems] = useState<HeroMediaItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -431,12 +444,13 @@ const DynamicHeroColumns = ({
         const results: HeroMediaItem[] = snapshot.docs
           .map((doc) => {
             const data = doc.data() as any;
-            const mediaType = data.mediaType ?? data.type ?? "image";
+            const mediaType: HeroMediaItem["mediaType"] =
+              data.mediaType === "video" || data.type === "video" ? "video" : "image";
             return {
               id: doc.id,
               url: data.url,
               alt: data.alt ?? data.name ?? "Hero media",
-              mediaType: mediaType === "video" ? "video" : "image",
+              mediaType,
               width: data.width,
               height: data.height
             };
@@ -519,11 +533,6 @@ const DynamicHeroColumns = ({
           from { transform: translateY(0); }
           to { transform: translateY(-38%); }
         }
-        @media (max-width: 840px) {
-          [data-hero-columns] {
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-          }
-        }
       `}</style>
       <div
         className="grid"
@@ -536,62 +545,69 @@ const DynamicHeroColumns = ({
         }}
       >
         {content}
-        <div className="grid" style={{ gap: columnsGap, height: "100%", justifyItems: "stretch" }}>
-          <div
-            data-hero-columns
-            style={{
-              display: "grid",
-              gap: columnsGap,
-              gridTemplateColumns: "repeat(3, minmax(120px, 190px))",
-              justifyContent: "end",
-              alignItems: "stretch",
-              height: "100%"
-            }}
-          >
-            {columns.map((bucket, colIdx) => {
-              const duration = 26 + colIdx * 3;
-              const direction = colIdx === 1 ? "alternate-reverse" : "alternate";
-              return (
-                <div
-                  key={`hero-col-${colIdx}`}
-                  data-hero-column
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    borderRadius: 18,
-                    background: "transparent",
-                    padding: 4,
-                    minHeight: isCompact ? 200 : 260,
-                    height: "100%"
-                  }}
-                >
+        {!hideColumns ? (
+          <div className="grid" style={{ gap: columnsGap, height: "100%", justifyItems: "stretch" }}>
+            <div
+              data-hero-columns
+              style={{
+                display: "grid",
+                gap: columnsGap,
+                gridTemplateColumns: "repeat(3, minmax(120px, 190px))",
+                justifyContent: "end",
+                alignItems: "stretch",
+                height: "100%"
+              }}
+            >
+              {columns.map((bucket, colIdx) => {
+                const duration = 26 + colIdx * 3;
+                const direction = colIdx === 1 ? "alternate-reverse" : "alternate";
+                return (
                   <div
-                    data-hero-track
+                    key={`hero-col-${colIdx}`}
+                    data-hero-column
                     style={{
-                      display: "grid",
-                      gap: itemGap,
-                      animation: `hero-column-scroll ${duration}s linear infinite`,
-                      animationDirection: direction as CSSProperties["animationDirection"],
-                      gridAutoRows: "minmax(140px, auto)"
+                      position: "relative",
+                      overflow: "hidden",
+                      borderRadius: 18,
+                      background: "transparent",
+                      padding: 4,
+                      minHeight: isCompact ? 200 : 260,
+                      height: "100%"
                     }}
                   >
-                    {bucket.map((item, itemIdx) => renderCell(item, `${item.id}-${itemIdx}`))}
+                    <div
+                      data-hero-track
+                      style={{
+                        display: "grid",
+                        gap: itemGap,
+                        animation: `hero-column-scroll ${duration}s linear infinite`,
+                        animationDirection: direction as CSSProperties["animationDirection"],
+                        gridAutoRows: "minmax(140px, auto)"
+                      }}
+                    >
+                      {bucket.map((item, itemIdx) => renderCell(item, `${item.id}-${itemIdx}`))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            {loading ? (
+              <span style={{ color: "var(--muted)", fontSize: 13 }}>Loading tagged media…</span>
+            ) : null}
+            {statusText ? <span style={{ color: "var(--muted)", fontSize: 13 }}>{statusText}</span> : null}
           </div>
-          {loading ? (
-            <span style={{ color: "var(--muted)", fontSize: 13 }}>Loading tagged media…</span>
-          ) : null}
-          {statusText ? <span style={{ color: "var(--muted)", fontSize: 13 }}>{statusText}</span> : null}
-        </div>
+        ) : null}
       </div>
     </>
   );
 };
 
-const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHeight: number) => {
+const renderHeroBlock = (
+  block: HeroBlock | ThirdsBlock,
+  index: number,
+  headerHeight: number,
+  viewportWidth: number | null
+) => {
   const heroMode = block.mode ?? "static";
   const isDynamicHero = block.type === "hero" && heroMode === "dynamic";
   const hasMedia = !isDynamicHero && Boolean(block.media?.url);
@@ -601,6 +617,8 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     block.background?.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(block.background?.url ?? "");
   const backgroundUrl = block.background?.url ?? "";
   const overlayStyleChoice = block.overlayStyle ?? "gradient";
+  const fallbackHeroBackground =
+    "radial-gradient(circle at 24% 22%, rgba(255, 140, 64, 0.22), transparent 46%), radial-gradient(circle at 20% 20%, var(--bg-glow-1), transparent 45%), radial-gradient(circle at 80% 30%, var(--bg-glow-2), transparent 55%), var(--surface)";
   const overlayImage =
     overlayStyleChoice === "full"
       ? `linear-gradient(145deg, var(--hero-overlay-from), var(--hero-overlay-to))${backgroundIsVideo ? "" : `, url(${backgroundUrl})`}`
@@ -610,6 +628,7 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
   const isCenteredThirds = isCompact && thirdsLayout === "centered";
   const fullBleedHeroStyle = getFullBleedHeroStyle(headerHeight, isCompact);
   const removeStroke = isDynamicHero || !!block.media?.url;
+  const hideColumns = isDynamicHero && viewportWidth !== null && viewportWidth < 1100;
   const heroStyle: CSSProperties = hasBackground
     ? {
         ...fullBleedHeroStyle,
@@ -624,7 +643,7 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     : {
         ...fullBleedHeroStyle,
         boxShadow: "none",
-        background: isCompact ? "transparent" : undefined,
+        background: isCompact ? "transparent" : fallbackHeroBackground,
         border: isCompact || removeStroke ? "none" : undefined,
         borderColor: isCompact || removeStroke ? "transparent" : undefined
       };
@@ -679,7 +698,8 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
   const textOnlyContentStyle: CSSProperties = hasMedia
     ? {}
     : {
-        maxWidth: isDynamicHero ? "min(var(--max-width), 640px)" : "min(var(--max-width), 600px)",
+        maxWidth:
+          isDynamicHero && hideColumns ? "min(var(--max-width), 840px)" : isDynamicHero ? "min(var(--max-width), 640px)" : "min(var(--max-width), 600px)",
         width: "100%",
         justifySelf: isDynamicHero ? "end" : isCenteredThirds ? "center" : "start",
         marginLeft: isDynamicHero ? "auto" : undefined
@@ -743,7 +763,7 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     : innerStyle;
 
   if (isDynamicHero && block.type === "hero") {
-    const dynamicGridTemplate = "minmax(460px, 1.1fr) minmax(360px, 0.9fr)";
+    const dynamicGridTemplate = hideColumns ? "minmax(520px, 1fr)" : "minmax(460px, 1.1fr) minmax(360px, 0.9fr)";
     return (
       <AnimatedSection
         key={block.id ?? index}
@@ -760,6 +780,7 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
           content={content}
           isCompact={isCompact}
           gridTemplate={dynamicGridTemplate}
+          hideColumns={hideColumns}
         />
       </AnimatedSection>
     );
@@ -2017,12 +2038,13 @@ const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number 
         const items: LogoItem[] = snapshot.docs
           .map((doc) => {
             const data = doc.data() as any;
-            const mediaType = data.mediaType ?? data.type ?? "image";
+            const mediaType: LogoItem["mediaType"] =
+              data.mediaType === "video" || data.type === "video" ? "video" : "image";
             return {
               id: doc.id,
               url: data.url,
               alt: data.alt ?? data.name ?? "Logo",
-              mediaType: mediaType === "video" ? "video" : "image",
+              mediaType,
               width: data.width,
               height: data.height
             };
@@ -2603,6 +2625,7 @@ const ShowcaseBlockSection = ({
 
 export function BlocksRenderer({ blocks }: BlocksRendererProps) {
   const headerHeight = useHeaderHeight();
+  const viewportWidth = useViewportWidth();
   const shouldForceDarkOnLoad = useMemo(() => {
     const first = blocks[0];
     if (!first) return false;
@@ -2636,7 +2659,7 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
           const key = block.id ?? index;
           let element: JSX.Element;
           if (block.type === "hero" || block.type === "thirds") {
-            element = renderHeroBlock(block, index, headerHeight);
+            element = renderHeroBlock(block, index, headerHeight, viewportWidth);
           } else if (block.type === "animated_headline") {
             element = renderAnimatedHeadlineBlock(block, index, headerHeight);
           } else if (block.type === "logos") {
