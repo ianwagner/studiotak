@@ -17,6 +17,7 @@ import type {
   ShowcaseBlock,
   SplitBlock,
   ThirdsBlock,
+  ContactBlock,
   BlockMedia
 } from "@/lib/admin/pages";
 import { animationPresets, defaultAnimationPreset, type AnimationPresetName } from "@/components/sections/animationPresets";
@@ -88,6 +89,7 @@ const isSplitBlock = (block: EditableBlock): block is SplitBlock => block.type =
 const isFeaturesBlock = (block: EditableBlock): block is FeaturesBlock => block.type === "features";
 const isScrollGalleryBlock = (block: EditableBlock): block is ScrollGalleryBlock => block.type === "scroll_gallery";
 const isShowcaseBlock = (block: EditableBlock): block is ShowcaseBlock => block.type === "showcase";
+const isContactBlock = (block: EditableBlock): block is ContactBlock => block.type === "contact";
 const isFeatureItemsBlock = (block: EditableBlock): block is FeaturesBlock | ScrollGalleryBlock =>
   isFeaturesBlock(block) || isScrollGalleryBlock(block);
 const isAnimatedHeadlineBlock = (block: EditableBlock): block is AnimatedHeadlineBlock => block.type === "animated_headline";
@@ -163,7 +165,8 @@ const newThirdsBlock = (): ThirdsBlock => ({
   ...newHeroBlock(),
   id: crypto.randomUUID(),
   type: "thirds",
-  adminLabel: "Thirds block"
+  adminLabel: "Thirds block",
+  layout: "left"
 });
 
 const newStoryBlock = (): StoryBlock => ({
@@ -245,6 +248,22 @@ const newShowcaseBlock = (): ShowcaseBlock => ({
   limit: 6,
   featuredOnly: false,
   animationPreset: defaultAnimationPreset,
+  enableDarkModeOnScroll: false
+});
+
+const newContactBlock = (): ContactBlock => ({
+  id: crypto.randomUUID(),
+  type: "contact",
+  adminLabel: "Contact block",
+  eyebrow: "Contact",
+  heading: "Plan your launch with Studio Tak",
+  body: "Tell us about your product, timeline, and the outcomes you want. We'll follow up with a focused plan.",
+  anchor: "contact",
+  media: undefined,
+  formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
+  portalId: "244262601",
+  region: "na2",
+  formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
   enableDarkModeOnScroll: false
 });
 
@@ -447,6 +466,8 @@ export function PageForm({
           return newScrollGalleryBlock();
         case "showcase":
           return newShowcaseBlock();
+        case "contact":
+          return newContactBlock();
         case "animated_headline":
           return newAnimatedHeadlineBlock();
         default:
@@ -463,7 +484,12 @@ export function PageForm({
         !isPendingBlock(block) &&
         ((block.type === "hero" && nextType === "thirds") || (block.type === "thirds" && nextType === "hero"))
       ) {
-        return { ...block, type: nextType, adminLabel: label };
+        const base = { ...block, type: nextType, adminLabel: label };
+        if (nextType === "thirds") {
+          return { ...base, layout: isThirdsBlock(block) ? block.layout ?? "left" : "left" };
+        }
+        const { layout: _layout, ...rest } = base as ThirdsBlock;
+        return rest;
       }
       if (isPendingBlock(block)) {
         return { ...buildBlock(nextType as BlockRecord["type"]), id: block.id, adminLabel: label };
@@ -483,6 +509,10 @@ export function PageForm({
 
   const handleHeroAlignmentChange = (idx: number, alignment: HeroLikeBlock["alignment"]) => {
     updateBlock(idx, (block) => (isHeroLikeBlock(block) ? { ...block, alignment } : block));
+  };
+
+  const handleThirdsLayoutChange = (idx: number, layout: NonNullable<ThirdsBlock["layout"]>) => {
+    updateBlock(idx, (block) => (isThirdsBlock(block) ? { ...block, layout } : block));
   };
 
   const handleStoryFieldChange = (
@@ -535,6 +565,14 @@ export function PageForm({
     value: ShowcaseBlock[keyof Omit<ShowcaseBlock, "id" | "type">]
   ) => {
     updateBlock(idx, (block) => (isShowcaseBlock(block) ? { ...block, [field]: value } : block));
+  };
+
+  const handleContactFieldChange = (
+    idx: number,
+    field: keyof Omit<ContactBlock, "id" | "type" | "media">,
+    value: ContactBlock[keyof Omit<ContactBlock, "id" | "type" | "media">]
+  ) => {
+    updateBlock(idx, (block) => (isContactBlock(block) ? { ...block, [field]: value } : block));
   };
 
   const addFeatureItem = (idx: number) => {
@@ -720,11 +758,13 @@ export function PageForm({
     const hero = (state.blocks ?? []).find(isHeroLikeBlock);
     const story = (state.blocks ?? []).find(isStoryBlock);
     const split = (state.blocks ?? []).find(isSplitBlock);
+    const contact = (state.blocks ?? []).find(isContactBlock);
     const title = hero?.title?.trim() || state.title?.trim() || "Page";
     const descParts = [
       hero?.subtitle,
       story?.body,
       split?.body,
+      contact?.body,
       ...(story?.sections ?? []).map((section) => `${section.title ?? ""} ${section.body ?? ""}`)
     ]
       .join(" ")
@@ -1028,10 +1068,13 @@ export function PageForm({
         ? "Scroll gallery"
         : block.type === "showcase"
         ? "Showcase"
+        : block.type === "contact"
+        ? "Contact block"
         : "Animated headline";
       const blockLabel = block.adminLabel?.trim() || baseLabel;
       const blockId = block.id ?? `block-${idx}`;
       const isOpen = openBlocks.has(blockId);
+      const thirdsLayout = block.type === "thirds" ? block.layout ?? "left" : "left";
       return (
         <div
           key={block.id ?? idx}
@@ -1093,6 +1136,7 @@ export function PageForm({
                 <option value="features">Features</option>
                 <option value="scroll_gallery">Scroll gallery</option>
                 <option value="showcase">Showcase</option>
+                <option value="contact">Contact</option>
                 <option value="animated_headline">Animated headline</option>
               </select>
             </div>
@@ -1128,6 +1172,18 @@ export function PageForm({
                   <span style={{ color: "var(--muted)", fontSize: 13 }}>
                     Thirds keeps the hero layout but uses a shorter, partial-height frame.
                   </span>
+                </div>
+              ) : null}
+              {block.type === "thirds" ? (
+                <div className="field-group">
+                  <label>Layout</label>
+                  <select
+                    value={thirdsLayout}
+                    onChange={(e) => handleThirdsLayoutChange(idx, e.target.value as NonNullable<ThirdsBlock["layout"]>)}
+                  >
+                    <option value="left">Left</option>
+                    <option value="centered">Centered</option>
+                  </select>
                 </div>
               ) : null}
               <div className="field-group">
@@ -1205,7 +1261,7 @@ export function PageForm({
                   onUpload={handleMediaUpload}
                   onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target, filterType })}
                   target="media"
-                  showAlignment
+                  showAlignment={block.type === "hero" || (block.type === "thirds" && thirdsLayout === "left")}
                   alignment={block.alignment}
                   onAlignmentChange={(next) => handleHeroAlignmentChange(idx, next)}
                   onClear={() =>
@@ -1331,6 +1387,114 @@ export function PageForm({
                 />
                 <span>Trigger dark mode while this block is in view</span>
               </label>
+            </div>
+          ) : isContactBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => handleContactFieldChange(idx, "eyebrow", e.target.value)}
+                    placeholder="Contact"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Anchor ID</label>
+                  <input
+                    className="input"
+                    value={block.anchor ?? ""}
+                    onChange={(e) => handleContactFieldChange(idx, "anchor", e.target.value)}
+                    placeholder="contact"
+                  />
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>Used for in-page links like #contact.</span>
+                </div>
+              </div>
+              <div className="field-group">
+                <label>Heading</label>
+                <input
+                  className="input"
+                  value={block.heading}
+                  onChange={(e) => handleContactFieldChange(idx, "heading", e.target.value)}
+                  placeholder="Plan your launch"
+                />
+              </div>
+              <div className="field-group">
+                <label>Body</label>
+                <textarea
+                  rows={3}
+                  value={block.body ?? ""}
+                  onChange={(e) => handleContactFieldChange(idx, "body", e.target.value)}
+                  placeholder="Tell visitors what happens after they submit."
+                />
+              </div>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <div className="field-group">
+                  <label>HubSpot portal ID</label>
+                  <input
+                    className="input"
+                    value={block.portalId ?? ""}
+                    onChange={(e) => handleContactFieldChange(idx, "portalId", e.target.value)}
+                    placeholder="244262601"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Form ID</label>
+                  <input
+                    className="input"
+                    value={block.formId ?? ""}
+                    onChange={(e) => handleContactFieldChange(idx, "formId", e.target.value)}
+                    placeholder="bb99355b-ad00-407a-81e7-882535a3c4be"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Region</label>
+                  <input
+                    className="input"
+                    value={block.region ?? ""}
+                    onChange={(e) => handleContactFieldChange(idx, "region", e.target.value)}
+                    placeholder="na2"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Form script src</label>
+                  <input
+                    className="input"
+                    value={block.formScriptSrc ?? ""}
+                    onChange={(e) => handleContactFieldChange(idx, "formScriptSrc", e.target.value)}
+                    placeholder="https://js-na2.hsforms.net/forms/embed/244262601.js"
+                  />
+                </div>
+              </div>
+              <MediaRow>
+                <MediaField
+                  blockId={blockId}
+                  blockIdx={idx}
+                  media={block.media}
+                  uploading={uploadingBlock === `${blockId}-media`}
+                  uploadError={uploadError}
+                  onUpload={handleMediaUpload}
+                  onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target, filterType })}
+                  onClear={() =>
+                    updateBlock(idx, (current) => (isContactBlock(current) ? { ...current, media: undefined } : current))
+                  }
+                />
+              </MediaRow>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!block.enableDarkModeOnScroll}
+                  onChange={(e) => handleContactFieldChange(idx, "enableDarkModeOnScroll", e.target.checked)}
+                />
+                <span>Trigger dark mode while this block is in view</span>
+              </label>
+              <div className="card" style={{ padding: 12, border: "1px dashed var(--border-strong)", display: "grid", gap: 6 }}>
+                <strong style={{ fontSize: 14 }}>HubSpot embed</strong>
+                <span style={{ color: "var(--muted)", fontSize: 13 }}>
+                  Uses the HubSpot embed script and the <code>hs-form-frame</code> container to render the form alongside your media.
+                </span>
+              </div>
             </div>
           ) : isAnimatedHeadlineBlock(block) ? (
             <div className="grid" style={{ gap: 12, padding: 12 }}>

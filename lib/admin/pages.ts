@@ -31,6 +31,7 @@ export type HeroBlock = {
 
 export type ThirdsBlock = Omit<HeroBlock, "type"> & {
   type: "thirds";
+  layout?: "left" | "centered";
 };
 
 export type StoryBlock = {
@@ -124,6 +125,22 @@ export type ShowcaseBlock = {
   enableDarkModeOnScroll?: boolean;
 };
 
+export type ContactBlock = {
+  id: string;
+  type: "contact";
+  adminLabel?: string;
+  eyebrow?: string;
+  heading: string;
+  body?: string;
+  anchor?: string;
+  media?: BlockMedia;
+  formId?: string;
+  portalId?: string;
+  region?: string;
+  formScriptSrc?: string;
+  enableDarkModeOnScroll?: boolean;
+};
+
 export type BlockRecord =
   | HeroBlock
   | ThirdsBlock
@@ -132,7 +149,8 @@ export type BlockRecord =
   | FeaturesBlock
   | AnimatedHeadlineBlock
   | ScrollGalleryBlock
-  | ShowcaseBlock;
+  | ShowcaseBlock
+  | ContactBlock;
 
 export type RedirectRule = {
   from: string;
@@ -263,6 +281,23 @@ export const seedPages: PageRecord[] = [
           { title: "Design system + tokens", body: "Design tokens, content schemas, and motion systems to keep every section coherent." },
           { title: "Build & QA", body: "Static-first builds with selective React islands and Framer Motion choreography." }
         ]
+      },
+      {
+        id: "home-contact",
+        type: "contact",
+        eyebrow: "Contact",
+        heading: "Plan your launch with Studio Tak",
+        body: "Tell us about your product, timeline, and the outcomes you want. We'll follow up with a focused plan.",
+        anchor: "contact",
+        media: {
+          url: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+          type: "image",
+          alt: "Designers collaborating at a table"
+        },
+        formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
+        portalId: "244262601",
+        region: "na2",
+        formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js"
       }
     ]
   },

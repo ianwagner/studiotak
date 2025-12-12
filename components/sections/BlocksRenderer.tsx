@@ -9,6 +9,7 @@ import type {
   AnimatedHeadlineBlock,
   BlockRecord,
   BlockSection,
+  ContactBlock,
   HeroBlock,
   ThirdsBlock,
   StoryBlock,
@@ -25,6 +26,17 @@ import { useDarkModeShift } from "./useDarkModeShift";
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import { collection, documentId, getDocs, getFirestore, limit, query, where, type QueryConstraint } from "firebase/firestore";
 import { seedComponents, type ComponentRecord } from "@/lib/admin/components";
+import Script from "next/script";
+
+declare global {
+  interface Window {
+    hbspt?: {
+      forms?: {
+        create?: (config: { portalId: string; formId: string; region?: string; target: string }) => void;
+      };
+    };
+  }
+}
 
 type BlocksRendererProps = {
   blocks: BlockRecord[];
@@ -320,6 +332,8 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
   const media = renderMedia(block.media);
   const hasBackground = Boolean(block.background?.url);
   const isCompact = block.type === "thirds";
+  const thirdsLayout = block.type === "thirds" ? block.layout ?? "left" : "left";
+  const isCenteredThirds = isCompact && thirdsLayout === "centered";
   const fullBleedHeroStyle = getFullBleedHeroStyle(headerHeight, isCompact);
   const removeStroke = !!block.media?.url;
   const heroStyle: CSSProperties = hasBackground
@@ -365,23 +379,38 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
     maxWidth: "var(--max-width)",
     margin: "0 auto",
     ...(hasBackground ? { padding: isCompact ? 26 : 32, position: "relative", zIndex: 1 } : {}),
-    ...(isCompact && !hasBackground ? { padding: "0 12px" } : {})
+    ...(isCompact && !hasBackground ? { padding: "0 12px" } : {}),
+    ...(isCenteredThirds ? { justifyItems: "center" } : {})
   };
   const textOnlyContentStyle: CSSProperties = hasMedia
     ? {}
-    : { maxWidth: "min(var(--max-width), 960px)", width: "100%", justifySelf: "start" };
+    : { maxWidth: "min(var(--max-width), 960px)", width: "100%", justifySelf: isCenteredThirds ? "center" : "start" };
   const headingSize = isCompact ? "clamp(36px, 8vw, 56px)" : "clamp(44px, 9vw, 76px)";
   const subtitleSize = isCompact ? 16 : 18;
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;
   const content = (
-    <div className="grid" style={{ gap: stackGap, ...textOnlyContentStyle }}>
+    <div
+      className="grid"
+      style={{
+        gap: stackGap,
+        ...textOnlyContentStyle,
+        ...(isCenteredThirds ? { textAlign: "center", justifyItems: "center", maxWidth: "min(var(--max-width), 820px)" } : {})
+      }}
+    >
       {block.eyebrow ? <Pill>{block.eyebrow}</Pill> : null}
       <h1 style={{ fontSize: headingSize, lineHeight: 1.05, margin: 0 }}>{block.title}</h1>
       {block.subtitle ? (
         <p style={{ maxWidth: 720, color: "var(--muted)", margin: 0, fontSize: subtitleSize }}>{block.subtitle}</p>
       ) : null}
-      <div style={{ display: "flex", gap: isCompact ? 10 : 12, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: isCompact ? 10 : 12,
+          flexWrap: "wrap",
+          justifyContent: isCenteredThirds ? "center" : undefined
+        }}
+      >
         {block.primaryCtaLabel && block.primaryCtaHref ? (
           <Link className="btn" href={block.primaryCtaHref as Route}>
             {block.primaryCtaLabel}
@@ -395,6 +424,29 @@ const renderHeroBlock = (block: HeroBlock | ThirdsBlock, index: number, headerHe
       </div>
     </div>
   );
+
+  if (isCenteredThirds) {
+    return (
+      <section
+        key={block.id ?? index}
+        style={{ ...heroStyle, position: hasBackground ? "relative" : heroStyle.position }}
+        className="thirds-block"
+      >
+        {overlay}
+        <div
+          className="grid"
+          style={{
+            gap: layoutGap,
+            alignItems: "center",
+            ...innerStyle
+          }}
+        >
+          {media ? <div style={{ width: "100%", maxWidth: 900 }}>{media}</div> : null}
+          {content}
+        </div>
+      </section>
+    );
+  }
 
   if (block.alignment === "centered" || !media) {
     if (isCompact) {
@@ -655,6 +707,232 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
         {mediaFirst ? content : media}
       </div>
     </motion.section>
+  );
+};
+
+const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: number }) => {
+  const hasMedia = !!block.media?.url;
+  const isVideo = block.media?.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(block.media?.url ?? "");
+  const media = hasMedia ? (
+    <div
+      data-contact-media
+      style={{
+        width: "100%",
+        aspectRatio: "1 / 1",
+        borderRadius: 16,
+        overflow: "hidden",
+        border: "1px solid var(--border-strong)",
+        background: "rgba(255,255,255,0.02)"
+      }}
+    >
+      {isVideo ? (
+        <video
+          src={block.media?.url}
+          controls
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        >
+          Your browser does not support the video tag.
+        </video>
+      ) : (
+        <img
+          src={block.media?.url ?? ""}
+          alt={block.media?.alt ?? ""}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      )}
+    </div>
+  ) : null;
+  const anchorId = block.anchor?.trim();
+  const portalId = block.portalId?.trim() || "244262601";
+  const formId = block.formId?.trim() || "bb99355b-ad00-407a-81e7-882535a3c4be";
+  const region = block.region?.trim() || "na2";
+  const scriptSrc = block.formScriptSrc?.trim() || `https://js-${region}.hsforms.net/forms/embed/${portalId}.js`;
+  const scriptId = `hubspot-form-${portalId}-${formId}`;
+  const preset = animationPresets[defaultAnimationPreset];
+  const formContainerId = useMemo(
+    () => `hs-form-${portalId}-${formId}-${block.id ?? index}`,
+    [portalId, formId, block.id, index]
+  );
+
+  useEffect(() => {
+    const container = document.getElementById(formContainerId);
+    if (!container) return;
+    let canceled = false;
+    let timeout: number | null = null;
+
+    const ensureScript = () => {
+      const existing = document.querySelector<HTMLScriptElement>(`script[src="${scriptSrc}"]`);
+      if (existing) return existing;
+      const el = document.createElement("script");
+      el.src = scriptSrc;
+      el.async = true;
+      el.defer = true;
+      document.body.appendChild(el);
+      return el;
+    };
+
+    const mountForm = () => {
+      if (canceled || !container || container.dataset.loaded === "true") return true;
+      if (window.hbspt?.forms?.create) {
+        window.hbspt.forms.create({
+          portalId,
+          formId,
+          region,
+          target: `#${formContainerId}`
+        });
+        container.dataset.loaded = "true";
+        return true;
+      }
+      return false;
+    };
+
+    const script = ensureScript();
+    const tryMount = () => {
+      if (mountForm()) return;
+      timeout = window.setTimeout(tryMount, 250);
+    };
+
+    if (script) {
+      script.addEventListener("load", tryMount);
+    }
+    tryMount();
+
+    return () => {
+      canceled = true;
+      if (script) script.removeEventListener("load", tryMount);
+      if (timeout) window.clearTimeout(timeout);
+    };
+  }, [formContainerId, formId, portalId, region, scriptSrc]);
+
+  return (
+    <AnimatedSection key={block.id ?? index} index={index} variant="plain" animated={false}>
+      <Script id={scriptId} src={scriptSrc} strategy="lazyOnload" />
+      <div id={anchorId || undefined} data-contact-block style={{ position: "relative" }}>
+        <style>{`
+          [data-contact-block] {
+            width: 100%;
+          }
+          [data-contact-section] {
+            width: 100%;
+            padding-left: 15px;
+            padding-right: 15px;
+          }
+          [data-contact-grid] {
+            gap: 18px;
+            align-items: center;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          }
+          @media (max-width: 900px) {
+            [data-contact-media] {
+              max-width: 540px;
+              margin-left: auto;
+              margin-right: auto;
+            }
+          }
+          @media (max-width: 768px) {
+            [data-contact-section] {
+              padding-left: 15px;
+              padding-right: 15px;
+            }
+            [data-contact-grid] {
+              grid-template-columns: 1fr !important;
+            }
+          }
+          [data-contact-form] .hs-form {
+            display: grid !important;
+            gap: 10px;
+          }
+          [data-contact-form] .hs-form label {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 2px;
+            display: block;
+          }
+          [data-contact-form] input,
+          [data-contact-form] textarea,
+          [data-contact-form] select {
+            width: 100% !important;
+            background: var(--input-bg) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border-strong) !important;
+            border-radius: 12px !important;
+            padding: 10px 12px !important;
+            box-shadow: none !important;
+          }
+          [data-contact-form] textarea {
+            min-height: 120px;
+            resize: vertical;
+          }
+          [data-contact-form] .hs-error-msgs {
+            color: var(--accent);
+            font-size: 13px;
+            margin: 2px 0 4px;
+            padding: 0;
+          }
+          [data-contact-form] .hs-button {
+            background: var(--accent) !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 12px 16px !important;
+            font-weight: 600 !important;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+          }
+          [data-contact-form] .hs-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+            background: var(--accent-strong) !important;
+          }
+          [data-contact-form] .hs-button:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+          }
+        `}</style>
+        <motion.section
+          data-contact-section
+          variants={preset.item}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          custom={index}
+        >
+          <div
+            className="grid"
+            data-contact-grid
+            style={{ gap: 18, alignItems: "center", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
+          >
+            {media}
+            <div className="grid" style={{ gap: 12 }}>
+              <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} />
+              <div
+                data-hubspot-form-wrapper
+                data-contact-form
+                style={{
+                  padding: 12,
+                  borderRadius: 12,
+                  border: "1px solid var(--border-strong)",
+                  background: "var(--input-bg)",
+                  boxShadow: "none"
+                }}
+              >
+                <div
+                  id={formContainerId}
+                  className="hs-form-frame"
+                  data-region={region}
+                  data-form-id={formId}
+                  data-portal-id={portalId}
+                />
+              </div>
+              <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
+                Powered by HubSpot. We typically reply within one business day.
+              </p>
+            </div>
+          </div>
+        </motion.section>
+      </div>
+    </AnimatedSection>
   );
 };
 
@@ -1339,6 +1617,8 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
           element = renderSplitBlock(block, index);
         } else if (block.type === "features") {
           element = <FeaturesBlockSection key={key} block={block} index={index} componentsMap={componentsMap} />;
+        } else if (block.type === "contact") {
+          element = <ContactBlockSection key={key} block={block} index={index} />;
         } else {
           element = renderStoryBlock(block, index);
         }
