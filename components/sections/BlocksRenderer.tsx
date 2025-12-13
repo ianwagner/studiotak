@@ -480,28 +480,38 @@ const DynamicHeroColumns = ({
 
   useEffect(() => {
     let canceled = false;
+    let done = false;
     setReady(false);
     if (!resolvedItems.length) {
       setReady(true);
       return;
     }
-    const preload = async () => {
-      const loaders = resolvedItems.map((item) => {
-        if (item.mediaType === "video") return Promise.resolve();
-        return new Promise<void>((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve();
-          img.onerror = () => resolve();
-          img.src = item.url;
-          if (img.complete) resolve();
-        });
-      });
-      await Promise.all(loaders);
-      if (!canceled) setReady(true);
+
+    const markReady = () => {
+      if (done || canceled) return;
+      done = true;
+      setReady(true);
     };
-    preload();
+
+    const fallbackTimer = window.setTimeout(markReady, 900);
+    const firstImage = resolvedItems.find((item) => item.mediaType !== "video");
+
+    if (!firstImage) {
+      markReady();
+      return () => window.clearTimeout(fallbackTimer);
+    }
+
+    const img = new Image();
+    img.onload = markReady;
+    img.onerror = markReady;
+    img.src = firstImage.url;
+    if (img.complete) {
+      markReady();
+    }
+
     return () => {
       canceled = true;
+      window.clearTimeout(fallbackTimer);
     };
   }, [resolvedItems]);
 
@@ -535,6 +545,8 @@ const DynamicHeroColumns = ({
             src={item.url}
             alt={item.alt ?? ""}
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            loading="lazy"
+            decoding="async"
           />
         )}
       </div>
