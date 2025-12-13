@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import { motion, useInView } from "framer-motion";
 import type {
@@ -26,6 +26,9 @@ import { getFirebaseApp } from "@/lib/firebaseClient";
 import { collection, getDocs, getFirestore, limit, query, where, type QueryConstraint } from "firebase/firestore";
 import Script from "next/script";
 import Head from "next/head";
+
+const viewportWidthVar = "var(--full-bleed-width, 100vw)";
+const viewportShiftVar = "var(--full-bleed-shift, calc(50% - 50vw))";
 
 declare global {
   interface Window {
@@ -299,13 +302,36 @@ const FeatureCard = ({
 };
 
 const useHeaderHeight = () => {
-  const [height, setHeight] = useState<number>(72);
+  const getInitialHeight = () => {
+    if (typeof document === "undefined") return 72;
+    const cssHeight = Number.parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue("--header-height") || "72"
+    );
+    const fallback = Number.isFinite(cssHeight) ? cssHeight : 72;
+    const measured = document.querySelector<HTMLElement>("[data-site-header]")?.getBoundingClientRect().height;
+    return Math.round(measured || fallback || 72);
+  };
+  const [height, setHeight] = useState<number>(getInitialHeight);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (typeof document === "undefined") return;
     const header = document.querySelector<HTMLElement>("[data-site-header]");
     if (!header) return;
 
-    const update = () => setHeight(header.getBoundingClientRect().height || 72);
+    const applyHeight = (next: number) => {
+      const rounded = Math.round(next || 72);
+      setHeight((prev) => {
+        if (Math.abs(prev - rounded) < 1) return prev;
+        return rounded;
+      });
+      document.documentElement.style.setProperty("--header-height", `${rounded}px`);
+    };
+
+    const update = () => {
+      const measured = header.getBoundingClientRect().height || 72;
+      applyHeight(measured);
+    };
+
     update();
 
     const observer = new ResizeObserver(update);
@@ -322,18 +348,22 @@ const useHeaderHeight = () => {
 };
 
 const getFullBleedHeroStyle = (headerHeight: number, compact = false, viewportWidth: number | null = null): CSSProperties => {
-  const gutter = viewportWidth !== null && viewportWidth < 640 ? 18 : 30;
-  const sideOffset = gutter / 2;
+  const isMobile = viewportWidth !== null && viewportWidth < 680;
+  const gutter = isMobile ? 0 : 30;
   const fullBleedWidth = `calc(var(--full-bleed-width, 100vw) - ${gutter}px)`;
-  const fullBleedShift = `calc(var(--full-bleed-shift, calc(50% - 50vw)) + ${sideOffset}px)`;
+  const leftInset = isMobile ? "max(15px, env(safe-area-inset-left, 0px))" : `${gutter / 2}px`;
+  const rightInset = isMobile ? "max(15px, env(safe-area-inset-right, 0px))" : `${gutter / 2}px`;
+  const fullBleedShiftLeft = `calc(var(--full-bleed-shift, calc(50% - 50vw)) + ${leftInset})`;
+  const fullBleedShiftRight = `calc(var(--full-bleed-shift, calc(50% - 50vw)) + ${rightInset})`;
+  const fullBleedHeight = "var(--full-bleed-height, 100vh)";
   return {
     width: fullBleedWidth,
     maxWidth: fullBleedWidth,
-    marginLeft: fullBleedShift,
-    marginRight: fullBleedShift,
+    marginLeft: fullBleedShiftLeft,
+    marginRight: fullBleedShiftRight,
     marginTop: 15,
     marginBottom: 15,
-    minHeight: compact ? "clamp(180px, 32vh, 360px)" : `calc(100vh - ${headerHeight}px - 30px)`,
+    minHeight: compact ? "clamp(180px, 32vh, 360px)" : `calc(${fullBleedHeight} - ${headerHeight}px - 30px)`,
     padding: compact ? "8px 0" : undefined,
     display: "flex",
     alignItems: "center"
@@ -1797,10 +1827,10 @@ const FeaturesBlockSection = ({
     <section
       key={block.id ?? index}
       style={{
-        width: "100vw",
-        maxWidth: "100vw",
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
+        width: viewportWidthVar,
+        maxWidth: viewportWidthVar,
+        marginLeft: viewportShiftVar,
+        marginRight: viewportShiftVar,
         padding: "36px 0 42px"
       }}
     >
@@ -1826,8 +1856,8 @@ const FeaturesBlockSection = ({
               gridAutoColumns: "minmax(260px, 380px)",
               gap: 16,
               justifyContent: "center",
-              paddingLeft: `max(${minSidePadding}px, calc((100vw - var(--max-width)) / 2 + ${paddingX}px))`,
-              paddingRight: `max(${minSidePadding}px, calc((100vw - var(--max-width)) / 2 + ${paddingX}px))`
+              paddingLeft: `max(${minSidePadding}px, calc((${viewportWidthVar} - var(--max-width)) / 2 + ${paddingX}px))`,
+              paddingRight: `max(${minSidePadding}px, calc((${viewportWidthVar} - var(--max-width)) / 2 + ${paddingX}px))`
             }}
             variants={galleryPreset.container}
             initial="hidden"
@@ -1910,10 +1940,10 @@ const ScrollGalleryBlockSection = ({
   const mobileCardWidth = "100%";
   const contentPaddingX = 12;
   const bleedContentStyle: CSSProperties = {
-    width: "calc(100vw - 30px)",
-    maxWidth: "calc(100vw - 30px)",
-    marginLeft: "calc(50% - 50vw + 15px)",
-    marginRight: "calc(50% - 50vw + 15px)",
+    width: `calc(${viewportWidthVar} - 30px)`,
+    maxWidth: `calc(${viewportWidthVar} - 30px)`,
+    marginLeft: `calc(${viewportShiftVar} + 15px)`,
+    marginRight: `calc(${viewportShiftVar} + 15px)`,
     display: "grid",
     justifyContent: "center"
   };
@@ -1922,17 +1952,20 @@ const ScrollGalleryBlockSection = ({
     maxWidth: "var(--max-width)"
   };
   const fullBleedStyle: CSSProperties = {
-    width: "100vw",
-    maxWidth: "100vw",
-    marginLeft: "calc(50% - 50vw)",
-    marginRight: "calc(50% - 50vw)",
+    width: viewportWidthVar,
+    maxWidth: viewportWidthVar,
+    marginLeft: viewportShiftVar,
+    marginRight: viewportShiftVar,
     padding: "36px 0 42px",
     display: "flex",
     alignItems: "center",
     overflow: "hidden"
   };
   const fadeWidth = 72;
+  const [sidePadding, setSidePadding] = useState(0);
   const [fadeState, setFadeState] = useState({ hasOverflow: false, left: false, right: false });
+  const canScrollLeft = fadeState.hasOverflow && fadeState.left;
+  const canScrollRight = fadeState.hasOverflow && fadeState.right;
   const edgeFadeMask =
     fadeState.left || fadeState.right
       ? `linear-gradient(90deg, ${fadeState.left ? `transparent 0, #000 ${fadeWidth}px` : "#000 0"}, #000 calc(100% - ${fadeState.right ? fadeWidth : 0}px), ${fadeState.right ? "transparent 100%" : "#000 100%"})`
@@ -1953,6 +1986,7 @@ const ScrollGalleryBlockSection = ({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const galleryPreset = animationPresets[defaultAnimationPreset];
   const galleryInView = useInView(trackRef, { amount: 0.35, once: true });
+  const horizontalPadding = isMobile ? Math.max(sidePadding, contentPaddingX) : contentPaddingX;
 
   const scrollByCards = (direction: "prev" | "next") => {
     const track = trackRef.current;
@@ -1963,6 +1997,7 @@ const ScrollGalleryBlockSection = ({
     const gap = 16;
     const delta = direction === "next" ? cardWidth + gap : -1 * (cardWidth + gap);
     scroller.scrollBy({ left: delta, behavior: "smooth" });
+    requestAnimationFrame(() => updateFadeState(scroller));
   };
 
   const resolvedItems = block.items ?? [];
@@ -1984,6 +2019,38 @@ const ScrollGalleryBlockSection = ({
     updateFadeState(scrollContainerRef.current);
   }, [resolvedItems.length]);
 
+  useEffect(() => {
+    const scroller = scrollContainerRef.current;
+    if (!scroller) return;
+    const firstCard = scroller.querySelector<HTMLElement>("[data-gallery-card]");
+    if (!firstCard) return;
+
+    const computePadding = () => {
+      if (!isMobile) {
+        setSidePadding(contentPaddingX);
+        updateFadeState(scroller);
+        return;
+      }
+      const viewport = scroller.clientWidth;
+      const card = firstCard.getBoundingClientRect().width || 0;
+      const base = 0;
+      const next = Math.max(base, (viewport - card) / 2);
+      setSidePadding(next);
+      updateFadeState(scroller);
+    };
+
+    computePadding();
+
+    const resizeObserver = new ResizeObserver(computePadding);
+    resizeObserver.observe(scroller);
+    resizeObserver.observe(firstCard);
+    window.addEventListener("resize", computePadding);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", computePadding);
+    };
+  }, [isMobile, contentPaddingX, resolvedItems.length]);
+
   return (
     <section key={block.id ?? index} style={fullBleedStyle}>
       <div style={{ ...bleedContentStyle, gap: 18 }}>
@@ -1997,7 +2064,9 @@ const ScrollGalleryBlockSection = ({
               className="btn secondary"
               aria-label="Previous"
               onClick={() => scrollByCards("prev")}
-              style={navButtonStyle}
+              style={{ ...navButtonStyle, opacity: canScrollLeft ? 1 : 0.4, cursor: canScrollLeft ? "pointer" : "not-allowed" }}
+              disabled={!canScrollLeft}
+              aria-disabled={!canScrollLeft}
             >
               <ChevronLeftIcon />
             </button>
@@ -2006,7 +2075,9 @@ const ScrollGalleryBlockSection = ({
               className="btn secondary"
               aria-label="Next"
               onClick={() => scrollByCards("next")}
-              style={navButtonStyle}
+              style={{ ...navButtonStyle, opacity: canScrollRight ? 1 : 0.4, cursor: canScrollRight ? "pointer" : "not-allowed" }}
+              disabled={!canScrollRight}
+              aria-disabled={!canScrollRight}
             >
               <ChevronRightIcon />
             </button>
@@ -2018,8 +2089,8 @@ const ScrollGalleryBlockSection = ({
             style={{
               overflowX: "auto",
               paddingBottom: 12,
-              paddingLeft: isMobile ? 0 : `${contentPaddingX}px`,
-              paddingRight: isMobile ? 0 : `${contentPaddingX}px`,
+              paddingLeft: horizontalPadding,
+              paddingRight: horizontalPadding,
               scrollbarWidth: "none",
               msOverflowStyle: "none",
               WebkitMaskImage: isMobile ? "none" : edgeFadeMask,
@@ -2028,8 +2099,8 @@ const ScrollGalleryBlockSection = ({
               maskSize: isMobile ? undefined : "100% 100%",
               WebkitMaskRepeat: isMobile ? undefined : "no-repeat",
               maskRepeat: isMobile ? undefined : "no-repeat",
-              scrollPaddingLeft: isMobile ? 0 : undefined,
-              scrollPaddingRight: isMobile ? 0 : undefined
+              scrollPaddingLeft: horizontalPadding,
+              scrollPaddingRight: horizontalPadding
             }}
           >
             <style>{`
@@ -2043,12 +2114,11 @@ const ScrollGalleryBlockSection = ({
               style={{
                 display: "grid",
                 gridAutoFlow: "column",
-                gridAutoColumns: isMobile ? mobileCardWidth : "minmax(320px, 480px)",
+                gridAutoColumns: isMobile ? mobileCardWidth : "minmax(320px, min(84vw, 520px))",
                 gap: 16,
-                padding: isMobile
-                  ? "0 0 16px 0"
-                  : `0 ${contentPaddingX + 48}px 16px 0`,
-                scrollSnapType: "x mandatory"
+                padding: "0 0 16px 0",
+                scrollSnapType: "x mandatory",
+                justifyItems: isMobile ? "center" : "start"
               }}
               variants={galleryPreset.container}
               initial="hidden"
@@ -2103,7 +2173,9 @@ const shuffleLogos = (items: LogoItem[]) => {
 };
 
 const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number }) => {
-  const maxLogos = clampNumber(block.limit ?? 12, 1, 20);
+  const maxLogosBase = clampNumber(block.limit ?? 12, 1, 20);
+  // Enforce an even count so we can split the wall evenly between two rows.
+  const maxLogos = Math.max(2, maxLogosBase - (maxLogosBase % 2));
   const [logos, setLogos] = useState<LogoItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
@@ -2171,9 +2243,21 @@ const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number 
       return [...items.slice(offset), ...items.slice(0, offset)];
     };
 
-    const resolved = (logos.length ? logos : placeholderLogos).slice(0, maxLogos);
-    const primary = resolved.length ? rotateLogos(shuffleLogos(resolved)) : resolved;
-    const secondary = resolved.length ? rotateLogos(shuffleLogos(resolved)) : resolved;
+    const ensureEvenLogos = (items: LogoItem[]) => {
+      if (!items.length) return items;
+      const evenCount = items.length - (items.length % 2);
+      if (evenCount >= 2) return items.slice(0, evenCount);
+      // Only one logo available; duplicate with a placeholder to keep the row split even.
+      const filler = placeholderLogos.find((item) => item.id !== items[0].id) ?? items[0];
+      return [items[0], filler];
+    };
+
+    const resolvedRaw = (logos.length ? logos : placeholderLogos).slice(0, maxLogos);
+    const resolved = ensureEvenLogos(resolvedRaw);
+    const randomized = resolved.length ? rotateLogos(shuffleLogos(resolved)) : resolved;
+    const half = Math.floor(randomized.length / 2);
+    const primary = randomized.slice(0, half);
+    const secondary = randomized.slice(half);
     setShuffledPrimary(primary);
     setShuffledSecondary(secondary);
   }, [logos, maxLogos]);
@@ -2235,7 +2319,7 @@ const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number 
     background: "transparent"
   };
   const imgStyle: CSSProperties = {
-    maxWidth: 75,
+    maxWidth: 85,
     maxHeight: 52,
     width: "100%",
     height: "100%",
@@ -2399,6 +2483,9 @@ type ShowcaseMediaItem = {
   isPlaceholder?: boolean;
 };
 
+// Showcase assets are always portrait 9x16, so start with that ratio to avoid a resize jump on load.
+const showcaseDefaultRatio = 9 / 16;
+
 const ShowcaseBlockSection = ({
   block,
   index,
@@ -2545,18 +2632,26 @@ const ShowcaseBlockSection = ({
 
   const sectionPadding = isNarrow ? "0" : "40px 0 52px";
 
-  const ShowcaseMedia = ({
-    item,
-    onLoaded,
-    loaded: externallyLoaded,
-    mediaKey
-  }: {
-    item: ShowcaseMediaItem;
-    onLoaded?: (ratio?: number) => void;
-    loaded?: boolean;
-    mediaKey: string;
-  }) => {
-    const [ready, setReady] = useState(false);
+const ShowcaseMedia = ({
+  item,
+  onLoaded,
+  loaded: externallyLoaded,
+  mediaKey,
+  priority = false
+}: {
+  item: ShowcaseMediaItem;
+  onLoaded?: (ratio?: number) => void;
+  loaded?: boolean;
+  mediaKey: string;
+  priority?: boolean;
+}) => {
+  const [ready, setReady] = useState(false);
+  const hasLoadedRef = useRef(false);
+  const lastMediaKeyRef = useRef<string | null>(null);
+  const onLoadedRef = useRef(onLoaded);
+    useEffect(() => {
+      onLoadedRef.current = onLoaded;
+    }, [onLoaded]);
     const imageRef = useRef<HTMLImageElement | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const isVideo = item.mediaType === "video" || /\.(mp4|mov|webm|ogg)$/i.test(item.url);
@@ -2575,14 +2670,25 @@ const ShowcaseBlockSection = ({
 
     const markLoaded = useCallback(
       (ratio?: number) => {
+        if (hasLoadedRef.current) return;
+        hasLoadedRef.current = true;
         setReady(true);
-        onLoaded?.(ratio);
+        onLoadedRef.current?.(ratio);
       },
-      [onLoaded]
+      []
     );
 
     useEffect(() => {
-      setReady(false);
+      const isNewMedia = lastMediaKeyRef.current !== mediaKey;
+      if (isNewMedia) {
+        lastMediaKeyRef.current = mediaKey;
+        hasLoadedRef.current = false;
+        setReady(false);
+      }
+      if (externallyLoaded && !hasLoadedRef.current) {
+        hasLoadedRef.current = true;
+        setReady(true);
+      }
       const node = isVideo ? videoRef.current : imageRef.current;
       if (node instanceof HTMLImageElement && node.complete) {
         if (node.naturalWidth && node.naturalHeight) {
@@ -2598,27 +2704,36 @@ const ShowcaseBlockSection = ({
         }
         markLoaded();
       }
-    }, [isVideo, item.url, markLoaded, mediaKey]);
+    }, [isVideo, item.url, markLoaded, mediaKey, externallyLoaded]);
 
     useEffect(() => {
-      if (isLoaded) return;
-      const fallback = window.setTimeout(() => markLoaded(), 1400);
-      return () => window.clearTimeout(fallback);
-    }, [isLoaded, item.url, markLoaded, mediaKey]);
+      if (!externallyLoaded) return;
+      if (hasLoadedRef.current) return;
+      hasLoadedRef.current = true;
+      setReady(true);
+    }, [externallyLoaded]);
 
-    if (isVideo) {
-      return (
-        <video
-          src={item.url}
-          style={mediaStyle}
-          ref={videoRef}
-          muted
-          playsInline
-          loop
-          onLoadedData={(e) => {
-            const video = e.currentTarget;
-            markLoaded(video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : undefined);
-          }}
+  useEffect(() => {
+    if (isLoaded) return;
+    const fallback = window.setTimeout(() => markLoaded(), 900);
+    return () => window.clearTimeout(fallback);
+  }, [isLoaded, item.url, markLoaded, mediaKey]);
+
+  if (isVideo) {
+    return (
+      <video
+        src={item.url}
+        style={mediaStyle}
+        ref={videoRef}
+        muted
+        preload={priority ? "auto" : "metadata"}
+        playsInline
+        loop
+        autoPlay
+        onLoadedData={(e) => {
+          const video = e.currentTarget;
+          markLoaded(video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : undefined);
+        }}
           onCanPlay={(e) => {
             const video = e.currentTarget;
             markLoaded(video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : undefined);
@@ -2639,8 +2754,9 @@ const ShowcaseBlockSection = ({
         src={item.url}
         alt={item.alt ?? ""}
         style={mediaStyle}
+        fetchpriority={priority ? "high" : "auto"}
         ref={imageRef}
-        loading="lazy"
+        loading={priority ? "eager" : "lazy"}
         onLoad={(e) => {
           const img = e.currentTarget;
           markLoaded(img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : undefined);
@@ -2654,15 +2770,14 @@ const ShowcaseBlockSection = ({
     <section
       key={block.id ?? index}
       style={{
-        width: "100vw",
-        maxWidth: "100vw",
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
+        width: "100%",
+        maxWidth: "100%",
+        marginLeft: 0,
+        marginRight: 0,
         padding: sectionPadding,
         display: "flex",
         alignItems: isNarrow ? "flex-start" : "center",
-        overflowX: "hidden",
-        overflowY: "visible"
+        overflow: "visible"
       }}
     >
       <div
@@ -2730,7 +2845,7 @@ const ShowcaseBlockSection = ({
           >
             {displayItems.length ? (
               displayItems.map((item, cardIdx) => {
-                const fallbackRatio = 4 / 3;
+                const fallbackRatio = showcaseDefaultRatio;
                 const cardKey = `${item.id ?? `card-${cardIdx}`}-${item.url}`;
                 const seed = zSeedsRef.current[cardKey] ?? 0;
                 const baseZ = Math.round(seed * 100);
@@ -2799,6 +2914,7 @@ const ShowcaseBlockSection = ({
                           }}
                           loaded={isLoaded}
                           mediaKey={cardKey}
+                          priority={cardIdx < 2}
                         />
                       ) : (
                         <ShowcaseMedia
@@ -2811,6 +2927,7 @@ const ShowcaseBlockSection = ({
                           }}
                           loaded={isLoaded}
                           mediaKey={cardKey}
+                          priority={cardIdx < 2}
                         />
                       )}
                     </div>

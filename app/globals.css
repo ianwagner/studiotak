@@ -29,6 +29,7 @@
   --bg-glow-2: rgba(255, 112, 11, 0.18);
   --full-bleed-width: 100vw;
   --full-bleed-shift: calc(50% - 50vw);
+  --full-bleed-height: 100vh;
   --sidebar-glow-1: rgba(0, 0, 0, 0.05);
   --sidebar-glow-2: rgba(0, 0, 0, 0.03);
   --footer-top: #ffffff;
@@ -60,6 +61,18 @@
   :root {
     --full-bleed-width: 100svw;
     --full-bleed-shift: calc(50% - 50svw);
+  }
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --full-bleed-height: 100dvh;
+  }
+}
+
+@supports (height: 100svh) {
+  :root {
+    --full-bleed-height: 100svh;
   }
 }
 
@@ -209,6 +222,9 @@
 
 html {
   scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: clip;
+  width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -229,6 +245,7 @@ body {
   max-width: 100%;
   overflow-x: hidden;
   overflow-x: clip;
+  width: 100%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -290,6 +307,8 @@ a:not(.btn):hover {
 
 main {
   width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
 }
 
 .container {
@@ -300,6 +319,13 @@ main {
 }
 
 @supports (-webkit-touch-callout: none) {
+  /* iOS Safari-specific: keep full-bleed math tied to the visual viewport to prevent right-push */
+  :root {
+    --full-bleed-width: 100%;
+    --full-bleed-shift: 0;
+    --full-bleed-height: 100svh;
+  }
+
   .container {
     width: 100%;
     max-width: none;

@@ -6,6 +6,9 @@ import type { CSSProperties } from "react";
 import type { AnimatedHeadlineBlock } from "@/lib/admin/pages";
 import { useDarkModeShift } from "./useDarkModeShift";
 
+const viewportWidthVar = "var(--full-bleed-width, 100vw)";
+const viewportShiftVar = "var(--full-bleed-shift, calc(50% - 50vw))";
+
 type TextAnimationVariant = AnimatedHeadlineBlock["animationStyle"];
 type AnimationMode = AnimatedHeadlineBlock["animationMode"];
 
@@ -205,10 +208,10 @@ export function AnimatedHeadline({
     : { position: "relative", width: "100%", marginTop: 15, marginBottom: 15 };
 
   const wrapperStyle: CSSProperties = {
-    width: "calc(100vw - 30px)",
-    maxWidth: "calc(100vw - 30px)",
-    marginLeft: "calc(50% - 50vw + 15px)",
-    marginRight: "calc(50% - 50vw + 15px)",
+    width: `calc(${viewportWidthVar} - 30px)`,
+    maxWidth: `calc(${viewportWidthVar} - 30px)`,
+    marginLeft: `calc(${viewportShiftVar} + 15px)`,
+    marginRight: `calc(${viewportShiftVar} + 15px)`,
     minHeight,
     padding: "16px",
     display: "flex",
