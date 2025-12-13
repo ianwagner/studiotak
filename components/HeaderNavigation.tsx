@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import type { Route } from "next";
 import type { NavigationItemRecord } from "@/lib/admin/navigation";
 
 type HeaderNavigationProps = {
@@ -65,30 +63,16 @@ export function HeaderNavigation({ items }: HeaderNavigationProps) {
     }
   }, [isOpen]);
 
-  const getInternalRoute = (href: string): Route | null => {
-    if (!href) return null;
-    if (!href.startsWith("/")) return null;
-    return href as Route;
-  };
-
   const renderNavLink = (item: NavigationItemRecord) => {
-    const internalHref = !item.isExternal ? getInternalRoute(item.href) : null;
-    const rel = item.isExternal ? "noreferrer noopener" : undefined;
-    const target = item.isExternal ? "_blank" : undefined;
+    const isExternal = item.isExternal || /^https?:\/\//i.test(item.href);
+    const rel = isExternal ? "noreferrer noopener" : undefined;
+    const target = isExternal ? "_blank" : undefined;
     const content = (
       <span className="nav-link-content">
         {item.icon ? <img className="nav-link-icon" src={item.icon} alt="" aria-hidden /> : null}
         <span>{item.label}</span>
       </span>
     );
-
-    if (internalHref) {
-      return (
-        <Link key={item.id} className="nav-link-item" href={internalHref}>
-          {content}
-        </Link>
-      );
-    }
 
     return (
       <a key={item.id} className="nav-link-item" href={item.href} target={target} rel={rel}>

@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import type { Route } from "next";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, HTMLAttributes, MouseEvent, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import { motion, useInView } from "framer-motion";
 import type {
   AnimatedHeadlineBlock,
@@ -61,33 +59,32 @@ type BlocksRendererProps = {
   blocks: BlockRecord[];
 };
 
-const normalizePathname = (path: string) => path.replace(/\/+$/, "") || "/";
-
-const scrollToAnchorIfOnPage = (href: string): boolean => {
-  if (typeof window === "undefined" || !href) return false;
-  try {
-    const base = window.location.href.split("#")[0];
-    const targetUrl = href.startsWith("#") ? new URL(`${base}${href}`) : new URL(href, window.location.href);
-    if (!targetUrl.hash) return false;
-    const anchorId = decodeURIComponent(targetUrl.hash.replace(/^#/, "")).trim();
-    if (!anchorId) return false;
-    const currentPath = normalizePathname(window.location.pathname);
-    const targetPath = normalizePathname(targetUrl.pathname);
-    if (currentPath !== targetPath) return false;
-    const anchorEl = document.getElementById(anchorId);
-    if (!anchorEl) return false;
-    anchorEl.scrollIntoView({ behavior: "smooth", block: "start" });
-    window.history.replaceState({}, "", `${targetUrl.pathname}${targetUrl.search}#${anchorId}`);
-    return true;
-  } catch {
-    return false;
+const AnchorAwareLink = ({
+  href,
+  className,
+  children,
+  style
+}: {
+  href: string;
+  className?: string;
+  children: ReactNode;
+  style?: CSSProperties;
+}) => {
+  if (!href) return null;
+  const isExternal = /^https?:\/\//i.test(href);
+  const isAnchor = href.startsWith("#");
+  if (isExternal) {
+    return (
+      <a className={className} href={href} style={style} target="_blank" rel="noreferrer noopener">
+        {children}
+      </a>
+    );
   }
-};
-
-const handleAnchorClick = (href: string, event: MouseEvent<HTMLAnchorElement>) => {
-  if (scrollToAnchorIfOnPage(href)) {
-    event.preventDefault();
-  }
+  return (
+    <a className={className} href={href} style={style} {...(isAnchor ? { "data-anchor": true } : {})}>
+      {children}
+    </a>
+  );
 };
 
 function ThemeShiftRegion({ enabled, children }: { enabled?: boolean; children: ReactNode }) {
@@ -247,14 +244,13 @@ const FeatureCard = ({
             </div>
             <p style={{ margin: 0, color: "var(--muted)", fontSize: 15 }}>{item.body}</p>
             {item.href ? (
-              <Link
-                href={item.href as Route}
+              <AnchorAwareLink
+                href={item.href}
                 className="nav-link"
                 style={{ width: "fit-content" }}
-                onClick={(event) => handleAnchorClick(item.href as string, event)}
               >
                 Learn more
-              </Link>
+              </AnchorAwareLink>
             ) : null}
           </div>
         </>
@@ -288,14 +284,13 @@ const FeatureCard = ({
           </div>
           <p style={{ margin: 0, color: "var(--muted)" }}>{item.body}</p>
           {item.href ? (
-            <Link
-              href={item.href as Route}
+            <AnchorAwareLink
+              href={item.href}
               className="nav-link"
               style={{ width: "fit-content" }}
-              onClick={(event) => handleAnchorClick(item.href as string, event)}
             >
               Learn more
-            </Link>
+            </AnchorAwareLink>
           ) : null}
         </>
       )}
@@ -803,24 +798,22 @@ const renderHeroBlock = (
         }}
       >
         {block.primaryCtaLabel && block.primaryCtaHref ? (
-          <Link
+          <AnchorAwareLink
             className="btn"
-            href={block.primaryCtaHref as Route}
-            onClick={(event) => handleAnchorClick(block.primaryCtaHref as string, event)}
+            href={block.primaryCtaHref}
             style={{ minWidth: 160, justifyContent: "center" }}
           >
             {block.primaryCtaLabel}
-          </Link>
+          </AnchorAwareLink>
         ) : null}
         {block.secondaryCtaLabel && block.secondaryCtaHref ? (
-          <Link
+          <AnchorAwareLink
             className="btn secondary"
-            href={block.secondaryCtaHref as Route}
-            onClick={(event) => handleAnchorClick(block.secondaryCtaHref as string, event)}
+            href={block.secondaryCtaHref}
             style={{ minWidth: 160, justifyContent: "center" }}
           >
             {block.secondaryCtaLabel}
-          </Link>
+          </AnchorAwareLink>
         ) : null}
       </div>
     </div>
@@ -1087,14 +1080,13 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
       <SectionHeading eyebrow={block.eyebrow} title={block.heading} />
       {block.body ? <p style={{ margin: 0, color: "var(--muted)", fontSize: 16 }}>{block.body}</p> : null}
       {block.ctaLabel && block.ctaHref ? (
-        <Link
+        <AnchorAwareLink
           className="btn"
-          href={block.ctaHref as Route}
+          href={block.ctaHref}
           style={{ width: "fit-content" }}
-          onClick={(event) => handleAnchorClick(block.ctaHref as string, event)}
         >
           {block.ctaLabel}
-        </Link>
+        </AnchorAwareLink>
       ) : null}
     </div>
   );
@@ -1103,7 +1095,12 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
     return (
       <motion.section
         key={block.id ?? index}
-        style={{ width: "100%" }}
+        style={{
+          width: "100%",
+          maxWidth: "min(var(--max-width), 960px)",
+          marginLeft: "auto",
+          marginRight: "auto"
+        }}
         variants={preset.item}
         initial="hidden"
         whileInView="visible"
@@ -1118,7 +1115,14 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
   return (
     <motion.section
       key={block.id ?? index}
-      style={{ width: "100%", paddingLeft: 15, paddingRight: 15 }}
+      style={{
+        width: "100%",
+        maxWidth: "min(var(--max-width), 960px)",
+        marginLeft: "auto",
+        marginRight: "auto",
+        paddingLeft: 15,
+        paddingRight: 15
+      }}
       data-split-section
       variants={preset.item}
       initial="hidden"
@@ -1355,9 +1359,15 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
         <style suppressHydrationWarning>{`
           [data-contact-block] {
             width: 100%;
+            max-width: var(--max-width);
+            margin-left: auto;
+            margin-right: auto;
           }
           [data-contact-section] {
             width: 100%;
+            max-width: var(--max-width);
+            margin-left: auto;
+            margin-right: auto;
             padding-left: 15px;
             padding-right: 15px;
           }

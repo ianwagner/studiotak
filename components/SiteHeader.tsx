@@ -19,7 +19,10 @@ export async function SiteHeader({ navItems: providedNav }: SiteHeaderProps = {}
       style={{
         position: "sticky",
         top: 0,
-        zIndex: 5,
+        zIndex: 2000,
+        isolation: "isolate",
+        pointerEvents: "auto",
+        transform: "translate3d(0,0,0)",
         background: "var(--header-bg)",
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--header-border)",
