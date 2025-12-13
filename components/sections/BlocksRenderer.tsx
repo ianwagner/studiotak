@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, MouseEvent, ReactNode } from "react";
 import { motion, useInView } from "framer-motion";
 import type {
   AnimatedHeadlineBlock,
@@ -60,6 +60,35 @@ declare global {
 
 type BlocksRendererProps = {
   blocks: BlockRecord[];
+};
+
+const normalizePathname = (path: string) => path.replace(/\/+$/, "") || "/";
+
+const scrollToAnchorIfOnPage = (href: string): boolean => {
+  if (typeof window === "undefined" || !href) return false;
+  try {
+    const base = window.location.href.split("#")[0];
+    const targetUrl = href.startsWith("#") ? new URL(`${base}${href}`) : new URL(href, window.location.href);
+    if (!targetUrl.hash) return false;
+    const anchorId = decodeURIComponent(targetUrl.hash.replace(/^#/, "")).trim();
+    if (!anchorId) return false;
+    const currentPath = normalizePathname(window.location.pathname);
+    const targetPath = normalizePathname(targetUrl.pathname);
+    if (currentPath !== targetPath) return false;
+    const anchorEl = document.getElementById(anchorId);
+    if (!anchorEl) return false;
+    anchorEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.history.replaceState({}, "", `${targetUrl.pathname}${targetUrl.search}#${anchorId}`);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const handleAnchorClick = (href: string, event: MouseEvent<HTMLAnchorElement>) => {
+  if (scrollToAnchorIfOnPage(href)) {
+    event.preventDefault();
+  }
 };
 
 function ThemeShiftRegion({ enabled, children }: { enabled?: boolean; children: ReactNode }) {
@@ -233,94 +262,109 @@ const FeatureCard = ({
   style?: CSSProperties;
   variant?: "grid" | "gallery";
   className?: string;
-} & HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={`card${className ? ` ${className}` : ""}`}
-    style={{
-      padding: variant === "gallery" ? 0 : 14,
-      display: "grid",
-      gap: variant === "gallery" ? 0 : 8,
-      border: "1px solid var(--border-strong)",
-      overflow: "hidden",
-      background: undefined,
-      boxShadow: "none",
-      ...style
-    }}
-    {...rest}
-  >
-    {variant === "gallery" ? (
-      <>
-        {item.icon?.url ? (
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            aspectRatio: "4 / 3",
-            background: "linear-gradient(135deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02))",
-            overflow: "hidden"
-          }}
-        >
-          <img
-            src={item.icon.url}
-            alt={item.icon.alt ?? ""}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: item.mediaFit === "contain" ? "contain" : "cover"
-            }}
-          />
-        </div>
-        ) : null}
-        <div style={{ padding: "16px 16px 18px", display: "grid", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <strong style={{ fontSize: 20 }}>{item.title}</strong>
-        </div>
-        <p style={{ margin: 0, color: "var(--muted)", fontSize: 15 }}>{item.body}</p>
-        {item.href ? (
-          <Link href={item.href as Route} className="nav-link" style={{ width: "fit-content" }}>
-            Learn more
-            </Link>
-          ) : null}
-        </div>
-      </>
-    ) : (
-      <>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+} & HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <div
+      className={`card${className ? ` ${className}` : ""}`}
+      style={{
+        padding: variant === "gallery" ? 0 : 14,
+        display: "grid",
+        gap: variant === "gallery" ? 0 : 8,
+        border: "1px solid var(--border-strong)",
+        overflow: "hidden",
+        background: undefined,
+        boxShadow: "none",
+        ...style
+      }}
+      {...rest}
+    >
+      {variant === "gallery" ? (
+        <>
           {item.icon?.url ? (
-            <img
-              src={item.icon.url}
-              alt={item.icon.alt ?? ""}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                border: "1px solid var(--border)",
-                objectFit: item.mediaFit === "contain" ? "contain" : "cover"
-              }}
-            />
-          ) : (
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                border: "1px solid var(--border)",
-                background: "rgba(255,255,255,0.03)"
+                position: "relative",
+                width: "100%",
+                background: "linear-gradient(135deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02))",
+                overflow: "hidden",
+                padding: "16px 16px 0",
+                boxSizing: "border-box"
               }}
-            />
-          )}
-          <strong style={{ fontSize: 18 }}>{item.title}</strong>
-        </div>
-        <p style={{ margin: 0, color: "var(--muted)" }}>{item.body}</p>
-        {item.href ? (
-          <Link href={item.href as Route} className="nav-link" style={{ width: "fit-content" }}>
-            Learn more
-          </Link>
-        ) : null}
-      </>
-    )}
-  </div>
-);
+            >
+              <img
+                src={item.icon.url}
+                alt={item.icon.alt ?? ""}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  maxHeight: 240,
+                  display: "block",
+                  objectFit: item.mediaFit === "contain" ? "contain" : "cover"
+                }}
+              />
+            </div>
+          ) : null}
+          <div style={{ padding: "16px 16px 18px", display: "grid", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <strong style={{ fontSize: 20 }}>{item.title}</strong>
+            </div>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: 15 }}>{item.body}</p>
+            {item.href ? (
+              <Link
+                href={item.href as Route}
+                className="nav-link"
+                style={{ width: "fit-content" }}
+                onClick={(event) => handleAnchorClick(item.href as string, event)}
+              >
+                Learn more
+              </Link>
+            ) : null}
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {item.icon?.url ? (
+              <img
+                src={item.icon.url}
+                alt={item.icon.alt ?? ""}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  border: "1px solid var(--border)",
+                  objectFit: item.mediaFit === "contain" ? "contain" : "cover"
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  border: "1px solid var(--border)",
+                  background: "rgba(255,255,255,0.03)"
+                }}
+              />
+            )}
+            <strong style={{ fontSize: 18 }}>{item.title}</strong>
+          </div>
+          <p style={{ margin: 0, color: "var(--muted)" }}>{item.body}</p>
+          {item.href ? (
+            <Link
+              href={item.href as Route}
+              className="nav-link"
+              style={{ width: "fit-content" }}
+              onClick={(event) => handleAnchorClick(item.href as string, event)}
+            >
+              Learn more
+            </Link>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+};
 
 const useHeaderHeight = () => {
   const [height, setHeight] = useState<number>(72);
@@ -779,12 +823,22 @@ const renderHeroBlock = (
         }}
       >
         {block.primaryCtaLabel && block.primaryCtaHref ? (
-          <Link className="btn" href={block.primaryCtaHref as Route}>
+          <Link
+            className="btn"
+            href={block.primaryCtaHref as Route}
+            onClick={(event) => handleAnchorClick(block.primaryCtaHref as string, event)}
+            style={{ minWidth: 160, justifyContent: "center" }}
+          >
             {block.primaryCtaLabel}
           </Link>
         ) : null}
         {block.secondaryCtaLabel && block.secondaryCtaHref ? (
-          <Link className="btn secondary" href={block.secondaryCtaHref as Route}>
+          <Link
+            className="btn secondary"
+            href={block.secondaryCtaHref as Route}
+            onClick={(event) => handleAnchorClick(block.secondaryCtaHref as string, event)}
+            style={{ minWidth: 160, justifyContent: "center" }}
+          >
             {block.secondaryCtaLabel}
           </Link>
         ) : null}
@@ -1053,7 +1107,12 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
       <SectionHeading eyebrow={block.eyebrow} title={block.heading} />
       {block.body ? <p style={{ margin: 0, color: "var(--muted)", fontSize: 16 }}>{block.body}</p> : null}
       {block.ctaLabel && block.ctaHref ? (
-        <Link className="btn" href={block.ctaHref as Route} style={{ width: "fit-content" }}>
+        <Link
+          className="btn"
+          href={block.ctaHref as Route}
+          style={{ width: "fit-content" }}
+          onClick={(event) => handleAnchorClick(block.ctaHref as string, event)}
+        >
           {block.ctaLabel}
         </Link>
       ) : null}
