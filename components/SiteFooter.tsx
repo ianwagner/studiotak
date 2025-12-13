@@ -32,7 +32,7 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
 
   return (
     <footer data-site-footer>
-      <div className="container footer-shell">
+      <div className="container footer-shell" data-keep-centered>
         <div className="footer-brand">
           {footerLogoUrl ? (
             <img

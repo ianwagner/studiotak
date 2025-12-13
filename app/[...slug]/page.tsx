@@ -102,7 +102,11 @@ export default async function MarketingPage({ params }: PageParams) {
       <SiteHeader navItems={navItems} />
       <div
         className="container"
-        style={{ padding: `${pagePaddingTop}px 0 ${pagePaddingBottom}px`, display: "grid", gap: 32 }}
+        style={{
+          padding: `${pagePaddingTop}px 0 ${pagePaddingBottom}px`,
+          display: "grid",
+          gap: 32
+        }}
       >
         <BlocksRenderer blocks={page.blocks} />
         {jsonLd ? (

@@ -20,7 +20,11 @@ export default async function HomePage() {
       <SiteHeader navItems={navItems} />
       <div
         className="container"
-        style={{ padding: `${pagePaddingTop}px 0 ${pagePaddingBottom}px`, display: "grid", gap: 32 }}
+        style={{
+          padding: `${pagePaddingTop}px 0 ${pagePaddingBottom}px`,
+          display: "grid",
+          gap: 32
+        }}
       >
         {blocks.length ? <BlocksRenderer blocks={blocks} /> : null}
       </div>

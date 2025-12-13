@@ -37,6 +37,7 @@ const normalizeSettings = (raw: any): SiteSettings => {
 export async function getSiteSettings(): Promise<SiteSettings> {
   const fallback = inMemorySettings ?? seedSiteSettings;
   if (!hasFirebaseConfig) {
+    inMemorySettings = fallback;
     return clone(fallback);
   }
   try {
@@ -54,6 +55,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     return clone(settings);
   } catch (error) {
     console.error("Failed to load site settings from Firestore", error);
+    inMemorySettings = fallback;
     return clone(fallback);
   }
 }

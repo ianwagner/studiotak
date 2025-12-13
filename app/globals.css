@@ -979,6 +979,30 @@ legend {
   letter-spacing: 0.02em;
 }
 
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--muted-surface) 0%, rgba(255, 255, 255, 0.4) 50%, var(--muted-surface) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background-position: 0 0;
+  }
+}
+
 @media (max-width: 900px) {
   .admin-layout {
     grid-template-columns: 1fr;

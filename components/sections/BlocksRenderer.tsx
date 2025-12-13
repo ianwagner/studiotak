@@ -25,8 +25,7 @@ import { AnimatedHeadline } from "./AnimatedHeadline";
 import { animationPresets, defaultAnimationPreset } from "./animationPresets";
 import { useDarkModeShift } from "./useDarkModeShift";
 import { getFirebaseApp } from "@/lib/firebaseClient";
-import { collection, documentId, getDocs, getFirestore, limit, query, where, type QueryConstraint } from "firebase/firestore";
-import { seedComponents, type ComponentRecord } from "@/lib/admin/components";
+import { collection, getDocs, getFirestore, limit, query, where, type QueryConstraint } from "firebase/firestore";
 import Script from "next/script";
 import Head from "next/head";
 
@@ -120,64 +119,6 @@ function ThemeShiftRegion({ enabled, children }: { enabled?: boolean; children: 
 
 const clampNumber = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const useComponentsMap = (componentIds: string[]) => {
-  const [map, setMap] = useState<Record<string, ComponentRecord>>({});
-
-  useEffect(() => {
-    let canceled = false;
-    const load = async () => {
-      if (!componentIds.length) {
-        setMap({});
-        return;
-      }
-      // Seed fallback when Firebase isn't configured.
-      if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-        const entries = seedComponents.filter((component) => componentIds.includes(component.id));
-        if (!canceled) {
-          setMap(Object.fromEntries(entries.map((component) => [component.id, component])));
-        }
-        return;
-      }
-
-      try {
-        const db = getFirestore(getFirebaseApp());
-        const ref = collection(db, "components");
-        const chunks: string[][] = [];
-        for (let i = 0; i < componentIds.length; i += 10) {
-          chunks.push(componentIds.slice(i, i + 10));
-        }
-        const results: ComponentRecord[] = [];
-        for (const chunk of chunks) {
-          const q = query(ref, where(documentId(), "in", chunk));
-          const snapshot = await getDocs(q);
-          snapshot.docs.forEach((doc) =>
-            results.push({
-              id: doc.id,
-              ...(doc.data() as Omit<ComponentRecord, "id">)
-            })
-          );
-        }
-        if (!canceled) {
-          setMap(Object.fromEntries(results.map((component) => [component.id, component])));
-        }
-      } catch (error) {
-        console.error("Failed to load components", error);
-        if (!canceled) {
-          const entries = seedComponents.filter((component) => componentIds.includes(component.id));
-          setMap(Object.fromEntries(entries.map((component) => [component.id, component])));
-        }
-      }
-    };
-
-    load();
-    return () => {
-      canceled = true;
-    };
-  }, [componentIds]);
-
-  return map;
-};
-
 const useViewportWidth = () => {
   const [width, setWidth] = useState<number | null>(null);
   useEffect(() => {
@@ -233,22 +174,6 @@ const renderBlockSections = (sections?: BlockSection[]) => {
       ))}
     </div>
   );
-};
-
-const mergeComponentFields = (item: FeatureItem, componentsMap: Record<string, ComponentRecord>): FeatureItem => {
-  if (!item.componentId) return item;
-  const component = componentsMap[item.componentId];
-  if (!component) return item;
-  return {
-    ...item,
-    title: component.title ?? item.title,
-    body: component.body ?? item.body,
-    icon: component.icon ?? item.icon,
-    industry: component.industry ?? item.industry,
-    type: component.type ?? item.type,
-    badge: item.badge,
-    mediaFit: component.mediaFit ?? item.mediaFit
-  };
 };
 
 const FeatureCard = ({
@@ -404,11 +329,13 @@ const useHeaderHeight = () => {
 const getFullBleedHeroStyle = (headerHeight: number, compact = false, viewportWidth: number | null = null): CSSProperties => {
   const gutter = viewportWidth !== null && viewportWidth < 640 ? 18 : 30;
   const sideOffset = gutter / 2;
+  const fullBleedWidth = `calc(var(--full-bleed-width, 100vw) - ${gutter}px)`;
+  const fullBleedShift = `calc(var(--full-bleed-shift, calc(50% - 50vw)) + ${sideOffset}px)`;
   return {
-    width: `calc(100vw - ${gutter}px)`,
-    maxWidth: `calc(100vw - ${gutter}px)`,
-    marginLeft: `calc(50% - 50vw + ${sideOffset}px)`,
-    marginRight: `calc(50% - 50vw + ${sideOffset}px)`,
+    width: fullBleedWidth,
+    maxWidth: fullBleedWidth,
+    marginLeft: fullBleedShift,
+    marginRight: fullBleedShift,
     marginTop: 15,
     marginBottom: 15,
     minHeight: compact ? "clamp(180px, 32vh, 360px)" : `calc(100vh - ${headerHeight}px - 30px)`,
@@ -781,8 +708,9 @@ const renderHeroBlock = (
     </>
   ) : null;
   const innerStyle: CSSProperties = {
-    width: "100%",
-    maxWidth: "var(--max-width)",
+    width: "min(100%, calc(var(--max-width) + 30px))",
+    paddingLeft: 15,
+    paddingRight: 15,
     margin: "0 auto",
     ...(hasBackground ? { padding: isCompact ? 26 : 32, position: "relative", zIndex: 2 } : {}),
     ...(isCompact && !hasBackground ? { padding: "0 12px" } : {}),
@@ -862,7 +790,7 @@ const renderHeroBlock = (
     ? {
         ...innerStyle,
         maxWidth: "100%",
-        margin: 0,
+        margin: "0 auto",
         paddingLeft: isNarrowViewport ? (isCompact ? 10 : 12) : isCompact ? 22 : 26,
         paddingRight: isSingleColumnDynamic
           ? isNarrowViewport
@@ -1803,18 +1731,14 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
 
 const FeaturesBlockSection = ({
   block,
-  index,
-  componentsMap
+  index
 }: {
   block: FeaturesBlock;
   index: number;
-  componentsMap: Record<string, ComponentRecord>;
 }) => {
   const paddingX = 16;
   const minSidePadding = 15;
-  const items = (block.items ?? [])
-    .map((item) => mergeComponentFields(item, componentsMap))
-    .slice(0, 3);
+  const items = (block.items ?? []).slice(0, 3);
   const galleryPreset = animationPresets[defaultAnimationPreset];
   const galleryRef = useRef<HTMLDivElement | null>(null);
   const galleryInView = useInView(galleryRef, { amount: 0.3, once: true });
@@ -1879,13 +1803,11 @@ const FeaturesBlockSection = ({
 const ScrollGalleryBlockSection = ({
   block,
   index,
-  headerHeight,
-  componentsMap
+  headerHeight
 }: {
   block: ScrollGalleryBlock;
   index: number;
   headerHeight: number;
-  componentsMap: Record<string, ComponentRecord>;
 }) => {
   const ChevronLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -1993,7 +1915,7 @@ const ScrollGalleryBlockSection = ({
     scroller.scrollBy({ left: delta, behavior: "smooth" });
   };
 
-  const resolvedItems = (block.items ?? []).map((item) => mergeComponentFields(item, componentsMap));
+  const resolvedItems = block.items ?? [];
 
   useEffect(() => {
     const scroller = scrollContainerRef.current;
@@ -2759,19 +2681,6 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
     const forceDark = shouldForceDarkOnLoad;
     return `(function(){try{var root=document.documentElement;if(!root)return;var base=root.getAttribute("data-base-theme");if(base!=="light"&&base!=="dark"){var prefersDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");var isDark=prefersDark&&prefersDark.matches;root.setAttribute("data-base-theme", isDark ? "dark" : "light");}if(${forceDark ? "true" : "false"} && root.getAttribute("data-theme")!=="dark"){root.setAttribute("data-theme","dark");}}catch(e){}})();`;
   }, [shouldForceDarkOnLoad]);
-  const componentIds = useMemo(() => {
-    const ids = new Set<string>();
-    blocks.forEach((block) => {
-      if (block.type === "features" || block.type === "scroll_gallery") {
-        (block.items ?? []).forEach((item) => {
-          if (item.componentId) ids.add(item.componentId);
-        });
-      }
-    });
-    return Array.from(ids);
-  }, [blocks]);
-  const componentsMap = useComponentsMap(componentIds);
-
   return (
     <>
       {shouldForceDarkOnLoad ? (
@@ -2794,7 +2703,6 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
                 block={block}
                 index={index}
                 headerHeight={headerHeight}
-                componentsMap={componentsMap}
               />
             );
           } else if (block.type === "showcase") {
@@ -2802,7 +2710,7 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
           } else if (block.type === "split") {
             element = renderSplitBlock(block, index);
           } else if (block.type === "features") {
-            element = <FeaturesBlockSection key={key} block={block} index={index} componentsMap={componentsMap} />;
+            element = <FeaturesBlockSection key={key} block={block} index={index} />;
           } else if (block.type === "contact") {
             element = <ContactBlockSection key={key} block={block} index={index} />;
           } else {
