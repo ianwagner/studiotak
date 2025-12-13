@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, HTMLAttributes, MouseEvent, ReactNode } from "react";
 import { motion, useInView } from "framer-motion";
 import type {
@@ -515,12 +515,33 @@ const DynamicHeroColumns = ({
     };
   }, [resolvedItems]);
 
-  const renderCell = (item: HeroMediaItem, key: string) => {
+  const HeroMedia = ({ item }: { item: HeroMediaItem }) => {
+    const [loaded, setLoaded] = useState(false);
     const isVideo = item.mediaType === "video";
     const aspectRatio = item.width && item.height ? `${item.width} / ${item.height}` : "9 / 16";
+    const mediaStyle: CSSProperties = {
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      display: "block",
+      filter: loaded ? "blur(0px)" : "blur(14px)",
+      transform: loaded ? "scale(1)" : "scale(1.04)",
+      transition: "filter 280ms ease, transform 340ms ease",
+      willChange: "filter, transform"
+    };
+
+    useEffect(() => {
+      setLoaded(false);
+    }, [item.url]);
+
+    useEffect(() => {
+      if (loaded) return;
+      const fallback = window.setTimeout(() => setLoaded(true), 1400);
+      return () => window.clearTimeout(fallback);
+    }, [item.url, loaded]);
+
     return (
       <div
-        key={key}
         style={{
           borderRadius: 18,
           overflow: "hidden",
@@ -536,7 +557,9 @@ const DynamicHeroColumns = ({
             muted
             loop
             playsInline
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            onLoadedData={() => setLoaded(true)}
+            onLoadedMetadata={() => setLoaded(true)}
+            style={mediaStyle}
           >
             Your browser does not support the video tag.
           </video>
@@ -544,13 +567,18 @@ const DynamicHeroColumns = ({
           <img
             src={item.url}
             alt={item.alt ?? ""}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            style={mediaStyle}
             loading="lazy"
             decoding="async"
+            onLoad={() => setLoaded(true)}
           />
         )}
       </div>
     );
+  };
+
+  const renderCell = (item: HeroMediaItem, key: string) => {
+    return <HeroMedia key={key} item={item} />;
   };
 
   return (
@@ -2213,7 +2241,10 @@ const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number 
   const wallBackground = "transparent";
 
   return (
-    <AnimatedSection key={block.id ?? index} index={index} variant="plain" style={{ width: "100%", pointerEvents: "none" }}>
+    <section
+      key={block.id ?? index}
+      style={{ width: "100%", pointerEvents: "none" }}
+    >
       <style suppressHydrationWarning>{`
         [data-logos-track] {
           display: flex;
@@ -2341,10 +2372,10 @@ const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number 
           </p>
         ) : null}
         {loading ? (
-          <p style={{ margin: 0, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Loading logos…</p>
-        ) : null}
-      </div>
-    </AnimatedSection>
+            <p style={{ margin: 0, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Loading logos…</p>
+          ) : null}
+        </div>
+    </section>
   );
 };
 
@@ -2375,6 +2406,7 @@ const ShowcaseBlockSection = ({
   const [items, setItems] = useState<ShowcaseMediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [ratios, setRatios] = useState<Record<string, number>>({});
+  const [loadedMap, setLoadedMap] = useState<Record<string, boolean>>({});
   const [viewportHeight, setViewportHeight] = useState<number | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const zSeedsRef = useRef<Record<string, number>>({});
@@ -2493,7 +2525,7 @@ const ShowcaseBlockSection = ({
 
   useEffect(() => {
     displayItems.forEach((item, idx) => {
-      const key = item.id ?? `card-${idx}`;
+      const key = `${item.id ?? `card-${idx}`}-${item.url}`;
       if (!(key in zSeedsRef.current)) {
         zSeedsRef.current[key] = Math.random();
       }
@@ -2502,6 +2534,111 @@ const ShowcaseBlockSection = ({
   const rotations = [-6, -2.5, 3.5, 1, -4.5, 5, -1.5];
 
   const sectionPadding = isNarrow ? "0" : "40px 0 52px";
+
+  const ShowcaseMedia = ({
+    item,
+    onLoaded,
+    loaded: externallyLoaded,
+    mediaKey
+  }: {
+    item: ShowcaseMediaItem;
+    onLoaded?: (ratio?: number) => void;
+    loaded?: boolean;
+    mediaKey: string;
+  }) => {
+    const [ready, setReady] = useState(false);
+    const imageRef = useRef<HTMLImageElement | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const isVideo = item.mediaType === "video" || /\.(mp4|mov|webm|ogg)$/i.test(item.url);
+    const isLoaded = ready || externallyLoaded;
+    const mediaStyle: CSSProperties = {
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      filter: isLoaded ? "blur(0px)" : "blur(14px)",
+      transform: isLoaded ? "scale(1)" : "scale(1.04)",
+      opacity: isLoaded ? 1 : 0.7,
+      transition: "filter 220ms ease, transform 260ms ease, opacity 220ms ease",
+      display: "block",
+      willChange: "filter, transform"
+    };
+
+    const markLoaded = useCallback(
+      (ratio?: number) => {
+        setReady(true);
+        onLoaded?.(ratio);
+      },
+      [onLoaded]
+    );
+
+    useEffect(() => {
+      setReady(false);
+      const node = isVideo ? videoRef.current : imageRef.current;
+      if (node instanceof HTMLImageElement && node.complete) {
+        if (node.naturalWidth && node.naturalHeight) {
+          markLoaded(node.naturalWidth / node.naturalHeight);
+          return;
+        }
+        markLoaded();
+      }
+      if (node instanceof HTMLVideoElement && node.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        if (node.videoWidth && node.videoHeight) {
+          markLoaded(node.videoWidth / node.videoHeight);
+          return;
+        }
+        markLoaded();
+      }
+    }, [isVideo, item.url, markLoaded, mediaKey]);
+
+    useEffect(() => {
+      if (isLoaded) return;
+      const fallback = window.setTimeout(() => markLoaded(), 1400);
+      return () => window.clearTimeout(fallback);
+    }, [isLoaded, item.url, markLoaded, mediaKey]);
+
+    if (isVideo) {
+      return (
+        <video
+          src={item.url}
+          style={mediaStyle}
+          ref={videoRef}
+          muted
+          playsInline
+          loop
+          onLoadedData={(e) => {
+            const video = e.currentTarget;
+            markLoaded(video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : undefined);
+          }}
+          onCanPlay={(e) => {
+            const video = e.currentTarget;
+            markLoaded(video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : undefined);
+          }}
+          onLoadedMetadata={(e) => {
+            const video = e.currentTarget;
+            if (video.videoWidth && video.videoHeight) {
+              markLoaded(video.videoWidth / video.videoHeight);
+            }
+          }}
+          onError={() => markLoaded()}
+        />
+      );
+    }
+
+    return (
+      <img
+        src={item.url}
+        alt={item.alt ?? ""}
+        style={mediaStyle}
+        ref={imageRef}
+        loading="lazy"
+        onLoad={(e) => {
+          const img = e.currentTarget;
+          markLoaded(img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : undefined);
+        }}
+        onError={() => markLoaded()}
+      />
+    );
+  };
 
   return (
     <section
@@ -2584,13 +2721,14 @@ const ShowcaseBlockSection = ({
             {displayItems.length ? (
               displayItems.map((item, cardIdx) => {
                 const fallbackRatio = 4 / 3;
-                const cardKey = item.id ?? `card-${cardIdx}`;
+                const cardKey = `${item.id ?? `card-${cardIdx}`}-${item.url}`;
                 const seed = zSeedsRef.current[cardKey] ?? 0;
                 const baseZ = Math.round(seed * 100);
                 const isHovered = hoveredId === cardKey;
                 const ratio =
-                  ratios[item.id] ||
+                  ratios[cardKey] ||
                   (item.width && item.height && item.width > 0 && item.height > 0 ? item.width / item.height : fallbackRatio);
+                const isLoaded = loadedMap[cardKey];
                 const cardW = Math.min(cardWidth, (maxCardHeight ?? Infinity) * ratio);
                 const cardH = cardW / ratio;
                 const isVideo = item.mediaType === "video" || /\.(mp4|mov|webm|ogg)$/i.test(item.url);
@@ -2641,31 +2779,28 @@ const ShowcaseBlockSection = ({
                           }}
                         />
                       ) : isVideo ? (
-                        <video
-                          src={item.url}
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          muted
-                          playsInline
-                          loop
-                          onLoadedMetadata={(e) => {
-                            const video = e.currentTarget;
-                            if (video.videoWidth && video.videoHeight) {
-                              setRatios((prev) => ({ ...prev, [item.id]: video.videoWidth / video.videoHeight }));
+                        <ShowcaseMedia
+                          item={item}
+                          onLoaded={(ratio) => {
+                            setLoadedMap((prev) => ({ ...prev, [cardKey]: true }));
+                            if (ratio) {
+                              setRatios((prev) => ({ ...prev, [cardKey]: ratio }));
                             }
                           }}
+                          loaded={isLoaded}
+                          mediaKey={cardKey}
                         />
                       ) : (
-                        <img
-                          src={item.url}
-                          alt={item.alt ?? ""}
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          loading="lazy"
-                          onLoad={(e) => {
-                            const img = e.currentTarget;
-                            if (img.naturalWidth && img.naturalHeight) {
-                              setRatios((prev) => ({ ...prev, [item.id]: img.naturalWidth / img.naturalHeight }));
+                        <ShowcaseMedia
+                          item={item}
+                          onLoaded={(ratio) => {
+                            setLoadedMap((prev) => ({ ...prev, [cardKey]: true }));
+                            if (ratio) {
+                              setRatios((prev) => ({ ...prev, [cardKey]: ratio }));
                             }
                           }}
+                          loaded={isLoaded}
+                          mediaKey={cardKey}
                         />
                       )}
                     </div>
@@ -2683,12 +2818,27 @@ const ShowcaseBlockSection = ({
 export function BlocksRenderer({ blocks }: BlocksRendererProps) {
   const headerHeight = useHeaderHeight();
   const viewportWidth = useViewportWidth();
+  const initialVisibleCount = 2;
+  // Defer rendering everything after the first two blocks until the user scrolls toward it to reduce initial work.
+  const shouldLazyLoadRest = blocks.length > initialVisibleCount;
+  const lazyLoadRef = useRef<HTMLDivElement | null>(null);
+  const lazyInView = useInView(lazyLoadRef, { once: true, margin: "35% 0px" });
+  const [renderRest, setRenderRest] = useState(!shouldLazyLoadRest);
   const shouldForceDarkOnLoad = useMemo(() => {
     const first = blocks[0];
     if (!first) return false;
     if (first.type === "animated_headline") return false;
     return !!first.enableDarkModeOnScroll;
   }, [blocks]);
+  useEffect(() => {
+    if (!shouldLazyLoadRest) {
+      setRenderRest(true);
+      return;
+    }
+    if (lazyInView) {
+      setRenderRest(true);
+    }
+  }, [lazyInView, shouldLazyLoadRest]);
   const initialThemeScript = useMemo(() => {
     const forceDark = shouldForceDarkOnLoad;
     return `(function(){try{var root=document.documentElement;if(!root)return;var base=root.getAttribute("data-base-theme");if(base!=="light"&&base!=="dark"){var prefersDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");var isDark=prefersDark&&prefersDark.matches;root.setAttribute("data-base-theme", isDark ? "dark" : "light");}if(${forceDark ? "true" : "false"} && root.getAttribute("data-theme")!=="dark"){root.setAttribute("data-theme","dark");}}catch(e){}})();`;
@@ -2701,6 +2851,13 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
       <div className="grid" style={{ gap: 24 }}>
         {blocks.map((block, index) => {
           const key = block.id ?? index;
+          const shouldDelayRender = shouldLazyLoadRest && index >= initialVisibleCount && !renderRest;
+          if (shouldDelayRender) {
+            if (index === initialVisibleCount) {
+              return <div key="lazy-sentinel" ref={lazyLoadRef} style={{ width: "100%", height: 1 }} />;
+            }
+            return null;
+          }
           let element: JSX.Element;
           if (block.type === "hero" || block.type === "thirds") {
             element = renderHeroBlock(block, index, headerHeight, viewportWidth);
