@@ -345,18 +345,22 @@ const useHeaderHeight = () => {
   return height;
 };
 
-const getFullBleedHeroStyle = (headerHeight: number, compact = false): CSSProperties => ({
-  width: "calc(100vw - 30px)",
-  maxWidth: "calc(100vw - 30px)",
-  marginLeft: "calc(50% - 50vw + 15px)",
-  marginRight: "calc(50% - 50vw + 15px)",
-  marginTop: 15,
-  marginBottom: 15,
-  minHeight: compact ? "clamp(180px, 32vh, 360px)" : `calc(100vh - ${headerHeight}px - 30px)`,
-  padding: compact ? "8px 0" : undefined,
-  display: "flex",
-  alignItems: "center"
-});
+const getFullBleedHeroStyle = (headerHeight: number, compact = false, viewportWidth: number | null = null): CSSProperties => {
+  const gutter = viewportWidth !== null && viewportWidth < 640 ? 18 : 30;
+  const sideOffset = gutter / 2;
+  return {
+    width: `calc(100vw - ${gutter}px)`,
+    maxWidth: `calc(100vw - ${gutter}px)`,
+    marginLeft: `calc(50% - 50vw + ${sideOffset}px)`,
+    marginRight: `calc(50% - 50vw + ${sideOffset}px)`,
+    marginTop: 15,
+    marginBottom: 15,
+    minHeight: compact ? "clamp(180px, 32vh, 360px)" : `calc(100vh - ${headerHeight}px - 30px)`,
+    padding: compact ? "8px 0" : undefined,
+    display: "flex",
+    alignItems: "center"
+  };
+};
 
 type HeroMediaItem = {
   id: string;
@@ -626,7 +630,7 @@ const renderHeroBlock = (
   const isCompact = block.type === "thirds";
   const thirdsLayout = block.type === "thirds" ? block.layout ?? "left" : "left";
   const isCenteredThirds = isCompact && thirdsLayout === "centered";
-  const fullBleedHeroStyle = getFullBleedHeroStyle(headerHeight, isCompact);
+  const fullBleedHeroStyle = getFullBleedHeroStyle(headerHeight, isCompact, viewportWidth);
   const removeStroke = isDynamicHero || !!block.media?.url;
   const hideColumns = isDynamicHero && viewportWidth !== null && viewportWidth < 1100;
   const heroStyle: CSSProperties = hasBackground
@@ -763,7 +767,7 @@ const renderHeroBlock = (
     : innerStyle;
 
   if (isDynamicHero && block.type === "hero") {
-    const dynamicGridTemplate = hideColumns ? "minmax(520px, 1fr)" : "minmax(460px, 1.1fr) minmax(360px, 0.9fr)";
+    const dynamicGridTemplate = hideColumns ? "minmax(0, 1fr)" : "minmax(460px, 1.1fr) minmax(360px, 0.9fr)";
     return (
       <AnimatedSection
         key={block.id ?? index}
