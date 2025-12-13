@@ -82,6 +82,30 @@ function AlignmentSelect({
   );
 }
 
+function AnchorField({
+  value,
+  onChange,
+  placeholder = "section-id"
+}: {
+  value?: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+}) {
+  const example = placeholder?.trim() || "section-id";
+  return (
+    <div className="field-group">
+      <label>Anchor ID</label>
+      <input
+        className="input"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={example}
+      />
+      <span style={{ color: "var(--muted)", fontSize: 12 }}>Used for in-page links like #{example}.</span>
+    </div>
+  );
+}
+
 const isHeroBlock = (block: EditableBlock): block is HeroBlock => block.type === "hero";
 const isThirdsBlock = (block: EditableBlock): block is ThirdsBlock => block.type === "thirds";
 const isHeroLikeBlock = (block: EditableBlock): block is HeroLikeBlock => isHeroBlock(block) || isThirdsBlock(block);
@@ -151,6 +175,7 @@ const newHeroBlock = (): HeroBlock => ({
   id: crypto.randomUUID(),
   type: "hero",
   adminLabel: "Hero block",
+  anchor: "",
   eyebrow: "",
   title: "Hero title",
   subtitle: "",
@@ -180,6 +205,7 @@ const newStoryBlock = (): StoryBlock => ({
   id: crypto.randomUUID(),
   type: "story",
   adminLabel: "Story block",
+  anchor: "",
   heading: "Story heading",
   body: "",
   variant: "single_column",
@@ -191,6 +217,7 @@ const newSplitBlock = (): SplitBlock => ({
   id: crypto.randomUUID(),
   type: "split",
   adminLabel: "Split block",
+  anchor: "",
   eyebrow: "",
   heading: "Split block heading",
   body: "Supporting text sits opposite the media.",
@@ -204,6 +231,7 @@ const newAnimatedHeadlineBlock = (): AnimatedHeadlineBlock => ({
   id: crypto.randomUUID(),
   type: "animated_headline",
   adminLabel: "Animated headline",
+  anchor: "",
   headline: "Animated headline",
   subtext: "Optional supporting line that animates with the headline.",
   animationStyle: "fade_by_word",
@@ -216,6 +244,7 @@ const newFeaturesBlock = (): FeaturesBlock => ({
   id: crypto.randomUUID(),
   type: "features",
   adminLabel: "Features block",
+  anchor: "",
   eyebrow: "Highlights",
   heading: "Feature block heading",
   body: "Describe the value these features deliver.",
@@ -232,6 +261,7 @@ const newLogosBlock = (): LogosBlock => ({
   id: crypto.randomUUID(),
   type: "logos",
   adminLabel: "Logos block",
+  anchor: "",
   eyebrow: "Logos",
   heading: "Trusted by teams that ship bold stories",
   limit: 12,
@@ -242,6 +272,7 @@ const newScrollGalleryBlock = (): ScrollGalleryBlock => ({
   id: crypto.randomUUID(),
   type: "scroll_gallery",
   adminLabel: "Scroll gallery",
+  anchor: "",
   eyebrow: "Gallery",
   heading: "Full-bleed scroll gallery",
   body: "Swipe through horizontally scrolling cards.",
@@ -257,6 +288,7 @@ const newShowcaseBlock = (): ShowcaseBlock => ({
   id: crypto.randomUUID(),
   type: "showcase",
   adminLabel: "Showcase",
+  anchor: "",
   eyebrow: "Media showcase",
   heading: "Stack of recent work",
   subhead: "Pulled live from the media library.",
@@ -1274,13 +1306,20 @@ export function PageForm({
                   </select>
                 </div>
               ) : null}
-              <div className="field-group">
-                <label>Eyebrow</label>
-                <input
-                  className="input"
-                  value={block.eyebrow ?? ""}
-                  onChange={(e) => handleHeroFieldChange(idx, "eyebrow", e.target.value)}
-                  placeholder="Page label"
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => handleHeroFieldChange(idx, "eyebrow", e.target.value)}
+                    placeholder="Page label"
+                  />
+                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleHeroFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "hero"}
                 />
               </div>
               <div className="field-group">
@@ -1425,6 +1464,11 @@ export function PageForm({
                     <option value="right">Right</option>
                   </select>
                 </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleSplitFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "section"}
+                />
               </div>
               <div className="field-group">
                 <label>Heading</label>
@@ -1502,16 +1546,11 @@ export function PageForm({
                     placeholder="Contact"
                   />
                 </div>
-                <div className="field-group">
-                  <label>Anchor ID</label>
-                  <input
-                    className="input"
-                    value={block.anchor ?? ""}
-                    onChange={(e) => handleContactFieldChange(idx, "anchor", e.target.value)}
-                    placeholder="contact"
-                  />
-                  <span style={{ color: "var(--muted)", fontSize: 12 }}>Used for in-page links like #contact.</span>
-                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleContactFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "contact"}
+                />
               </div>
               <div className="field-group">
                 <label>Heading</label>
@@ -1600,13 +1639,20 @@ export function PageForm({
             </div>
           ) : isAnimatedHeadlineBlock(block) ? (
             <div className="grid" style={{ gap: 12, padding: 12 }}>
-              <div className="field-group">
-                <label>Headline</label>
-                <input
-                  className="input"
-                  value={block.headline}
-                  onChange={(e) => handleAnimatedHeadlineFieldChange(idx, "headline", e.target.value)}
-                  placeholder="Animated headline"
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Headline</label>
+                  <input
+                    className="input"
+                    value={block.headline}
+                    onChange={(e) => handleAnimatedHeadlineFieldChange(idx, "headline", e.target.value)}
+                    placeholder="Animated headline"
+                  />
+                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleAnimatedHeadlineFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "headline"}
                 />
               </div>
               <div className="field-group">
@@ -1671,6 +1717,11 @@ export function PageForm({
                     placeholder="Section label"
                   />
                 </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleShowcaseFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "showcase"}
+                />
                 <div className="field-group">
                   <label>Title</label>
                   <input
@@ -1778,6 +1829,11 @@ export function PageForm({
                     placeholder="Trusted by"
                   />
                 </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleLogosFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "logos"}
+                />
               </div>
               <div className="field-group">
                 <label>Headline</label>
@@ -1832,6 +1888,11 @@ export function PageForm({
                     placeholder="Section label"
                   />
                 </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleScrollGalleryFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "gallery"}
+                />
               </div>
               <div className="field-group">
                 <label>Headline</label>
@@ -1994,6 +2055,11 @@ export function PageForm({
                     placeholder="3"
                   />
                 </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleFeaturesFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "capabilities"}
+                />
               </div>
               <div className="field-group">
                 <label>Heading</label>
@@ -2134,13 +2200,20 @@ export function PageForm({
             </div>
           ) : (
             <div className="grid" style={{ gap: 12, padding: 12 }}>
-              <div className="field-group">
-                <label>Heading</label>
-                <input
-                  className="input"
-                  value={block.heading}
-                  onChange={(e) => handleStoryFieldChange(idx, "heading", e.target.value)}
-                  placeholder="Story headline"
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Heading</label>
+                  <input
+                    className="input"
+                    value={block.heading}
+                    onChange={(e) => handleStoryFieldChange(idx, "heading", e.target.value)}
+                    placeholder="Story headline"
+                  />
+                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleStoryFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "section"}
                 />
               </div>
               <div className="field-group">

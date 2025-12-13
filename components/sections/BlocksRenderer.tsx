@@ -419,6 +419,7 @@ const DynamicHeroColumns = ({
 }) => {
   const [items, setItems] = useState<HeroMediaItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
   const industryTag = block.mediaIndustryTag?.trim();
   const typeTag = block.mediaTypeTag?.trim();
   const maxItems = clampNumber(block.mediaLimit ?? 18, 6, 60);
@@ -494,6 +495,33 @@ const DynamicHeroColumns = ({
   const columnsGap = isCompact ? 6 : 8;
   const containerGap = itemGap;
 
+  useEffect(() => {
+    let canceled = false;
+    setReady(false);
+    if (!resolvedItems.length) {
+      setReady(true);
+      return;
+    }
+    const preload = async () => {
+      const loaders = resolvedItems.map((item) => {
+        if (item.mediaType === "video") return Promise.resolve();
+        return new Promise<void>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = item.url;
+          if (img.complete) resolve();
+        });
+      });
+      await Promise.all(loaders);
+      if (!canceled) setReady(true);
+    };
+    preload();
+    return () => {
+      canceled = true;
+    };
+  }, [resolvedItems]);
+
   const renderCell = (item: HeroMediaItem, key: string) => {
     const isVideo = item.mediaType === "video";
     const aspectRatio = item.width && item.height ? `${item.width} / ${item.height}` : "9 / 16";
@@ -550,7 +578,11 @@ const DynamicHeroColumns = ({
       >
         {content}
         {!hideColumns ? (
-          <div className="grid" style={{ gap: columnsGap, height: "100%", justifyItems: "stretch" }}>
+          <div
+            className="grid"
+            style={{ gap: columnsGap, height: "100%", justifyItems: "stretch", opacity: ready ? 1 : 0, transition: "opacity 180ms ease" }}
+            aria-busy={!ready}
+          >
             <div
               data-hero-columns
               style={{
@@ -633,6 +665,7 @@ const renderHeroBlock = (
   const fullBleedHeroStyle = getFullBleedHeroStyle(headerHeight, isCompact, viewportWidth);
   const removeStroke = isDynamicHero || !!block.media?.url;
   const hideColumns = isDynamicHero && viewportWidth !== null && viewportWidth < 1100;
+  const isNarrowViewport = viewportWidth !== null && viewportWidth < 640;
   const heroStyle: CSSProperties = hasBackground
     ? {
         ...fullBleedHeroStyle,
@@ -699,14 +732,16 @@ const renderHeroBlock = (
     ...(isCompact && !hasBackground ? { padding: "0 12px" } : {}),
     ...(isCenteredThirds ? { justifyItems: "center" } : {})
   };
+  const isSingleColumnDynamic = isDynamicHero && hideColumns;
   const textOnlyContentStyle: CSSProperties = hasMedia
     ? {}
     : {
         maxWidth:
-          isDynamicHero && hideColumns ? "min(var(--max-width), 840px)" : isDynamicHero ? "min(var(--max-width), 640px)" : "min(var(--max-width), 600px)",
+          isSingleColumnDynamic ? "min(var(--max-width), 880px)" : isDynamicHero ? "min(var(--max-width), 640px)" : "min(var(--max-width), 600px)",
         width: "100%",
-        justifySelf: isDynamicHero ? "end" : isCenteredThirds ? "center" : "start",
-        marginLeft: isDynamicHero ? "auto" : undefined
+        justifySelf: isDynamicHero ? (isSingleColumnDynamic ? "start" : "end") : isCenteredThirds ? "center" : "start",
+        marginLeft: isDynamicHero && !isSingleColumnDynamic ? "auto" : undefined,
+        textAlign: isCenteredThirds ? "center" : undefined
       };
   const headingSize = isCompact ? "clamp(36px, 8vw, 56px)" : "clamp(44px, 9vw, 76px)";
   const subtitleSize = isCompact ? 16 : 18;
@@ -739,7 +774,8 @@ const renderHeroBlock = (
           gap: isCompact ? 10 : 12,
           alignItems: "flex-start",
           flexWrap: "wrap",
-          justifyContent: isCenteredThirds ? "center" : undefined
+          justifyContent: isCenteredThirds ? "center" : undefined,
+          paddingTop: isNarrowViewport ? 10 : undefined
         }}
       >
         {block.primaryCtaLabel && block.primaryCtaHref ? (
@@ -761,8 +797,14 @@ const renderHeroBlock = (
         ...innerStyle,
         maxWidth: "100%",
         margin: 0,
-        paddingLeft: isCompact ? 22 : 26,
-        paddingRight: 0
+        paddingLeft: isNarrowViewport ? (isCompact ? 10 : 12) : isCompact ? 22 : 26,
+        paddingRight: isSingleColumnDynamic
+          ? isNarrowViewport
+            ? (isCompact ? 10 : 12)
+            : isCompact
+            ? 22
+            : 26
+          : 0
       }
     : innerStyle;
 
@@ -1110,7 +1152,6 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
       )}
     </div>
   ) : null;
-  const anchorId = block.anchor?.trim();
   const preset = animationPresets[defaultAnimationPreset];
 
   useEffect(() => {
@@ -1271,7 +1312,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
       </Head>
       <Script id="brevo-form-main" src="https://sibforms.com/forms/end-form/build/main.js" strategy="afterInteractive" />
       <Script id="brevo-form-recaptcha" src="https://www.google.com/recaptcha/api.js?hl=en" strategy="afterInteractive" />
-      <div id={anchorId || undefined} data-contact-block style={{ position: "relative" }}>
+      <div data-contact-block style={{ position: "relative" }}>
         <style suppressHydrationWarning>{`
           [data-contact-block] {
             width: 100%;
@@ -1821,6 +1862,9 @@ const ScrollGalleryBlockSection = ({
     border: "1px solid var(--border-strong)"
   };
 
+  const viewportWidth = useViewportWidth();
+  const isMobile = (viewportWidth ?? Number.POSITIVE_INFINITY) <= 768;
+  const mobileCardWidth = "100%";
   const contentPaddingX = 12;
   const bleedContentStyle: CSSProperties = {
     width: "calc(100vw - 30px)",
@@ -1931,16 +1975,18 @@ const ScrollGalleryBlockSection = ({
             style={{
               overflowX: "auto",
               paddingBottom: 12,
-              paddingLeft: `${contentPaddingX}px`,
-              paddingRight: `${contentPaddingX}px`,
+              paddingLeft: isMobile ? 0 : `${contentPaddingX}px`,
+              paddingRight: isMobile ? 0 : `${contentPaddingX}px`,
               scrollbarWidth: "none",
               msOverflowStyle: "none",
-              WebkitMaskImage: edgeFadeMask,
-              maskImage: edgeFadeMask,
-              WebkitMaskSize: "100% 100%",
-              maskSize: "100% 100%",
-              WebkitMaskRepeat: "no-repeat",
-              maskRepeat: "no-repeat"
+              WebkitMaskImage: isMobile ? "none" : edgeFadeMask,
+              maskImage: isMobile ? "none" : edgeFadeMask,
+              WebkitMaskSize: isMobile ? undefined : "100% 100%",
+              maskSize: isMobile ? undefined : "100% 100%",
+              WebkitMaskRepeat: isMobile ? undefined : "no-repeat",
+              maskRepeat: isMobile ? undefined : "no-repeat",
+              scrollPaddingLeft: isMobile ? 0 : undefined,
+              scrollPaddingRight: isMobile ? 0 : undefined
             }}
           >
             <style>{`
@@ -1954,9 +2000,11 @@ const ScrollGalleryBlockSection = ({
               style={{
                 display: "grid",
                 gridAutoFlow: "column",
-                gridAutoColumns: "minmax(320px, 480px)",
+                gridAutoColumns: isMobile ? mobileCardWidth : "minmax(320px, 480px)",
                 gap: 16,
-                padding: `0 ${contentPaddingX + 48}px 16px 0`,
+                padding: isMobile
+                  ? "0 0 16px 0"
+                  : `0 ${contentPaddingX + 48}px 16px 0`,
                 scrollSnapType: "x mandatory"
               }}
               variants={galleryPreset.container}
@@ -1970,7 +2018,7 @@ const ScrollGalleryBlockSection = ({
                     variant="gallery"
                     style={{
                       minHeight: "100%",
-                      scrollSnapAlign: "start"
+                      scrollSnapAlign: isMobile ? "center" : "start"
                     }}
                     data-gallery-card
                   />
@@ -2689,15 +2737,24 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
           } else {
             element = renderStoryBlock(block, index);
           }
+          const anchorId = (block.anchor ?? block.id ?? "").trim();
+          const anchoredElement =
+            anchorId.length > 0 ? (
+              <div key={key} id={anchorId} style={{ scrollMarginTop: headerHeight + 12, width: "100%" }}>
+                {element}
+              </div>
+            ) : (
+              element
+            );
           const shouldWrap = block.type !== "animated_headline" && block.enableDarkModeOnScroll;
           if (shouldWrap) {
             return (
               <ThemeShiftRegion key={key} enabled>
-                {element}
+                {anchoredElement}
               </ThemeShiftRegion>
             );
           }
-          return element;
+          return anchoredElement;
         })}
       </div>
     </>

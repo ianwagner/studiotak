@@ -16,6 +16,7 @@ export type HeroBlock = {
   id: string;
   type: "hero";
   adminLabel?: string;
+  anchor?: string;
   eyebrow?: string;
   title: string;
   subtitle?: string;
@@ -43,6 +44,7 @@ export type StoryBlock = {
   id: string;
   type: "story";
   adminLabel?: string;
+  anchor?: string;
   heading: string;
   body: string;
   media?: BlockMedia;
@@ -55,6 +57,7 @@ export type SplitBlock = {
   id: string;
   type: "split";
   adminLabel?: string;
+  anchor?: string;
   eyebrow?: string;
   heading: string;
   body?: string;
@@ -72,6 +75,7 @@ export type AnimatedHeadlineBlock = {
   id: string;
   type: "animated_headline";
   adminLabel?: string;
+  anchor?: string;
   headline: string;
   subtext?: string;
   animationStyle: AnimatedHeadlineStyle;
@@ -96,6 +100,7 @@ export type FeaturesBlock = {
   id: string;
   type: "features";
   adminLabel?: string;
+  anchor?: string;
   eyebrow?: string;
   heading: string;
   body?: string;
@@ -108,6 +113,7 @@ export type ScrollGalleryBlock = {
   id: string;
   type: "scroll_gallery";
   adminLabel?: string;
+  anchor?: string;
   eyebrow?: string;
   heading: string;
   body?: string;
@@ -119,6 +125,7 @@ export type LogosBlock = {
   id: string;
   type: "logos";
   adminLabel?: string;
+  anchor?: string;
   eyebrow?: string;
   heading?: string;
   limit?: number;
@@ -129,6 +136,7 @@ export type ShowcaseBlock = {
   id: string;
   type: "showcase";
   adminLabel?: string;
+  anchor?: string;
   eyebrow?: string;
   heading?: string;
   subhead?: string;
@@ -259,6 +267,7 @@ export const seedPages: PageRecord[] = [
       {
         id: "home-features",
         type: "features",
+        anchor: "capabilities",
         eyebrow: "Capabilities",
         heading: "Blocks built as a component library",
         body: "Each block maps to content schema fields so marketing can ship pages without engineering.",
@@ -289,6 +298,7 @@ export const seedPages: PageRecord[] = [
       {
         id: "home-story",
         type: "story",
+        anchor: "process",
         heading: "Process",
         body: "Edit these steps in /admin → Pages to update the live site.",
         variant: "two_column",
