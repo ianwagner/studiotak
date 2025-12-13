@@ -27,6 +27,8 @@
   --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
   --bg-glow-1: rgba(255, 112, 11, 0.12);
   --bg-glow-2: rgba(255, 112, 11, 0.18);
+  --full-bleed-width: 100vw;
+  --full-bleed-shift: calc(50% - 50vw);
   --sidebar-glow-1: rgba(0, 0, 0, 0.05);
   --sidebar-glow-2: rgba(0, 0, 0, 0.03);
   --footer-top: #ffffff;
@@ -47,6 +49,24 @@
   color-scheme: light dark;
 }
 
+@supports (width: 100lvw) {
+  :root {
+    --full-bleed-width: 100lvw;
+    --full-bleed-shift: calc(50% - 50lvw);
+  }
+}
+
+/* Safari-only: drop auto centering for non-flagged containers */
+@media not all and (min-resolution: 0.001dpcm) {
+  @supports (-webkit-appearance: none) {
+    .container:not([data-keep-centered]) {
+      width: 100%;
+      max-width: none;
+      margin: 0 !important;
+      padding: 0 15px !important;
+    }
+  }
+}
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0c0c0f;
@@ -263,9 +283,25 @@ main {
 }
 
 .container {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0 24px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 15px;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .container {
+    width: 100%;
+    max-width: none;
+    margin: 0 !important;
+    padding: 0 15px !important;
+  }
+
+  .container[data-keep-centered] {
+    width: min(100%, calc(var(--max-width) + 30px));
+    max-width: calc(var(--max-width) + 30px);
+    margin: 0 auto !important;
+  }
 }
 
 .grid {
@@ -643,6 +679,12 @@ code {
   display: grid;
   gap: 10px;
   align-content: start;
+}
+
+footer[data-site-footer] .footer-shell {
+  width: min(100%, calc(var(--max-width) + 30px));
+  margin: 0 auto;
+  padding: 0 15px;
 }
 
 .footer-section-title {

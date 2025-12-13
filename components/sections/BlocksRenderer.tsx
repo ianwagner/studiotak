@@ -268,12 +268,14 @@ const FeatureCard = ({
       className={`card${className ? ` ${className}` : ""}`}
       style={{
         padding: variant === "gallery" ? 0 : 14,
-        display: "grid",
+        display: variant === "gallery" ? "flex" : "grid",
+        flexDirection: variant === "gallery" ? "column" : undefined,
         gap: variant === "gallery" ? 0 : 8,
         border: "1px solid var(--border-strong)",
         overflow: "hidden",
         background: undefined,
         boxShadow: "none",
+        height: "100%",
         ...style
       }}
       {...rest}
@@ -285,7 +287,7 @@ const FeatureCard = ({
               style={{
                 position: "relative",
                 width: "100%",
-                background: "linear-gradient(135deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02))",
+                background: "transparent",
                 overflow: "hidden",
                 padding: "16px 16px 0",
                 boxSizing: "border-box"
@@ -304,7 +306,17 @@ const FeatureCard = ({
               />
             </div>
           ) : null}
-          <div style={{ padding: "16px 16px 18px", display: "grid", gap: 8 }}>
+          <div
+            style={{
+              padding: "16px 16px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              alignItems: "flex-start",
+              justifyContent: "flex-start",
+              flex: 1
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <strong style={{ fontSize: 20 }}>{item.title}</strong>
             </div>
