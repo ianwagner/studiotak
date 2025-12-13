@@ -49,10 +49,17 @@
   color-scheme: light dark;
 }
 
-@supports (width: 100lvw) {
+@supports (width: 100dvw) {
   :root {
-    --full-bleed-width: 100lvw;
-    --full-bleed-shift: calc(50% - 50lvw);
+    --full-bleed-width: 100dvw;
+    --full-bleed-shift: calc(50% - 50dvw);
+  }
+}
+
+@supports (width: 100svw) {
+  :root {
+    --full-bleed-width: 100svw;
+    --full-bleed-shift: calc(50% - 50svw);
   }
 }
 
@@ -219,6 +226,9 @@ body {
   font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
   line-height: 1.5;
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 @media (prefers-color-scheme: dark) {
