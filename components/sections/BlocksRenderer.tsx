@@ -2754,7 +2754,7 @@ const ShowcaseMedia = ({
         src={item.url}
         alt={item.alt ?? ""}
         style={mediaStyle}
-        fetchpriority={priority ? "high" : "auto"}
+        fetchPriority={priority ? "high" : "auto"}
         ref={imageRef}
         loading={priority ? "eager" : "lazy"}
         onLoad={(e) => {
