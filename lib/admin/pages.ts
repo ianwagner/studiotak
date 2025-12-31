@@ -1,4 +1,5 @@
 import type { AnimationPresetName } from "@/components/sections/animationPresets";
+import type { GhostPost } from "@/lib/ghost";
 
 export type PageStatus = "draft" | "published";
 
@@ -11,6 +12,15 @@ export type BlockMedia = {
 };
 
 export type BlockSection = { title: string; body: string };
+
+export type DividerBlock = {
+  id: string;
+  type: "divider";
+  adminLabel?: string;
+  anchor?: string;
+  width?: "full" | "page";
+  enableDarkModeOnScroll?: boolean;
+};
 
 export type HeroBlock = {
   id: string;
@@ -164,7 +174,30 @@ export type ContactBlock = {
   enableDarkModeOnScroll?: boolean;
 };
 
+export type ArticleFeaturedBlock = {
+  id: string;
+  type: "article_featured";
+  adminLabel?: string;
+  anchor?: string;
+  tagFilter?: string;
+  posts?: GhostPost[];
+  enableDarkModeOnScroll?: boolean;
+};
+
+export type ArticleGridBlock = {
+  id: string;
+  type: "article_grid";
+  adminLabel?: string;
+  anchor?: string;
+  tagFilter?: string;
+  offset?: number;
+  limit?: number;
+  posts?: GhostPost[];
+  enableDarkModeOnScroll?: boolean;
+};
+
 export type BlockRecord =
+  | DividerBlock
   | HeroBlock
   | ThirdsBlock
   | StoryBlock
@@ -174,7 +207,9 @@ export type BlockRecord =
   | ScrollGalleryBlock
   | ShowcaseBlock
   | LogosBlock
-  | ContactBlock;
+  | ContactBlock
+  | ArticleFeaturedBlock
+  | ArticleGridBlock;
 
 export type RedirectRule = {
   from: string;
@@ -384,6 +419,27 @@ export const seedPages: PageRecord[] = [
           { title: "Case studies", body: "Narratives anchored by metrics and motion." },
           { title: "Collaboration", body: "Work directly with senior designers and engineers." }
         ]
+      }
+    ]
+  },
+  {
+    id: "learn",
+    slug: "/learn",
+    title: "Learn",
+    status: "published",
+    seoTitle: "Learn | Studio Tak",
+    metaDescription: "Insights, case studies, and notes from Studio Tak.",
+    blocks: [
+      {
+        id: "learn-featured",
+        type: "article_featured",
+        adminLabel: "Featured article"
+      },
+      {
+        id: "learn-grid",
+        type: "article_grid",
+        adminLabel: "Article grid",
+        offset: 1
       }
     ]
   }

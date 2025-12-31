@@ -1,8 +1,19 @@
 import { collection, documentId, getDocs, getFirestore, limit, query, where } from "firebase/firestore";
-import type { BlockRecord, HeroBlock, PageRecord, StoryBlock, FeatureItem, FeaturesBlock, ScrollGalleryBlock } from "./admin/pages";
+import type {
+  ArticleFeaturedBlock,
+  ArticleGridBlock,
+  BlockRecord,
+  HeroBlock,
+  PageRecord,
+  StoryBlock,
+  FeatureItem,
+  FeaturesBlock,
+  ScrollGalleryBlock
+} from "./admin/pages";
 import { seedPages } from "./admin/pages";
 import { getFirebaseApp } from "./firebaseClient";
 import { seedComponents, type ComponentRecord } from "./admin/components";
+import { getGhostPosts } from "./ghost";
 
 const collectionName = "pages";
 
@@ -173,6 +184,61 @@ const mergePageWithComponents = async (page: PageRecord | null): Promise<PageRec
   return { ...page, blocks: mergeBlocksWithComponents(page.blocks, componentMap) };
 };
 
+const normalizeTagFilter = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+};
+
+const mergePageWithArticles = async (page: PageRecord | null, tagOverride?: string | null): Promise<PageRecord | null> => {
+  if (!page) return page;
+  const blocks = page.blocks ?? [];
+  const needsArticles = blocks.some((block) => block.type === "article_featured" || block.type === "article_grid");
+  if (!needsArticles) return page;
+
+  const tagCache = new Map<string | null, Awaited<ReturnType<typeof getGhostPosts>>>();
+  const normalizedOverride = normalizeTagFilter(tagOverride);
+  const getPostsForTag = async (tagFilter?: string | null) => {
+    const key = normalizeTagFilter(tagFilter);
+    if (tagCache.has(key)) {
+      return tagCache.get(key) ?? [];
+    }
+    const posts = await getGhostPosts(key);
+    tagCache.set(key, posts);
+    return posts;
+  };
+
+  const hydratedBlocks = await Promise.all(
+    blocks.map(async (block) => {
+      if (block.type === "article_featured") {
+        const effectiveTag = normalizedOverride ?? block.tagFilter;
+        const posts = await getPostsForTag(effectiveTag);
+        const featured = posts.slice(0, 1);
+        return { ...(block as ArticleFeaturedBlock), posts: featured };
+      }
+      if (block.type === "article_grid") {
+        const effectiveTag = normalizedOverride ?? block.tagFilter;
+        const posts = await getPostsForTag(effectiveTag);
+        const offset = Math.max(0, block.offset ?? 0);
+        const limit = block.limit && block.limit > 0 ? block.limit : posts.length - offset;
+        const list = posts.slice(offset, offset + Math.max(0, limit));
+        return { ...(block as ArticleGridBlock), posts: list };
+      }
+      return block;
+    })
+  );
+
+  return { ...page, blocks: hydratedBlocks };
+};
+
+const mergePageWithComponentsAndArticles = async (
+  page: PageRecord | null,
+  tagOverride?: string | null
+): Promise<PageRecord | null> => {
+  const withComponents = await mergePageWithComponents(page);
+  return mergePageWithArticles(withComponents, tagOverride);
+};
+
 export const normalizeSlugPath = (slug: string): string => {
   const trimmed = slug.trim();
   if (!trimmed || trimmed === "/") return "/";
@@ -181,14 +247,17 @@ export const normalizeSlugPath = (slug: string): string => {
   return withoutTrailingSlash || "/";
 };
 
-export async function getPublishedPageBySlug(slug: string): Promise<PageRecord | null> {
+export async function getPublishedPageBySlug(
+  slug: string,
+  options?: { tagFilter?: string | null }
+): Promise<PageRecord | null> {
   const normalizedSlug = normalizeSlugPath(slug);
   const fallback =
     seedPages.find((page) => normalizeSlugPath(page.slug) === normalizedSlug && page.status === "published") ?? null;
 
   // If Firebase isn't configured we still want the marketing site to render with seed content.
   if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-    return mergePageWithComponents(fallback);
+    return mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
   }
 
   try {
@@ -209,12 +278,12 @@ export async function getPublishedPageBySlug(slug: string): Promise<PageRecord |
       snapshot = await getDocs(altQuery);
     }
 
-    if (snapshot.empty) return mergePageWithComponents(fallback);
+    if (snapshot.empty) return mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
     const page = fromSnapshot(snapshot.docs[0]);
-    return mergePageWithComponents(page);
+    return mergePageWithComponentsAndArticles(page, options?.tagFilter);
   } catch (error) {
     console.error("Failed to load published page from Firestore", error);
-    return mergePageWithComponents(fallback);
+    return mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
   }
 }
 

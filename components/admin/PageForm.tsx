@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import type {
   AnimatedHeadlineBlock,
   BlockRecord,
+  DividerBlock,
   HeroBlock,
   PageRecord,
   PageStatus,
@@ -19,6 +20,8 @@ import type {
   SplitBlock,
   ThirdsBlock,
   ContactBlock,
+  ArticleFeaturedBlock,
+  ArticleGridBlock,
   BlockMedia
 } from "@/lib/admin/pages";
 import { animationPresets, defaultAnimationPreset, type AnimationPresetName } from "@/components/sections/animationPresets";
@@ -116,6 +119,9 @@ const isScrollGalleryBlock = (block: EditableBlock): block is ScrollGalleryBlock
 const isShowcaseBlock = (block: EditableBlock): block is ShowcaseBlock => block.type === "showcase";
 const isLogosBlock = (block: EditableBlock): block is LogosBlock => block.type === "logos";
 const isContactBlock = (block: EditableBlock): block is ContactBlock => block.type === "contact";
+const isDividerBlock = (block: EditableBlock): block is DividerBlock => block.type === "divider";
+const isArticleFeaturedBlock = (block: EditableBlock): block is ArticleFeaturedBlock => block.type === "article_featured";
+const isArticleGridBlock = (block: EditableBlock): block is ArticleGridBlock => block.type === "article_grid";
 const isFeatureItemsBlock = (block: EditableBlock): block is FeaturesBlock | ScrollGalleryBlock =>
   isFeaturesBlock(block) || isScrollGalleryBlock(block);
 const isAnimatedHeadlineBlock = (block: EditableBlock): block is AnimatedHeadlineBlock => block.type === "animated_headline";
@@ -169,6 +175,15 @@ const newPendingBlock = (): PendingBlock => ({
   id: crypto.randomUUID(),
   type: "pending",
   adminLabel: ""
+});
+
+const newDividerBlock = (): DividerBlock => ({
+  id: crypto.randomUUID(),
+  type: "divider",
+  adminLabel: "Divider",
+  anchor: "",
+  width: "full",
+  enableDarkModeOnScroll: false
 });
 
 const newHeroBlock = (): HeroBlock => ({
@@ -313,6 +328,26 @@ const newContactBlock = (): ContactBlock => ({
   portalId: "244262601",
   region: "na2",
   formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
+  enableDarkModeOnScroll: false
+});
+
+const newArticleFeaturedBlock = (): ArticleFeaturedBlock => ({
+  id: crypto.randomUUID(),
+  type: "article_featured",
+  adminLabel: "Featured article",
+  anchor: "",
+  tagFilter: "",
+  enableDarkModeOnScroll: false
+});
+
+const newArticleGridBlock = (): ArticleGridBlock => ({
+  id: crypto.randomUUID(),
+  type: "article_grid",
+  adminLabel: "Article grid",
+  anchor: "",
+  tagFilter: "",
+  offset: 0,
+  limit: 0,
   enableDarkModeOnScroll: false
 });
 
@@ -503,6 +538,8 @@ export function PageForm({
       switch (type) {
         case "hero":
           return newHeroBlock();
+        case "divider":
+          return newDividerBlock();
         case "thirds":
           return newThirdsBlock();
         case "story":
@@ -521,6 +558,10 @@ export function PageForm({
           return newContactBlock();
         case "animated_headline":
           return newAnimatedHeadlineBlock();
+        case "article_featured":
+          return newArticleFeaturedBlock();
+        case "article_grid":
+          return newArticleGridBlock();
         default:
           return newStoryBlock();
       }
@@ -632,6 +673,22 @@ export function PageForm({
     value: ContactBlock[keyof Omit<ContactBlock, "id" | "type" | "media">]
   ) => {
     updateBlock(idx, (block) => (isContactBlock(block) ? { ...block, [field]: value } : block));
+  };
+
+  const handleArticleFeaturedFieldChange = (
+    idx: number,
+    field: keyof Omit<ArticleFeaturedBlock, "id" | "type" | "posts">,
+    value: ArticleFeaturedBlock[keyof Omit<ArticleFeaturedBlock, "id" | "type" | "posts">]
+  ) => {
+    updateBlock(idx, (block) => (isArticleFeaturedBlock(block) ? { ...block, [field]: value } : block));
+  };
+
+  const handleArticleGridFieldChange = (
+    idx: number,
+    field: keyof Omit<ArticleGridBlock, "id" | "type" | "posts">,
+    value: ArticleGridBlock[keyof Omit<ArticleGridBlock, "id" | "type" | "posts">]
+  ) => {
+    updateBlock(idx, (block) => (isArticleGridBlock(block) ? { ...block, [field]: value } : block));
   };
 
   const addFeatureItem = (idx: number) => {
@@ -1111,6 +1168,8 @@ export function PageForm({
         ? "New block"
         : block.type === "hero"
         ? "Hero block"
+        : block.type === "divider"
+        ? "Divider"
         : block.type === "thirds"
         ? "Thirds block"
         : block.type === "story"
@@ -1127,6 +1186,10 @@ export function PageForm({
         ? "Logos block"
         : block.type === "contact"
         ? "Contact block"
+        : block.type === "article_featured"
+        ? "Featured article"
+        : block.type === "article_grid"
+        ? "Article grid"
         : "Animated headline";
       const blockLabel = block.adminLabel?.trim() || baseLabel;
       const blockId = block.id ?? `block-${idx}`;
@@ -1189,6 +1252,7 @@ export function PageForm({
                   Select block type…
                 </option>
                 <option value="hero">Hero</option>
+                <option value="divider">Divider</option>
                 <option value="thirds">Thirds</option>
                 <option value="story">Story / Text</option>
                 <option value="split">Split</option>
@@ -1198,6 +1262,8 @@ export function PageForm({
                 <option value="showcase">Showcase</option>
                 <option value="contact">Contact</option>
                 <option value="animated_headline">Animated headline</option>
+                <option value="article_featured">Featured article</option>
+                <option value="article_grid">Article grid</option>
               </select>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -1635,6 +1701,76 @@ export function PageForm({
                 <span style={{ color: "var(--muted)", fontSize: 13 }}>
                   Uses the HubSpot embed script and the <code>hs-form-frame</code> container to render the form alongside your media.
                 </span>
+              </div>
+            </div>
+          ) : isArticleFeaturedBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleArticleFeaturedFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "featured-article"}
+                />
+                <div className="field-group">
+                  <label>Ghost tag filter (optional)</label>
+                  <input
+                    className="input"
+                    value={block.tagFilter ?? ""}
+                    onChange={(e) => handleArticleFeaturedFieldChange(idx, "tagFilter", e.target.value)}
+                    placeholder="featured"
+                  />
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>Leave blank to show the most recent post.</span>
+                </div>
+              </div>
+              <div className="card" style={{ padding: 12, border: "1px dashed var(--border-strong)" }}>
+                <strong style={{ display: "block", marginBottom: 4 }}>Featured article</strong>
+                <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
+                  Pulls the most recent Ghost post (or the most recent post in the tag filter).
+                </p>
+              </div>
+            </div>
+          ) : isArticleGridBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleArticleGridFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "article-grid"}
+                />
+                <div className="field-group">
+                  <label>Ghost tag filter (optional)</label>
+                  <input
+                    className="input"
+                    value={block.tagFilter ?? ""}
+                    onChange={(e) => handleArticleGridFieldChange(idx, "tagFilter", e.target.value)}
+                    placeholder="news"
+                  />
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>Leave blank to show the most recent posts.</span>
+                </div>
+                <div className="field-group">
+                  <label>Offset</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min={0}
+                    value={block.offset ?? 0}
+                    onChange={(e) => handleArticleGridFieldChange(idx, "offset", Math.max(0, Number(e.target.value) || 0))}
+                    placeholder="0"
+                  />
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>Set to 1 if you already feature the first post elsewhere.</span>
+                </div>
+                <div className="field-group">
+                  <label>Max posts</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min={0}
+                    value={block.limit ?? 0}
+                    onChange={(e) => handleArticleGridFieldChange(idx, "limit", Math.max(0, Number(e.target.value) || 0))}
+                    placeholder="0"
+                  />
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>Use 0 to show all posts.</span>
+                </div>
               </div>
             </div>
           ) : isAnimatedHeadlineBlock(block) ? (
@@ -2196,6 +2332,52 @@ export function PageForm({
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : isDividerBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) =>
+                    updateBlock(idx, (current) => (isDividerBlock(current) ? { ...current, anchor: value } : current))
+                  }
+                  placeholder={block.anchor || "divider"}
+                />
+                <div className="field-group">
+                  <label>Width</label>
+                  <select
+                    value={block.width ?? "full"}
+                    onChange={(e) =>
+                      updateBlock(idx, (current) =>
+                        isDividerBlock(current)
+                          ? { ...current, width: e.target.value as DividerBlock["width"] }
+                          : current
+                      )
+                    }
+                  >
+                    <option value="full">Full width</option>
+                    <option value="page">Page width</option>
+                  </select>
+                </div>
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!block.enableDarkModeOnScroll}
+                  onChange={(e) =>
+                    updateBlock(idx, (current) =>
+                      isDividerBlock(current) ? { ...current, enableDarkModeOnScroll: e.target.checked } : current
+                    )
+                  }
+                />
+                <span>Trigger dark mode while this divider is in view</span>
+              </label>
+              <div className="card" style={{ padding: 12, border: "1px dashed var(--border-strong)" }}>
+                <strong style={{ display: "block", marginBottom: 4 }}>Simple ghost-style divider</strong>
+                <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
+                  Renders the same horizontal rule style used in Ghost posts.
+                </p>
               </div>
             </div>
           ) : (

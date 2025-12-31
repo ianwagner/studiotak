@@ -26,6 +26,13 @@ const componentEntries: ComponentEntry[] = [
     usage: "Great for mid-page intros or CTA banners when you want the hero look without a full viewport height."
   },
   {
+    id: "divider",
+    title: "Divider",
+    summary: "Ghost-style horizontal rule for subtle section breaks.",
+    fields: ["Optional anchor", "Optional dark mode toggle"],
+    usage: "Use between major sections to give the page a quiet visual pause."
+  },
+  {
     id: "story",
     title: "Story",
     summary: "Multi-column story block with optional media and sections.",

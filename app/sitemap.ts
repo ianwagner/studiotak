@@ -7,6 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [pages, posts] = await Promise.all([getPublishedPages(), getGhostPosts()]);
   const learnUrl = new URL("/learn", siteBase).toString();
 
+  const hasLearnPage = pages.some((page) => normalizeSlugPath(page.slug) === "/learn");
   const pageEntries = pages
     .filter((page) => !page.noindex && !page.sitemapExclude)
     .map((page) => {
@@ -23,5 +24,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: post.updated_at ?? post.published_at ?? new Date().toISOString()
   }));
 
-  return [{ url: learnUrl, lastModified: new Date().toISOString() }, ...pageEntries, ...postEntries];
+  const learnEntry = hasLearnPage ? [] : [{ url: learnUrl, lastModified: new Date().toISOString() }];
+  return [...learnEntry, ...pageEntries, ...postEntries];
 }

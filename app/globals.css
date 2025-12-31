@@ -309,6 +309,9 @@ main {
   width: 100%;
   max-width: 100vw;
   overflow-x: clip;
+  min-height: var(--full-bleed-height);
+  display: flex;
+  flex-direction: column;
 }
 
 .container {
@@ -404,7 +407,8 @@ main {
 }
 
 .learn-shell {
-  width: min(calc(100% - clamp(32px, 6vw, 96px)), calc(var(--max-width) + 30px));
+  width: 100%;
+  max-width: var(--max-width);
   margin: 0 auto;
 }
 
@@ -933,7 +937,7 @@ main {
 
 .learn-recent-grid {
   display: grid;
-  gap: clamp(8px, 3vw, 28px);
+  gap: 16px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -950,7 +954,7 @@ main {
 
 .learn-posts-grid {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 36px;
+  gap: 16px;
 }
 
 .learn-post-card {
@@ -1322,7 +1326,7 @@ code {
   transform: rotate(180deg);
 }
 [data-site-footer] {
-  margin-top: 72px;
+  margin-top: auto;
   padding: 32px 0 44px;
   background:
     radial-gradient(70% 42% at var(--ember-x1, 20%) var(--ember-y1, 110%), var(--footer-ember-1), transparent 52%),
