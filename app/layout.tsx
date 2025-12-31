@@ -10,7 +10,7 @@ const rubik = Rubik({
   variable: "--font-sans"
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studio-tak.example";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
 
 const baseMetadata: Metadata = {
   title: "Studio Tak | Design Systems & Interactive Experiences",

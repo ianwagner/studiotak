@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studio-tak.example";
+  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
   const disallow = process.env.ROBOTS_DISALLOW
     ? process.env.ROBOTS_DISALLOW.split(",").map((path) => path.trim()).filter(Boolean)
     : undefined;

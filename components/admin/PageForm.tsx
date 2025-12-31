@@ -826,7 +826,7 @@ export function PageForm({
       .replace(/\s+/g, " ")
       .trim();
     const desc = descParts ? `${descParts.slice(0, 170)}${descParts.length > 170 ? "…" : ""}` : "";
-    const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studio-tak.example";
+    const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
     return {
       seoTitle: title,
       metaDescription: desc,

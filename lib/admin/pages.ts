@@ -214,7 +214,7 @@ export const seedPages: PageRecord[] = [
     status: "published",
     seoTitle: "Studio Tak | Design Systems & Interactive Experiences",
     metaDescription: "Static-first marketing pages built with React islands where they matter.",
-    canonicalUrl: "https://studio-tak.example/",
+    canonicalUrl: "https://studiotak.co/",
     blocks: [
       {
         id: "home-hero",

@@ -22,7 +22,7 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
     return acc;
   }, {});
   const footerParents = footerLinks.filter((item) => !item.parentId);
-  const year = new Date().getFullYear();
+  const year = 2026;
   const footerSections = footerParents.reduce<Record<string, NavigationItemRecord[]>>((sections, item) => {
     const sectionName = item.footerSection?.trim() || "Links";
     sections[sectionName] = sections[sectionName] ? [...sections[sectionName], item] : [item];

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 
   if (!page) return {};
 
-  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studio-tak.example";
+  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
   const canonical =
     page.canonicalUrl?.trim() || new URL(slugPath === "/" ? "/" : slugPath, siteBase).toString();
 

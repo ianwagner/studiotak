@@ -2507,6 +2507,7 @@ const ShowcaseBlockSection = ({
   const [viewportHeight, setViewportHeight] = useState<number | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const zSeedsRef = useRef<Record<string, number>>({});
+  const viewportWidth = useViewportWidth();
   const isNarrow = containerWidth < 720;
   const mobilePaddingX = 15;
   const paddingX = isNarrow ? mobilePaddingX : basePaddingX;
@@ -2597,12 +2598,15 @@ const ShowcaseBlockSection = ({
   const cardCount = displayItems.length || 1;
 
   const availableWidth = Math.max(320, containerWidth - paddingX * 2);
-  const overlap = isNarrow ? 54 : clampNumber(Math.round(availableWidth / 18), 42, 120);
+  const overlapBase = clampNumber(Math.round(availableWidth / 18), 42, 140);
+  const overlapBoost = clampNumber(Math.round((1150 - availableWidth) / 20), 0, 36);
+  const overlap = clampNumber(Math.max(isNarrow ? 64 : 42, overlapBase + overlapBoost), 42, 160);
   const minCardWidth = 220;
   const maxCardWidth = 520;
   const computedFitWidth = (availableWidth + overlap * (cardCount - 1)) / cardCount;
   const fittedCardWidth = clampNumber(computedFitWidth, minCardWidth, maxCardWidth);
-  const shouldScroll = (fittedCardWidth === minCardWidth && cardCount > 1) || isNarrow;
+  const forceScroll = (viewportWidth ?? Number.POSITIVE_INFINITY) < 1250;
+  const shouldScroll = forceScroll || (fittedCardWidth === minCardWidth && cardCount > 1) || isNarrow;
   const cardWidth = shouldScroll ? Math.min(320, Math.max(minCardWidth, fittedCardWidth)) : fittedCardWidth;
   const maxCardHeight = shouldScroll
     ? clampNumber(viewportHeight !== null ? viewportHeight - headerHeight - 96 : 560, 260, 660)
