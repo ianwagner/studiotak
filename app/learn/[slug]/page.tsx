@@ -74,7 +74,7 @@ export default async function LearnPostPage({ params }: PageParams) {
   return (
     <main>
       <SiteHeader navItems={navItems} />
-      <article className="container learn-article learn-shell" style={{ padding: "72px 0 120px" }}>
+      <article className="container learn-article learn-shell">
         <div className="learn-post-header">
           <div className="learn-post-meta">
             {published ? <span className="learn-date">{published}</span> : null}

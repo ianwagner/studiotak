@@ -543,6 +543,7 @@ main {
   width: min(100%, 760px);
   display: grid;
   gap: 32px;
+  padding: 72px 0 120px;
 }
 
 .learn-post-header {
@@ -993,6 +994,11 @@ main {
 }
 
 @media (max-width: 800px) {
+  .learn-article {
+    padding: 72px 16px 120px;
+    margin-top: 24px;
+  }
+
   .learn-recent-grid {
     grid-template-columns: 1fr;
     gap: 12px;
