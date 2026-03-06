@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Script from "next/script";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -69,7 +68,6 @@ export default async function LearnPostPage({ params }: PageParams) {
   }
 
   const published = formatDate(post.published_at);
-  const tags = (post.tags ?? []).filter((tag) => tag.visibility !== "internal");
 
   return (
     <main>
@@ -85,15 +83,6 @@ export default async function LearnPostPage({ params }: PageParams) {
           </div>
           <h1>{post.title}</h1>
           {post.excerpt ? <p className="learn-post-excerpt">{post.excerpt}</p> : null}
-          {tags.length ? (
-            <div className="learn-tags-row">
-              {tags.map((tag) => (
-                <Link key={tag.slug} href={`/learn?tag=${encodeURIComponent(tag.slug)}`} className="learn-tag">
-                  {tag.name}
-                </Link>
-              ))}
-            </div>
-          ) : null}
         </div>
         {post.feature_image ? (
           <figure className="learn-hero-media">

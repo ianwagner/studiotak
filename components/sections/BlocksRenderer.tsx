@@ -45,12 +45,6 @@ const formatDate = (value?: string | null): string | null => {
   }).format(date);
 };
 
-const getPostEyebrow = (tags?: { name: string; slug: string; visibility?: string | null }[]): string | null => {
-  if (!tags?.length) return null;
-  const tag = tags.find((item) => item.visibility !== "internal" && item.slug !== "featured");
-  return tag?.name ?? null;
-};
-
 declare global {
   interface Window {
     dataLayer?: unknown[];
@@ -3042,28 +3036,16 @@ const ArticleFeaturedBlockSection = ({ block }: { block: ArticleFeaturedBlock })
   const post = block.posts?.[0];
   if (!post) return null;
   const published = formatDate(post.published_at);
-  const tags = (post.tags ?? []).filter((tag) => tag.visibility !== "internal");
-  const eyebrow = getPostEyebrow(post.tags);
   return (
     <section className="container learn-shell" style={{ display: "grid", gap: 24, padding: "24px 0 48px" }}>
       <Link href={`/learn/${post.slug}`} className="learn-featured-link">
         <div className="learn-featured">
           <div className="learn-featured-content">
-            {eyebrow ? <span className="tag learn-eyebrow">{eyebrow}</span> : null}
             <div className="learn-featured-meta">
               {published ? <span className="learn-date">{published}</span> : null}
             </div>
             <h2 className="learn-featured-title">{post.title}</h2>
             {post.excerpt ? <p style={{ color: "var(--muted)", margin: 0 }}>{post.excerpt}</p> : null}
-            {tags.length ? (
-              <div className="learn-tags-row">
-                {tags.map((tag) => (
-                  <span key={tag.slug} className="learn-tag">
-                    {tag.name}
-                  </span>
-                ))}
-              </div>
-            ) : null}
             <span className="btn learn-featured-cta">Read more</span>
           </div>
           <div className="learn-featured-media">
@@ -3091,7 +3073,6 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
           <div className="learn-recent-grid">
             {recentPosts.map((post) => {
               const published = formatDate(post.published_at);
-              const eyebrow = getPostEyebrow(post.tags);
               return (
                 <Link key={post.id} href={`/learn/${post.slug}`} className="learn-recent-link">
                   <article className="learn-recent-card">
@@ -3103,7 +3084,6 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
                       )}
                     </div>
                     <div className="learn-card-body">
-                      {eyebrow ? <span className="tag learn-eyebrow">{eyebrow}</span> : null}
                       {published ? <span className="learn-date">{published}</span> : null}
                       <h4 className="learn-card-title">{post.title}</h4>
                     </div>
@@ -3118,8 +3098,6 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
         <div className="grid learn-posts-grid">
           {gridPosts.map((post) => {
             const published = formatDate(post.published_at);
-            const tags = (post.tags ?? []).filter((tag) => tag.visibility !== "internal");
-            const eyebrow = getPostEyebrow(post.tags);
             return (
               <article key={post.id} className="card learn-post-card">
                 <Link href={`/learn/${post.slug}`} className="learn-media-link">
@@ -3130,7 +3108,6 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
                   )}
                 </Link>
                 <div className="learn-card-body">
-                  {eyebrow ? <span className="tag learn-eyebrow">{eyebrow}</span> : null}
                   <h4 className="learn-card-title">
                     <Link href={`/learn/${post.slug}`} className="learn-card-link">
                       {post.title}
@@ -3139,13 +3116,6 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
                   {post.excerpt ? <p className="learn-card-excerpt">{post.excerpt}</p> : null}
                   <div className="learn-card-meta">
                     {published ? <span className="learn-date">{published}</span> : null}
-                    {tags.length
-                      ? tags.map((tag) => (
-                          <Link key={tag.slug} href={`/learn?tag=${encodeURIComponent(tag.slug)}`} className="learn-tag">
-                            {tag.name}
-                          </Link>
-                        ))
-                      : null}
                   </div>
                 </div>
               </article>
