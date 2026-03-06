@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
+import Script from "next/script";
 import { getSiteSettings } from "@/lib/siteSettings";
 import "./globals.css";
 
@@ -11,6 +12,7 @@ const rubik = Rubik({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
+const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 const baseMetadata: Metadata = {
   title: "Studio Tak | Design Systems & Interactive Experiences",
@@ -45,6 +47,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={rubik.variable}>
       <body className={rubik.className}>
+        {googleAnalyticsId ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${googleAnalyticsId}');
+              `}
+            </Script>
+          </>
+        ) : null}
         {children}
       </body>
     </html>

@@ -53,6 +53,8 @@ const getPostEyebrow = (tags?: { name: string; slug: string; visibility?: string
 
 declare global {
   interface Window {
+    dataLayer?: unknown[];
+    gtag?: (...args: unknown[]) => void;
     REQUIRED_CODE_ERROR_MESSAGE?: string;
     LOCALE?: string;
     EMAIL_INVALID_MESSAGE?: string;
@@ -83,29 +85,49 @@ type BlocksRendererProps = {
   blocks: BlockRecord[];
 };
 
+const trackGaEvent = (eventName: string, params: Record<string, unknown> = {}) => {
+  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
+  window.gtag("event", eventName, params);
+};
+
 const AnchorAwareLink = ({
   href,
   className,
   children,
-  style
+  style,
+  trackingName,
+  trackingSection
 }: {
   href: string;
   className?: string;
   children: ReactNode;
   style?: CSSProperties;
+  trackingName?: string;
+  trackingSection?: string;
 }) => {
   if (!href) return null;
   const isExternal = /^https?:\/\//i.test(href);
   const isAnchor = href.startsWith("#");
+  const eventName = trackingName ?? (className?.includes("btn") ? "cta_click" : undefined);
+  const handleClick = () => {
+    if (!eventName) return;
+    const text = typeof children === "string" ? children : undefined;
+    trackGaEvent(eventName, {
+      link_url: href,
+      link_text: text,
+      section: trackingSection ?? "unknown"
+    });
+  };
+
   if (isExternal) {
     return (
-      <a className={className} href={href} style={style} target="_blank" rel="noreferrer noopener">
+      <a className={className} href={href} style={style} target="_blank" rel="noreferrer noopener" onClick={handleClick}>
         {children}
       </a>
     );
   }
   return (
-    <a className={className} href={href} style={style} {...(isAnchor ? { "data-anchor": true } : {})}>
+    <a className={className} href={href} style={style} onClick={handleClick} {...(isAnchor ? { "data-anchor": true } : {})}>
       {children}
     </a>
   );
@@ -271,6 +293,8 @@ const FeatureCard = ({
               <AnchorAwareLink
                 href={item.href}
                 className="nav-link"
+                trackingName="content_link_click"
+                trackingSection="features_gallery"
                 style={{ width: "fit-content" }}
               >
                 Learn more
@@ -311,6 +335,8 @@ const FeatureCard = ({
             <AnchorAwareLink
               href={item.href}
               className="nav-link"
+              trackingName="content_link_click"
+              trackingSection="features_grid"
               style={{ width: "fit-content" }}
             >
               Learn more
@@ -852,6 +878,7 @@ const renderHeroBlock = (
           <AnchorAwareLink
             className="btn"
             href={block.primaryCtaHref}
+            trackingSection="hero_primary"
             style={{ minWidth: 160, justifyContent: "center" }}
           >
             {block.primaryCtaLabel}
@@ -861,6 +888,7 @@ const renderHeroBlock = (
           <AnchorAwareLink
             className="btn secondary"
             href={block.secondaryCtaHref}
+            trackingSection="hero_secondary"
             style={{ minWidth: 160, justifyContent: "center" }}
           >
             {block.secondaryCtaLabel}
@@ -1154,6 +1182,8 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
         <AnchorAwareLink
           className="btn"
           href={block.ctaHref}
+          trackingName="cta_click"
+          trackingSection="split_block"
           style={{ width: "fit-content" }}
         >
           {block.ctaLabel}
@@ -1236,6 +1266,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
   const isVideo = block.media?.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(block.media?.url ?? "");
   const [formSuccess, setFormSuccess] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
+  const hasTrackedFormStart = useRef(false);
   const recaptchaSiteKey = "6Ld_MyksAAAAAMwJusVI9I7wpyxKjnM5i8X9VFpL";
   const media = hasMedia ? (
     <div
@@ -1395,6 +1426,11 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
           mode: "no-cors"
         });
         setFormSuccess(true);
+        trackGaEvent("generate_lead", {
+          form_id: "sib-form",
+          method: "brevo_embed",
+          section: block.anchor ?? "contact"
+        });
         form.reset();
         const errorEls = form.querySelectorAll<HTMLElement>(".entry__error");
         errorEls.forEach((el) => (el.textContent = ""));
@@ -1410,14 +1446,29 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
     emailInput?.addEventListener("input", validateEmail);
     emailInput?.addEventListener("blur", validateEmail);
     form?.addEventListener("submit", handleSubmit, { capture: true });
+
+    const handleFormStart = () => {
+      if (hasTrackedFormStart.current) return;
+      hasTrackedFormStart.current = true;
+      trackGaEvent("form_start", {
+        form_id: "sib-form",
+        method: "brevo_embed",
+        section: block.anchor ?? "contact"
+      });
+    };
+    form?.addEventListener("focusin", handleFormStart);
+    form?.addEventListener("input", handleFormStart);
+
     validateEmail();
 
     return () => {
       emailInput?.removeEventListener("input", validateEmail);
       emailInput?.removeEventListener("blur", validateEmail);
       form?.removeEventListener("submit", handleSubmit, { capture: true } as EventListenerOptions);
+      form?.removeEventListener("focusin", handleFormStart);
+      form?.removeEventListener("input", handleFormStart);
     };
-  }, []);
+  }, [block.anchor]);
 
   return (
     <AnimatedSection key={block.id ?? index} index={index} variant="plain" animated={false}>
