@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -67,46 +66,10 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   const pageData = await getPublishedPageBySlug("/learn", { tagFilter });
   if (!pageData) return notFound();
   const blocks = pageData.blocks ?? [];
-  const posts = collectArticlePosts(blocks);
-  const formattedTag = tagFilter?.trim();
-
-  const tags = new Map<string, string>();
-  posts.forEach((post) => {
-    (post.tags ?? [])
-      .filter((tag) => tag.visibility !== "internal")
-      .forEach((tag) => {
-        if (!tags.has(tag.slug)) {
-          tags.set(tag.slug, tag.name);
-        }
-      });
-  });
-
-  const tagList = Array.from(tags.entries()).map(([slug, name]) => ({ slug, name }));
 
   return (
     <main>
       <SiteHeader navItems={navItems} />
-      {formattedTag || tagList.length ? (
-        <section className="container learn-filter-bar learn-shell">
-          {formattedTag ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <span className="learn-tag">Filtered: {formattedTag}</span>
-              <Link href="/learn" className="learn-tag">
-                Clear filter
-              </Link>
-            </div>
-          ) : null}
-          {tagList.length ? (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {tagList.map((tag) => (
-                <Link key={tag.slug} href={`/learn?tag=${encodeURIComponent(tag.slug)}`} className="learn-tag">
-                  {tag.name}
-                </Link>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
       {blocks.length ? <BlocksRenderer blocks={blocks} /> : null}
       <SiteFooter navItems={navItems} />
     </main>
