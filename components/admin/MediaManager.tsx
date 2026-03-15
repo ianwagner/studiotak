@@ -15,6 +15,7 @@ import {
   serverTimestamp,
   updateDoc
 } from "firebase/firestore";
+import { prepareImageFileForUpload } from "@/lib/clientImageUpload";
 import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import type { MediaRecord } from "@/lib/admin/media";
 import { localAuthBypassEnabled } from "@/lib/localAuthBypass";
@@ -126,13 +127,14 @@ export function MediaManager() {
       const timestamp = Date.now();
       await Promise.all(
         form.files.map(async (file, idx) => {
-          const path = `uploads/${timestamp}-${idx}-${file.name}`;
+          const uploadFile = await prepareImageFileForUpload(file);
+          const path = `uploads/${timestamp}-${idx}-${uploadFile.name}`;
           const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, file);
+          await uploadBytes(storageRef, uploadFile);
           const url = await getDownloadURL(storageRef);
 
           const payload = {
-            name: file.name,
+            name: uploadFile.name,
             url,
             industry: form.industry,
             type: form.type,

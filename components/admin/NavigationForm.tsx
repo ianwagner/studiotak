@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { prepareImageDataUrl } from "@/lib/clientImageUpload";
 import type { NavigationItemRecord } from "@/lib/admin/navigation";
 import type { Route } from "next";
 
@@ -133,12 +134,13 @@ export function NavigationForm({
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   if (!file) return;
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    const result = reader.result?.toString() ?? "";
-                    setFormState((prev) => ({ ...prev, icon: result }));
-                  };
-                  reader.readAsDataURL(file);
+                  void prepareImageDataUrl(file)
+                    .then((result) => {
+                      setFormState((prev) => ({ ...prev, icon: result }));
+                    })
+                    .catch((error) => {
+                      console.error("Failed to prepare navigation icon", error);
+                    });
                 }}
               />
               {formState.icon ? (

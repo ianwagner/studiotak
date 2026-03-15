@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { migrateUploadedAssetsToWebp, type AssetMigrationSummary } from "@/lib/assetMigration";
+import { prepareImageFileForUpload } from "@/lib/clientImageUpload";
 import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import {
   getSiteSettings,
@@ -43,6 +45,10 @@ export function SiteSettingsForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState<Partial<Record<AssetKey, boolean>>>({});
+  const [migratingAssets, setMigratingAssets] = useState(false);
+  const [migrationProgress, setMigrationProgress] = useState<string | null>(null);
+  const [migrationError, setMigrationError] = useState<string | null>(null);
+  const [migrationSummary, setMigrationSummary] = useState<AssetMigrationSummary | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -71,8 +77,11 @@ export function SiteSettingsForm() {
       await ensureFirebaseDevAuth();
       const app = getFirebaseApp();
       const storage = getStorage(app);
-      const storageRef = ref(storage, `site-settings/${key}-${Date.now()}-${file.name}`);
-      await uploadBytes(storageRef, file);
+      const uploadFile = await prepareImageFileForUpload(file, {
+        preserveOriginalFormat: key === "faviconUrl" || key === "touchIconUrl"
+      });
+      const storageRef = ref(storage, `site-settings/${key}-${Date.now()}-${uploadFile.name}`);
+      await uploadBytes(storageRef, uploadFile);
       const url = await getDownloadURL(storageRef);
       const saved = await saveSiteSettings({ ...form, [key]: url });
       setForm(saved);
@@ -104,6 +113,36 @@ export function SiteSettingsForm() {
       setError("Unable to save settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAssetMigration = async () => {
+    if (!siteSettingsFirebaseReady) {
+      setMigrationError("Configure Firebase env vars to migrate uploaded assets.");
+      return;
+    }
+
+    setMigratingAssets(true);
+    setMigrationError(null);
+    setMigrationSummary(null);
+    setMigrationProgress("Starting asset migration…");
+    setMessage(null);
+    setError(null);
+
+    try {
+      const summary = await migrateUploadedAssetsToWebp({
+        onProgress: setMigrationProgress
+      });
+      const settings = await getSiteSettings();
+      setForm(settings);
+      setMigrationSummary(summary);
+      setMigrationProgress("Asset migration complete.");
+      setMessage("Existing uploaded images were backfilled to WebP where safe.");
+    } catch (err: any) {
+      console.error(err);
+      setMigrationError(err?.message ?? "Asset migration failed.");
+    } finally {
+      setMigratingAssets(false);
     }
   };
 
@@ -174,6 +213,54 @@ export function SiteSettingsForm() {
             ) : null}
           </div>
         </form>
+      </div>
+
+      <div className="card" style={{ padding: 12, display: "grid", gap: 12 }}>
+        <div>
+          <h2 style={{ margin: "0 0 6px" }}>Backfill existing uploads to WebP</h2>
+          <p style={{ margin: 0, color: "var(--muted)" }}>
+            Rewrites existing Firebase-hosted images uploaded through the admin, updates Firestore references, and leaves favicon /
+            touch icon files alone for compatibility.
+          </p>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <button className="btn" type="button" onClick={handleAssetMigration} disabled={migratingAssets || !siteSettingsFirebaseReady}>
+            {migratingAssets ? "Migrating…" : "Run asset migration"}
+          </button>
+          {migrationProgress ? <span style={{ color: "var(--muted)", fontSize: 13 }}>{migrationProgress}</span> : null}
+        </div>
+
+        {migrationError ? <div style={{ color: "var(--danger)" }}>{migrationError}</div> : null}
+
+        {migrationSummary ? (
+          <div className="grid" style={{ gap: 8 }}>
+            <div style={{ color: "var(--muted)", fontSize: 13 }}>
+              Storage assets scanned: {migrationSummary.scannedStorageAssets} | migrated: {migrationSummary.migratedStorageAssets} |
+              skipped: {migrationSummary.skippedStorageAssets} | failed: {migrationSummary.failedStorageAssets}
+            </div>
+            <div style={{ color: "var(--muted)", fontSize: 13 }}>
+              Documents updated: site settings {migrationSummary.updatedDocuments.siteSettings}, media{" "}
+              {migrationSummary.updatedDocuments.media}, pages {migrationSummary.updatedDocuments.pages}, components{" "}
+              {migrationSummary.updatedDocuments.components}, navigation {migrationSummary.updatedDocuments.navigation}
+            </div>
+            <div style={{ color: "var(--muted)", fontSize: 13 }}>
+              Inline navigation icons converted: {migrationSummary.convertedNavigationIcons}
+            </div>
+            {migrationSummary.failures.length ? (
+              <details>
+                <summary style={{ cursor: "pointer" }}>Migration failures ({migrationSummary.failures.length})</summary>
+                <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                  {migrationSummary.failures.map((failure) => (
+                    <li key={failure} style={{ color: "var(--danger)", fontSize: 13 }}>
+                      {failure}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

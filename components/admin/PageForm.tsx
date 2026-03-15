@@ -27,6 +27,7 @@ import type {
 import { animationPresets, defaultAnimationPreset, type AnimationPresetName } from "@/components/sections/animationPresets";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { addDoc, collection, getDocs, getFirestore, limit, query, serverTimestamp, where } from "firebase/firestore";
+import { prepareImageFileForUpload } from "@/lib/clientImageUpload";
 import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import { getAuth } from "firebase/auth";
 import type { ComponentRecord } from "@/lib/admin/components";
@@ -768,9 +769,10 @@ export function PageForm({
       }
       const storage = getStorage(app);
       const db = getFirestore(app);
-      const path = `block-media/${Date.now()}-${file.name}`;
+      const uploadFile = isVideo ? file : await prepareImageFileForUpload(file);
+      const path = `block-media/${Date.now()}-${uploadFile.name}`;
       const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
+      await uploadBytes(storageRef, uploadFile);
       const url = await getDownloadURL(storageRef);
 
       const updatedMedia: BlockMedia = {
@@ -786,7 +788,7 @@ export function PageForm({
       });
 
       await addDoc(collection(db, "media"), {
-        name: file.name,
+        name: uploadFile.name,
         url,
         industry: `Page: ${formState.title || "Untitled"}`,
         type: block.type,
@@ -831,9 +833,10 @@ export function PageForm({
       }
       const storage = getStorage(app);
       const db = getFirestore(app);
-      const path = `social-media/${Date.now()}-${file.name}`;
+      const uploadFile = file.type.startsWith("video") ? file : await prepareImageFileForUpload(file);
+      const path = `social-media/${Date.now()}-${uploadFile.name}`;
       const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
+      await uploadBytes(storageRef, uploadFile);
       const url = await getDownloadURL(storageRef);
       const mediaPayload = {
         url,
@@ -843,7 +846,7 @@ export function PageForm({
       setFormState((prev) => (prev ? { ...prev, socialImage: mediaPayload } : prev));
 
       await addDoc(collection(db, "media"), {
-        name: file.name,
+        name: uploadFile.name,
         url,
         industry: `Page social: ${formState.title || "Untitled"}`,
         type: "social",
