@@ -442,5 +442,173 @@ export const seedPages: PageRecord[] = [
         offset: 1
       }
     ]
+  },
+  {
+    id: "campfire-test",
+    slug: "/campfire-test",
+    title: "Campfire",
+    status: "published",
+    seoTitle: "Campfire — Bespoke Meta Ad Creative, Sold Per Ad",
+    metaDescription:
+      "High-volume Meta ad creative that still feels intentional. Human-led, performance-focused, priced per ad. No subscriptions, no lock-in.",
+    ogTitle: "Campfire — Bespoke Meta Ad Creative",
+    ogDescription:
+      "Every ad made for your brand. Human designers who know what converts on Meta. Pay per ad, not per month.",
+    focusKeyword: "meta ad creative",
+    blocks: [
+      {
+        id: "cf-hero",
+        type: "hero",
+        eyebrow: "Campfire / Bespoke Ad Creative",
+        title: "Ads that actually look like your brand",
+        subtitle:
+          "Bespoke Meta ad creative, made by people with taste. Pay per ad — no subscriptions, no retainers, no guesswork.",
+        primaryCtaLabel: "Get started",
+        primaryCtaHref: "#contact",
+        secondaryCtaLabel: "See how it works",
+        secondaryCtaHref: "#how-it-works",
+        alignment: "centered",
+      },
+      {
+        id: "cf-headline",
+        type: "animated_headline",
+        headline: "High volume doesn't have to mean low quality",
+        subtext:
+          "Every ad is made for your brand specifically. No templates. No AI slop. Just intentional creative that performs.",
+        animationStyle: "fade_by_word",
+        animationMode: "scroll",
+        freezeOnScroll: true,
+        enableDarkModeOnScroll: true,
+      },
+      {
+        id: "cf-value-props",
+        type: "scroll_gallery",
+        eyebrow: "Why Campfire",
+        heading: "Creative that works as hard as you do",
+        body: "We make ads for brands scaling their Meta spend who refuse to settle for generic. Here's what makes us different.",
+        items: [
+          {
+            title: "Bespoke, not templated",
+            body: "Every ad starts from your brand, your products, your audience. We learn what makes you different and build creative around it.",
+            badge: "Made for you",
+          },
+          {
+            title: "Pay per ad",
+            body: "One ad, one price. No monthly subscriptions, no retainers, no confusing packages. Scale up or down whenever you need to.",
+            badge: "Simple pricing",
+          },
+          {
+            title: "Human-led, Meta-optimized",
+            body: "Real designers who understand Meta's ad ecosystem — formats, placements, hooks, and what actually stops a thumb.",
+            badge: "Performance",
+          },
+          {
+            title: "Fast without cutting corners",
+            body: "Our production system moves quickly, but every ad gets a human design pass. Speed and quality aren't a trade-off here.",
+            badge: "Quick turnaround",
+          },
+        ],
+      },
+      {
+        id: "cf-how-it-works",
+        type: "story",
+        anchor: "how-it-works",
+        heading: "How it works",
+        body: "Three steps between you and ads that actually represent your brand. No onboarding marathons, no scope creep.",
+        variant: "two_column",
+        sections: [
+          {
+            title: "1. Share your brand",
+            body: "Send us your brand guidelines, product pages, and any creative you like. We study what makes your brand yours — colors, tone, audience, the whole picture.",
+          },
+          {
+            title: "2. We make your ads",
+            body: "Our designers build bespoke static and video ads optimized for Meta. Every layout, headline, and visual choice is intentional — informed by what actually performs.",
+          },
+          {
+            title: "3. Review, approve, launch",
+            body: "Review your ads in our lightweight approval tool. Request changes, leave notes, and approve — all in one place. Then put them to work.",
+          },
+        ],
+      },
+      {
+        id: "cf-who-its-for",
+        type: "features",
+        eyebrow: "Built for",
+        heading: "You've outgrown Canva. You're not ready for an agency.",
+        body: "Campfire fills the gap between DIY and enterprise — professional creative for brands that are growing fast and need ads that keep up.",
+        columns: 3,
+        items: [
+          {
+            title: "Scaling founders",
+            body: "You're spending $10K–$100K/month on Meta and you know your creative could be better. You need great ads without hiring a full-time designer.",
+            badge: "Entrepreneurs",
+          },
+          {
+            title: "Growth & media buyers",
+            body: "You know what to test but can't get creative made fast enough. Campfire keeps your ad account fed with fresh, on-brand creative.",
+            badge: "Performance teams",
+          },
+          {
+            title: "Marketing teams at SMBs",
+            body: "Your team is growing but your creative resources aren't. We work like an extension of your team — learning your brand, not just filling a queue.",
+            badge: "Growing brands",
+          },
+        ],
+      },
+      {
+        id: "cf-split-performance",
+        type: "split",
+        eyebrow: "The point",
+        heading: "Beautiful creative that actually converts",
+        body: "We care about whether the ad works, not just how it looks. Every creative decision is informed by Meta ad performance data — what hooks, what converts, what scales. Pretty ads that don't perform aren't good ads.",
+        mediaSide: "right",
+        ctaLabel: "See the work",
+        ctaHref: "#contact",
+      },
+      {
+        id: "cf-vs-alternatives",
+        type: "features",
+        eyebrow: "Honest comparison",
+        heading: "How Campfire stacks up",
+        body: "We're not the right fit for everyone. But if you're scaling Meta ads and want creative that performs, here's why brands choose us.",
+        columns: 2,
+        items: [
+          {
+            title: "vs. Design subscriptions",
+            body: "Services like Design Pickle charge $2K+/month for a general design queue. We specialize in Meta ads, charge per ad, and you talk to people who know your brand.",
+            badge: "No subscription",
+          },
+          {
+            title: "vs. AI ad tools",
+            body: "AI can generate an ad. We make your ad. Human taste, brand nuance, and creative direction that AI can't replicate — yet.",
+            badge: "Human-led",
+          },
+          {
+            title: "vs. Freelancers",
+            body: "Stop rolling the dice. We bring consistent quality, Meta ad expertise, and a real creative relationship — not a one-off transaction.",
+            badge: "Consistent",
+          },
+          {
+            title: "vs. Doing it yourself",
+            body: "Your time is worth more than another hour in Canva. Focus on running your business — we'll handle the creative.",
+            badge: "Your time back",
+          },
+        ],
+      },
+      {
+        id: "cf-contact",
+        type: "contact",
+        eyebrow: "Let's talk",
+        heading: "Tell us about your brand",
+        body: "Share a bit about your business, your Meta ad goals, and the kind of creative you're looking for. We'll follow up with a plan — no pitch deck, no pressure.",
+        anchor: "contact",
+        formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
+        portalId: "244262601",
+        region: "na2",
+        formScriptSrc:
+          "https://js-na2.hsforms.net/forms/embed/244262601.js",
+      },
+    ],
   }
 ];
