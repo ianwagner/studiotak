@@ -79,9 +79,11 @@ const releaseDarkMode = () => {
       clearTimeout(revertTimer);
     }
     const nextTheme = getStoredTheme();
+    // Slightly longer hold before reverting to prevent flicker near section edges
     revertTimer = window.setTimeout(() => {
       applyTheme(nextTheme);
-      const delay = 520;
+      // Wait for the CSS transition to finish before removing the transition class
+      const delay = 480;
       transitionTimer = window.setTimeout(() => {
         root.classList.remove("theme-transition");
         storedTheme = null;
@@ -89,7 +91,7 @@ const releaseDarkMode = () => {
         transitionTimer = null;
       }, delay);
       revertTimer = null;
-    }, 120);
+    }, 160);
   }
 };
 
