@@ -200,14 +200,28 @@ const renderMedia = (media?: HeroBlock["media"]) => {
 
 const renderBlockSections = (sections?: BlockSection[]) => {
   if (!sections?.length) return null;
+  const preset = animationPresets[defaultAnimationPreset];
   return (
-    <div className="grid" style={{ gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+    <div className="story-timeline">
       {sections.map((section, idx) => (
-        <div key={`${section.title}-${idx}`} className="card" style={{ display: "grid", gap: 8 }}>
-          <span className="tag">{`0${idx + 1}`}</span>
-          <strong style={{ fontSize: 18 }}>{section.title}</strong>
-          <p style={{ margin: 0, color: "var(--muted)" }}>{section.body}</p>
-        </div>
+        <motion.div
+          key={`${section.title}-${idx}`}
+          className="story-step"
+          variants={preset.item}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          custom={idx}
+        >
+          <div className="story-step-marker">
+            <span className="story-step-badge">{`0${idx + 1}`}</span>
+            <div className="story-step-line" />
+          </div>
+          <div className="story-step-content">
+            <strong style={{ fontSize: 18 }}>{section.title}</strong>
+            <p style={{ margin: 0, color: "var(--muted)" }}>{section.body}</p>
+          </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -386,8 +400,11 @@ const sectionPx = "var(--section-px, 15px)";
 const getFullBleedHeroStyle = (headerHeight: number, compact = false, viewportWidth: number | null = null): CSSProperties => {
   const isMobile = viewportWidth !== null && viewportWidth < 680;
   const gutter = isMobile ? 0 : 30;
-  const leftInset = isMobile ? `max(${sectionPx}, env(safe-area-inset-left, 0px))` : `${gutter / 2}px`;
-  const rightInset = isMobile ? `max(${sectionPx}, env(safe-area-inset-right, 0px))` : `${gutter / 2}px`;
+  // On Safari iOS, --full-bleed-mobile-inset is 0px because --full-bleed-width is container-relative (100%)
+  // and the container's own padding already provides the margin. On other browsers it equals --section-px.
+  const mobileInset = "var(--full-bleed-mobile-inset, var(--section-px, 15px))";
+  const leftInset = isMobile ? `max(${mobileInset}, env(safe-area-inset-left, 0px))` : `${gutter / 2}px`;
+  const rightInset = isMobile ? `max(${mobileInset}, env(safe-area-inset-right, 0px))` : `${gutter / 2}px`;
   // Width must subtract both side margins to prevent right-edge overflow
   const fullBleedWidth = isMobile
     ? `calc(var(--full-bleed-width, 100vw) - ${leftInset} - ${rightInset})`
@@ -1071,6 +1088,14 @@ const renderDividerBlock = (block: DividerBlock, index: number) => {
 const renderStoryBlock = (block: StoryBlock, index: number) => {
   const media = renderMedia(block.media);
   const sectionsList = renderBlockSections(block.sections);
+  const storyOuterStyle: CSSProperties = {
+    width: "100%",
+    maxWidth: "var(--max-width)",
+    marginLeft: "auto",
+    marginRight: "auto",
+    paddingLeft: sectionPx,
+    paddingRight: sectionPx
+  };
 
   const storyHeading = (
     <div className="grid" style={{ gap: 10 }}>
@@ -1083,7 +1108,7 @@ const renderStoryBlock = (block: StoryBlock, index: number) => {
 
   if (block.variant === "two_column") {
     return (
-      <AnimatedSection key={block.id ?? index} index={index}>
+      <AnimatedSection key={block.id ?? index} index={index} variant="plain" style={storyOuterStyle}>
         <div
           className="grid"
           style={{ gap: 18, alignItems: "start", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
@@ -1100,7 +1125,7 @@ const renderStoryBlock = (block: StoryBlock, index: number) => {
 
   if (block.variant === "split_with_quote") {
     return (
-      <AnimatedSection key={block.id ?? index} index={index}>
+      <AnimatedSection key={block.id ?? index} index={index} variant="plain" style={storyOuterStyle}>
         <div className="grid" style={{ gap: 16 }}>
           {block.body ? (
             <div
@@ -1125,7 +1150,7 @@ const renderStoryBlock = (block: StoryBlock, index: number) => {
   }
 
   return (
-    <AnimatedSection key={block.id ?? index} index={index}>
+    <AnimatedSection key={block.id ?? index} index={index} variant="plain" style={storyOuterStyle}>
       <div className="grid" style={{ gap: 12 }}>
         {storyHeading}
         {media}

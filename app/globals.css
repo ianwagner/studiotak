@@ -33,6 +33,7 @@
   --full-bleed-width: 100vw;
   --full-bleed-shift: calc(50% - 50vw);
   --full-bleed-height: 100vh;
+  --full-bleed-mobile-inset: var(--section-px);
   --sidebar-glow-1: rgba(0, 0, 0, 0.05);
   --sidebar-glow-2: rgba(0, 0, 0, 0.03);
   --footer-top: #ffffff;
@@ -319,11 +320,14 @@ main {
 }
 
 @supports (-webkit-touch-callout: none) {
-  /* iOS Safari-specific: keep full-bleed math tied to the visual viewport to prevent right-push */
+  /* iOS Safari-specific: keep full-bleed math tied to the visual viewport to prevent right-push.
+     --full-bleed-width: 100% is container-relative, so the hero doesn't need extra inset
+     subtraction on mobile — the container's own padding handles the margin. */
   :root {
     --full-bleed-width: 100%;
     --full-bleed-shift: 0;
     --full-bleed-height: 100svh;
+    --full-bleed-mobile-inset: 0px;
   }
 
   .container {
@@ -1058,6 +1062,68 @@ main {
   font-size: var(--eyebrow-size);
   letter-spacing: var(--eyebrow-letter-spacing);
   text-transform: uppercase;
+}
+
+/* Story timeline */
+.story-timeline {
+  display: grid;
+  gap: 0;
+  position: relative;
+}
+
+.story-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  padding: 0 0 32px;
+  position: relative;
+}
+
+.story-step:last-child {
+  padding-bottom: 0;
+}
+
+.story-step-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.story-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--eyebrow-color);
+  font-weight: var(--eyebrow-weight);
+  font-size: 12px;
+  letter-spacing: var(--eyebrow-letter-spacing);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.story-step-line {
+  width: 1px;
+  flex: 1;
+  background: var(--border);
+  margin-top: 8px;
+}
+
+.story-step:last-child .story-step-line {
+  display: none;
+}
+
+.story-step-content {
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
 }
 
 /* Features gallery */
