@@ -141,8 +141,8 @@ function ThemeShiftRegion({ enabled, children }: { enabled?: boolean; children: 
       setShouldActivate(true);
       return;
     }
-    // Hold dark mode briefly when hovering near the edge of the viewport to avoid flicker.
-    const timeout = window.setTimeout(() => setShouldActivate(false), 140);
+    // Hold dark mode when near the edge of the viewport — longer hold reduces flicker during scroll.
+    const timeout = window.setTimeout(() => setShouldActivate(false), 200);
     return () => window.clearTimeout(timeout);
   }, [enabled, inView]);
 
@@ -343,16 +343,9 @@ const FeatureCard = ({
 };
 
 const useHeaderHeight = () => {
-  const getInitialHeight = () => {
-    if (typeof document === "undefined") return 72;
-    const cssHeight = Number.parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue("--header-height") || "72"
-    );
-    const fallback = Number.isFinite(cssHeight) ? cssHeight : 72;
-    const measured = document.querySelector<HTMLElement>("[data-site-header]")?.getBoundingClientRect().height;
-    return Math.round(measured || fallback || 72);
-  };
-  const [height, setHeight] = useState<number>(getInitialHeight);
+  // Always start with the CSS default to avoid SSR/client hydration mismatch.
+  // The useLayoutEffect below will correct it immediately on mount.
+  const [height, setHeight] = useState<number>(72);
 
   useLayoutEffect(() => {
     if (typeof document === "undefined") return;
@@ -388,15 +381,23 @@ const useHeaderHeight = () => {
   return height;
 };
 
+const sectionPx = "var(--section-px, 15px)";
+
 const getFullBleedHeroStyle = (headerHeight: number, compact = false, viewportWidth: number | null = null): CSSProperties => {
   const isMobile = viewportWidth !== null && viewportWidth < 680;
   const gutter = isMobile ? 0 : 30;
-  const fullBleedWidth = `calc(var(--full-bleed-width, 100vw) - ${gutter}px)`;
-  const leftInset = isMobile ? "max(15px, env(safe-area-inset-left, 0px))" : `${gutter / 2}px`;
-  const rightInset = isMobile ? "max(15px, env(safe-area-inset-right, 0px))" : `${gutter / 2}px`;
+  const leftInset = isMobile ? `max(${sectionPx}, env(safe-area-inset-left, 0px))` : `${gutter / 2}px`;
+  const rightInset = isMobile ? `max(${sectionPx}, env(safe-area-inset-right, 0px))` : `${gutter / 2}px`;
+  // Width must subtract both side margins to prevent right-edge overflow
+  const fullBleedWidth = isMobile
+    ? `calc(var(--full-bleed-width, 100vw) - ${leftInset} - ${rightInset})`
+    : `calc(var(--full-bleed-width, 100vw) - ${gutter}px)`;
   const fullBleedShiftLeft = `calc(var(--full-bleed-shift, calc(50% - 50vw)) + ${leftInset})`;
   const fullBleedShiftRight = `calc(var(--full-bleed-shift, calc(50% - 50vw)) + ${rightInset})`;
   const fullBleedHeight = "var(--full-bleed-height, 100vh)";
+  // Use the CSS variable instead of the JS value to avoid SSR/client hydration mismatch
+  const headerVar = "var(--header-height, 72px)";
+  const heroMaxHeight = compact ? undefined : `calc(${fullBleedHeight} - ${headerVar} - 30px)`;
   return {
     width: fullBleedWidth,
     maxWidth: fullBleedWidth,
@@ -404,10 +405,12 @@ const getFullBleedHeroStyle = (headerHeight: number, compact = false, viewportWi
     marginRight: fullBleedShiftRight,
     marginTop: 15,
     marginBottom: 15,
-    minHeight: compact ? "clamp(180px, 32vh, 360px)" : `calc(${fullBleedHeight} - ${headerHeight}px - 30px)`,
+    minHeight: compact ? "clamp(180px, 32vh, 360px)" : `calc(${fullBleedHeight} - ${headerVar} - 30px)`,
+    maxHeight: heroMaxHeight,
     padding: compact ? "8px 0" : undefined,
     display: "flex",
-    alignItems: "center"
+    alignItems: "center",
+    overflow: "hidden"
   };
 };
 
@@ -590,9 +593,9 @@ const DynamicHeroColumns = ({
       height: "100%",
       objectFit: "cover",
       display: "block",
-      filter: loaded ? "blur(0px)" : "blur(14px)",
-      transform: loaded ? "scale(1)" : "scale(1.04)",
-      transition: "filter 280ms ease, transform 340ms ease",
+      filter: loaded ? "blur(0px)" : "blur(12px)",
+      transform: loaded ? "scale(1)" : "scale(1.03)",
+      transition: "filter 320ms cubic-bezier(0.4, 0, 0.2, 1), transform 380ms cubic-bezier(0.4, 0, 0.2, 1)",
       willChange: "filter, transform"
     };
 
@@ -662,14 +665,14 @@ const DynamicHeroColumns = ({
           alignItems: "center",
           ...innerStyle,
           gridTemplateColumns: gridTemplate,
-          paddingRight: 10
+          paddingRight: 0
         }}
       >
         {content}
         {!hideColumns ? (
           <div
             className="grid"
-            style={{ gap: columnsGap, height: "100%", justifyItems: "stretch", opacity: ready ? 1 : 0, transition: "opacity 180ms ease" }}
+            style={{ gap: columnsGap, height: "100%", maxHeight: "100%", justifyItems: "stretch", opacity: ready ? 1 : 0, transition: "opacity 240ms ease", overflow: "hidden" }}
             aria-busy={!ready}
           >
             <div
@@ -680,7 +683,9 @@ const DynamicHeroColumns = ({
                 gridTemplateColumns: "repeat(3, minmax(120px, 190px))",
                 justifyContent: "end",
                 alignItems: "stretch",
-                height: "100%"
+                height: "100%",
+                maxHeight: "100%",
+                overflow: "hidden"
               }}
             >
               {columns.map((bucket, colIdx) => {
@@ -814,12 +819,12 @@ const renderHeroBlock = (
     </>
   ) : null;
   const innerStyle: CSSProperties = {
-    width: "min(100%, calc(var(--max-width) + 30px))",
-    paddingLeft: 15,
-    paddingRight: 15,
+    width: `min(100%, calc(var(--max-width) + ${sectionPx} * 2))`,
+    paddingLeft: sectionPx,
+    paddingRight: sectionPx,
     margin: "0 auto",
     ...(hasBackground ? { padding: isCompact ? 26 : 32, position: "relative", zIndex: 2 } : {}),
-    ...(isCompact && !hasBackground ? { padding: "0 12px" } : {}),
+    ...(isCompact && !hasBackground ? { padding: `0 12px` } : {}),
     ...(isCenteredThirds ? { justifyItems: "center" } : {})
   };
   const isSingleColumnDynamic = isDynamicHero && hideColumns;
@@ -840,8 +845,8 @@ const renderHeroBlock = (
   const dynamicLayoutGap = isDynamicHero ? 12 : layoutGap;
   const dynamicStackGap = isDynamicHero ? 6 : stackGap;
   if (isDynamicHero) {
+    // Dynamic heroes should stay exactly their target height — overflow from scrolling columns is clipped.
     heroStyle.overflow = "hidden";
-    heroStyle.maxHeight = heroStyle.minHeight;
   }
   const content = (
     <div
@@ -1215,8 +1220,8 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
         maxWidth: "var(--max-width)",
         marginLeft: "auto",
         marginRight: "auto",
-        paddingLeft: 15,
-        paddingRight: 15
+        paddingLeft: sectionPx,
+        paddingRight: sectionPx
       }}
       data-split-section
       variants={preset.item}
@@ -1235,8 +1240,8 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
         }
         @media (max-width: 768px) {
           [data-split-section] {
-            padding-left: 15px;
-            padding-right: 15px;
+            padding-left: var(--section-px, 16px);
+            padding-right: var(--section-px, 16px);
           }
           [data-split-grid] {
             grid-template-columns: 1fr !important;
@@ -1484,8 +1489,8 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             max-width: var(--max-width);
             margin-left: auto;
             margin-right: auto;
-            padding-left: 15px;
-            padding-right: 15px;
+            padding-left: var(--section-px, 15px);
+            padding-right: var(--section-px, 15px);
           }
           [data-contact-grid] {
             gap: 18px;
@@ -1903,7 +1908,7 @@ const FeaturesBlockSection = ({
   index: number;
 }) => {
   const paddingX = 16;
-  const minSidePadding = 15;
+  const minSidePadding = 16;
   const items = (block.items ?? []).slice(0, 3);
   const galleryPreset = animationPresets[defaultAnimationPreset];
   const galleryRef = useRef<HTMLDivElement | null>(null);
@@ -3160,7 +3165,7 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
       {shouldForceDarkOnLoad ? (
         <script id="initial-theme-shift" dangerouslySetInnerHTML={{ __html: initialThemeScript }} />
       ) : null}
-      <div className="grid" style={{ gap: 24 }}>
+      <div className="grid" style={{ gap: "var(--block-gap, 24px)" }}>
         {blocks.map((block, index) => {
           const key = block.id ?? index;
           const shouldDelayRender = shouldLazyLoadRest && index >= initialVisibleCount && !renderRest;
