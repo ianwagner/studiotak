@@ -110,7 +110,7 @@ export function ComponentForm({
       await addDoc(collection(db, "media"), {
         name: uploadFile.name,
         url,
-        industry: formState.industry ?? "",
+        industry: (formState.industry ?? "").split(",").map((s) => s.trim()).filter(Boolean),
         type: formState.type ?? "",
         alt: file.name,
         mediaType: "image",

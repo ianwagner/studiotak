@@ -509,7 +509,7 @@ const DynamicHeroColumns = ({
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
         const constraints: QueryConstraint[] = [];
-        if (industryTag) constraints.push(where("industry", "==", industryTag));
+        if (industryTag) constraints.push(where("industry", "array-contains", industryTag));
         if (typeTag) constraints.push(where("type", "==", typeTag));
         constraints.push(limit(maxItems));
         const q = query(mediaRef, ...constraints);
@@ -2673,7 +2673,7 @@ const ShowcaseBlockSection = ({
         const mediaRef = collection(db, "media");
         const constraints: QueryConstraint[] = [where("type", "==", typeFilter)];
         if (industryFilter) {
-          constraints.push(where("industry", "==", industryFilter));
+          constraints.push(where("industry", "array-contains", industryFilter));
         }
         if (featuredOnly) {
           constraints.push(where("featured", "==", true));

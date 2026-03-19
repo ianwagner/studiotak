@@ -70,7 +70,7 @@ export function MediaManager() {
           id: doc.id,
           name: raw.name,
           url: raw.url,
-          industry: raw.industry ?? "",
+          industry: Array.isArray(raw.industry) ? raw.industry : (typeof raw.industry === "string" && raw.industry.trim() ? [raw.industry.trim()] : []),
           type: raw.type ?? "",
           uploadedAt: raw.uploadedAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
           alt: raw.alt ?? "",
@@ -136,7 +136,7 @@ export function MediaManager() {
           const payload = {
             name: uploadFile.name,
             url,
-            industry: form.industry,
+            industry: form.industry.split(",").map((s) => s.trim()).filter(Boolean),
             type: form.type,
             alt: form.alt || file.name,
             mediaType: form.mediaType ?? (file.type.startsWith("video") ? "video" : "image"),
@@ -156,13 +156,13 @@ export function MediaManager() {
     }
   };
 
-  const handleFieldChange = async (id: string, field: MediaField, value: string | boolean) => {
+  const handleFieldChange = async (id: string, field: MediaField, value: string | boolean | string[]) => {
     if (!firebaseReady) return;
     try {
       await ensureFirebaseDevAuth();
       const db = getFirestore(getFirebaseApp());
       const ref = doc(db, "media", id);
-      const normalizedValue = field === "featured" ? Boolean(value) : (value as string);
+      const normalizedValue = field === "featured" ? Boolean(value) : value;
       await updateDoc(ref, { [field]: normalizedValue });
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, [field]: normalizedValue } : item))
@@ -173,8 +173,14 @@ export function MediaManager() {
     }
   };
 
-  const handleTagChange = (id: string, field: "industry" | "type", value: string) =>
-    handleFieldChange(id, field, value);
+  const handleTagChange = (id: string, field: "industry" | "type", value: string) => {
+    if (field === "industry") {
+      const arr = value.split(",").map((s) => s.trim()).filter(Boolean);
+      handleFieldChange(id, field, arr);
+    } else {
+      handleFieldChange(id, field, value);
+    }
+  };
 
   const handleMetaChange = (id: string, field: "alt" | "mediaType" | "featured", value: string | boolean) =>
     handleFieldChange(id, field, value);
@@ -194,8 +200,8 @@ export function MediaManager() {
   };
 
   const industryFilters = useMemo(() => {
-    const unique = new Set(items.map((item) => item.industry).filter(Boolean));
-    return Array.from(unique);
+    const unique = new Set(items.flatMap((item) => item.industry).filter(Boolean));
+    return Array.from(unique).sort();
   }, [items]);
 
   const typeFilters = useMemo(() => {
@@ -208,10 +214,10 @@ export function MediaManager() {
     return items.filter((item) => {
       const matchesSearch =
         !query ||
-        [item.name, item.industry, item.type, item.alt, item.url]
+        [item.name, item.industry.join(" "), item.type, item.alt, item.url]
           .filter(Boolean)
           .some((field) => field!.toLowerCase().includes(query));
-      const matchesIndustry = filterIndustry === "all" || item.industry === filterIndustry;
+      const matchesIndustry = filterIndustry === "all" || item.industry.includes(filterIndustry);
       const matchesType = filterType === "all" || item.type === filterType;
       const matchesMediaType = filterMediaType === "all" || (item.mediaType ?? "image") === filterMediaType;
       const matchesFeatured =
@@ -594,7 +600,7 @@ function MediaLibrary({
           </div>
           <input
             className="input"
-            value={item.industry}
+            value={item.industry.join(", ")}
             onChange={(e) => onTagChange(item.id, "industry", e.target.value)}
             placeholder="Industry"
           />
@@ -816,8 +822,9 @@ function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number
               Featured
             </span>
           ) : null}
-          {item.industry ? (
+          {item.industry.length > 0 ? item.industry.map((tag) => (
             <span
+              key={tag}
               style={{
                 background: "rgba(255,255,255,0.9)",
                 color: "var(--text)",
@@ -827,9 +834,9 @@ function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number
                 border: "1px solid var(--border)"
               }}
             >
-              {item.industry}
+              {tag}
             </span>
-          ) : null}
+          )) : null}
           {item.type ? (
             <span
               style={{
