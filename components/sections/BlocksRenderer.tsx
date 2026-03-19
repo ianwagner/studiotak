@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, useInView } from "framer-motion";
 import type {
   AnimatedHeadlineBlock,
@@ -476,7 +477,8 @@ const DynamicHeroColumns = ({
   content,
   isCompact,
   gridTemplate,
-  hideColumns
+  hideColumns,
+  audienceFilter
 }: {
   block: HeroBlock;
   innerStyle: CSSProperties;
@@ -485,11 +487,12 @@ const DynamicHeroColumns = ({
   isCompact: boolean;
   gridTemplate: string;
   hideColumns: boolean;
+  audienceFilter?: string;
 }) => {
   const [items, setItems] = useState<HeroMediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
-  const industryTag = block.mediaIndustryTag?.trim();
+  const industryTag = audienceFilter || block.mediaIndustryTag?.trim();
   const typeTag = block.mediaTypeTag?.trim();
   const maxItems = clampNumber(block.mediaLimit ?? 18, 6, 60);
 
@@ -508,28 +511,52 @@ const DynamicHeroColumns = ({
         setLoading(true);
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
-        const constraints: QueryConstraint[] = [];
-        if (industryTag) constraints.push(where("industry", "array-contains", industryTag));
-        if (typeTag) constraints.push(where("type", "==", typeTag));
-        constraints.push(limit(maxItems));
-        const q = query(mediaRef, ...constraints);
-        const snapshot = await getDocs(q);
-        if (canceled) return;
-        const results: HeroMediaItem[] = snapshot.docs
-          .map((doc) => {
-            const data = doc.data() as any;
-            const mediaType: HeroMediaItem["mediaType"] =
-              data.mediaType === "video" || data.type === "video" ? "video" : "image";
-            return {
-              id: doc.id,
-              url: data.url,
-              alt: data.alt ?? data.name ?? "Hero media",
-              mediaType,
-              width: data.width,
-              height: data.height
-            };
-          })
-          .filter((item) => item.url);
+
+        const toHeroItem = (doc: any): HeroMediaItem => {
+          const data = doc.data() as any;
+          const mediaType: HeroMediaItem["mediaType"] =
+            data.mediaType === "video" || data.type === "video" ? "video" : "image";
+          return {
+            id: doc.id,
+            url: data.url,
+            alt: data.alt ?? data.name ?? "Hero media",
+            mediaType,
+            width: data.width,
+            height: data.height
+          };
+        };
+
+        const baseConstraints: QueryConstraint[] = [];
+        if (typeTag) baseConstraints.push(where("type", "==", typeTag));
+
+        let results: HeroMediaItem[] = [];
+
+        // 1. Prioritize industry-matched items
+        if (industryTag) {
+          const industryQ = query(
+            mediaRef,
+            ...baseConstraints,
+            where("industry", "array-contains", industryTag),
+            limit(maxItems)
+          );
+          const industrySnap = await getDocs(industryQ);
+          if (canceled) return;
+          results = industrySnap.docs.map(toHeroItem).filter((item) => item.url);
+        }
+
+        // 2. Backfill remaining spots with any-industry media
+        if (results.length < maxItems) {
+          const remaining = maxItems - results.length;
+          const backfillQ = query(mediaRef, ...baseConstraints, limit(remaining + results.length));
+          const backfillSnap = await getDocs(backfillQ);
+          if (canceled) return;
+          const existingIds = new Set(results.map((r) => r.id));
+          const backfill = backfillSnap.docs
+            .map(toHeroItem)
+            .filter((item) => item.url && !existingIds.has(item.id));
+          results = [...results, ...backfill].slice(0, maxItems);
+        }
+
         setItems(results);
       } catch (error) {
         console.error("Failed to load hero media", error);
@@ -753,7 +780,8 @@ const renderHeroBlock = (
   block: HeroBlock | ThirdsBlock,
   index: number,
   headerHeight: number,
-  viewportWidth: number | null
+  viewportWidth: number | null,
+  audienceFilter?: string
 ) => {
   const heroMode = block.mode ?? "static";
   const isDynamicHero = block.type === "hero" && heroMode === "dynamic";
@@ -949,6 +977,7 @@ const renderHeroBlock = (
           isCompact={isCompact}
           gridTemplate={dynamicGridTemplate}
           hideColumns={hideColumns}
+          audienceFilter={audienceFilter}
         />
       </AnimatedSection>
     );
@@ -2288,7 +2317,7 @@ const shuffleLogos = (items: LogoItem[]) => {
   return result;
 };
 
-const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number }) => {
+const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock; index: number; audienceFilter?: string }) => {
   const maxLogosBase = clampNumber(block.limit ?? 12, 1, 20);
   // Enforce an even count so we can split the wall evenly between two rows.
   const maxLogos = Math.max(2, maxLogosBase - (maxLogosBase % 2));
@@ -2314,25 +2343,51 @@ const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number 
         setLoading(true);
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
-        const constraints = [where("type", "in", ["Logo", "logo"]), limit(maxLogos)] as QueryConstraint[];
-        const q = query(mediaRef, ...constraints);
-        const snapshot = await getDocs(q);
-        if (canceled) return;
-        const items: LogoItem[] = snapshot.docs
-          .map((doc) => {
-            const data = doc.data() as any;
-            const mediaType: LogoItem["mediaType"] =
-              data.mediaType === "video" || data.type === "video" ? "video" : "image";
-            return {
-              id: doc.id,
-              url: data.url,
-              alt: data.alt ?? data.name ?? "Logo",
-              mediaType,
-              width: data.width,
-              height: data.height
-            };
-          })
-          .filter((item) => item.url && item.mediaType !== "video");
+        const baseConstraints: QueryConstraint[] = [where("type", "in", ["Logo", "logo"])];
+
+        const toLogoItem = (doc: any): LogoItem => {
+          const data = doc.data() as any;
+          const mediaType: LogoItem["mediaType"] =
+            data.mediaType === "video" || data.type === "video" ? "video" : "image";
+          return {
+            id: doc.id,
+            url: data.url,
+            alt: data.alt ?? data.name ?? "Logo",
+            mediaType,
+            width: data.width,
+            height: data.height
+          };
+        };
+        const isValidLogo = (item: LogoItem) => item.url && item.mediaType !== "video";
+
+        let items: LogoItem[] = [];
+
+        // 1. Prioritize audience-matched logos
+        if (audienceFilter) {
+          const industryQ = query(
+            mediaRef,
+            ...baseConstraints,
+            where("industry", "array-contains", audienceFilter),
+            limit(maxLogos)
+          );
+          const industrySnap = await getDocs(industryQ);
+          if (canceled) return;
+          items = industrySnap.docs.map(toLogoItem).filter(isValidLogo);
+        }
+
+        // 2. Backfill remaining spots with any-industry logos
+        if (items.length < maxLogos) {
+          const remaining = maxLogos - items.length;
+          const backfillQ = query(mediaRef, ...baseConstraints, limit(remaining + items.length));
+          const backfillSnap = await getDocs(backfillQ);
+          if (canceled) return;
+          const existingIds = new Set(items.map((i) => i.id));
+          const backfill = backfillSnap.docs
+            .map(toLogoItem)
+            .filter((item) => isValidLogo(item) && !existingIds.has(item.id));
+          items = [...items, ...backfill].slice(0, maxLogos);
+        }
+
         if (!items.length) {
           setLogos(shuffleLogos(placeholderLogos.slice(0, maxLogos)));
         } else {
@@ -2350,7 +2405,7 @@ const LogosBlockSection = ({ block, index }: { block: LogosBlock; index: number 
     return () => {
       canceled = true;
     };
-  }, [maxLogos]);
+  }, [maxLogos, audienceFilter]);
 
   useEffect(() => {
     const rotateLogos = (items: LogoItem[]) => {
@@ -2605,11 +2660,13 @@ const showcaseDefaultRatio = 9 / 16;
 const ShowcaseBlockSection = ({
   block,
   index,
-  headerHeight
+  headerHeight,
+  audienceFilter
 }: {
   block: ShowcaseBlock;
   index: number;
   headerHeight: number;
+  audienceFilter?: string;
 }) => {
   const basePaddingX = 0;
   const frameRef = useRef<HTMLDivElement | null>(null);
@@ -2628,7 +2685,7 @@ const ShowcaseBlockSection = ({
   const mobilePaddingX = 15;
   const paddingX = isNarrow ? mobilePaddingX : basePaddingX;
   const typeFilter = block.typeFilter?.trim();
-  const industryFilter = block.industryFilter?.trim();
+  const industryFilter = audienceFilter || block.industryFilter?.trim();
   const featuredOnly = Boolean(block.featuredOnly);
   const resultsLimit = clampNumber(block.limit ?? 6, 1, 24);
   const presetName = block.animationPreset ?? defaultAnimationPreset;
@@ -2671,17 +2728,8 @@ const ShowcaseBlockSection = ({
         setLoading(true);
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
-        const constraints: QueryConstraint[] = [where("type", "==", typeFilter)];
-        if (industryFilter) {
-          constraints.push(where("industry", "array-contains", industryFilter));
-        }
-        if (featuredOnly) {
-          constraints.push(where("featured", "==", true));
-        }
-        constraints.push(limit(resultsLimit));
-        const q = query(mediaRef, ...constraints);
-        const snapshot = await getDocs(q);
-        const data: ShowcaseMediaItem[] = snapshot.docs.map((doc) => {
+
+        const toItem = (doc: any): ShowcaseMediaItem => {
           const raw = doc.data() as any;
           const mediaType = raw.mediaType ?? raw.type ?? "image";
           return {
@@ -2692,7 +2740,39 @@ const ShowcaseBlockSection = ({
             width: raw.width,
             height: raw.height
           };
-        });
+        };
+
+        const baseConstraints: QueryConstraint[] = [where("type", "==", typeFilter)];
+        if (featuredOnly) {
+          baseConstraints.push(where("featured", "==", true));
+        }
+
+        let data: ShowcaseMediaItem[] = [];
+
+        // 1. Fetch industry-matched items first (prioritized)
+        if (industryFilter) {
+          const industryQ = query(
+            mediaRef,
+            ...baseConstraints,
+            where("industry", "array-contains", industryFilter),
+            limit(resultsLimit)
+          );
+          const industrySnap = await getDocs(industryQ);
+          data = industrySnap.docs.map(toItem);
+        }
+
+        // 2. Backfill remaining spots with any-industry media
+        if (data.length < resultsLimit) {
+          const remaining = resultsLimit - data.length;
+          const backfillQ = query(mediaRef, ...baseConstraints, limit(remaining + data.length));
+          const backfillSnap = await getDocs(backfillQ);
+          const existingIds = new Set(data.map((d) => d.id));
+          const backfill = backfillSnap.docs
+            .map(toItem)
+            .filter((item) => !existingIds.has(item.id));
+          data = [...data, ...backfill].slice(0, resultsLimit);
+        }
+
         if (!canceled) {
           setItems(data);
         }
@@ -2708,7 +2788,7 @@ const ShowcaseBlockSection = ({
     return () => {
       canceled = true;
     };
-  }, [typeFilter, industryFilter, featuredOnly, resultsLimit]);
+  }, [typeFilter, industryFilter, audienceFilter, featuredOnly, resultsLimit]);
 
   const displayItems = (items.length ? items.slice(0, resultsLimit) : []).slice(0, resultsLimit);
   const cardCount = displayItems.length || 1;
@@ -3157,7 +3237,9 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
   );
 };
 
-export function BlocksRenderer({ blocks }: BlocksRendererProps) {
+function BlocksRendererInner({ blocks }: BlocksRendererProps) {
+  const searchParams = useSearchParams();
+  const audienceFilter = searchParams.get("audience") ?? undefined;
   const headerHeight = useHeaderHeight();
   const viewportWidth = useViewportWidth();
   const initialVisibleCount = 2;
@@ -3202,11 +3284,11 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
           }
           let element: JSX.Element;
           if (block.type === "hero" || block.type === "thirds") {
-            element = renderHeroBlock(block, index, headerHeight, viewportWidth);
+            element = renderHeroBlock(block, index, headerHeight, viewportWidth, audienceFilter);
           } else if (block.type === "animated_headline") {
             element = renderAnimatedHeadlineBlock(block, index, headerHeight);
           } else if (block.type === "logos") {
-            element = <LogosBlockSection key={key} block={block} index={index} />;
+            element = <LogosBlockSection key={key} block={block} index={index} audienceFilter={audienceFilter} />;
           } else if (block.type === "scroll_gallery") {
             element = (
               <ScrollGalleryBlockSection
@@ -3217,7 +3299,7 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
               />
             );
           } else if (block.type === "showcase") {
-            element = <ShowcaseBlockSection key={key} block={block} index={index} headerHeight={headerHeight} />;
+            element = <ShowcaseBlockSection key={key} block={block} index={index} headerHeight={headerHeight} audienceFilter={audienceFilter} />;
           } else if (block.type === "split") {
             element = renderSplitBlock(block, index);
           } else if (block.type === "features") {
@@ -3254,5 +3336,13 @@ export function BlocksRenderer({ blocks }: BlocksRendererProps) {
         })}
       </div>
     </>
+  );
+}
+
+export function BlocksRenderer(props: BlocksRendererProps) {
+  return (
+    <Suspense>
+      <BlocksRendererInner {...props} />
+    </Suspense>
   );
 }
