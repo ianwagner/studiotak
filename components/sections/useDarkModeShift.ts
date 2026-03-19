@@ -6,7 +6,6 @@ let activeShifts = 0;
 let storedTheme: "light" | "dark" | null = null;
 let transitionTimer: number | null = null;
 let applyFrame: number | null = null;
-let revertTimer: number | null = null;
 let currentTheme: "light" | "dark" | null = null;
 
 const readBaseTheme = (): "light" | "dark" => {
@@ -55,12 +54,6 @@ const applyTheme = (theme: "light" | "dark") => {
 };
 
 const applyDarkMode = () => {
-  const root = document.documentElement;
-  if (!root) return;
-  if (revertTimer !== null) {
-    clearTimeout(revertTimer);
-    revertTimer = null;
-  }
   getStoredTheme();
   activeShifts += 1;
   applyTheme("dark");
@@ -75,23 +68,14 @@ const releaseDarkMode = () => {
       cancelAnimationFrame(applyFrame);
       applyFrame = null;
     }
-    if (revertTimer !== null) {
-      clearTimeout(revertTimer);
-    }
     const nextTheme = getStoredTheme();
-    // Slightly longer hold before reverting to prevent flicker near section edges
-    revertTimer = window.setTimeout(() => {
-      applyTheme(nextTheme);
-      // Wait for the CSS transition to finish before removing the transition class
-      const delay = 480;
-      transitionTimer = window.setTimeout(() => {
-        root.classList.remove("theme-transition");
-        storedTheme = null;
-        currentTheme = root.getAttribute("data-theme") as "light" | "dark" | null;
-        transitionTimer = null;
-      }, delay);
-      revertTimer = null;
-    }, 160);
+    applyTheme(nextTheme);
+    transitionTimer = window.setTimeout(() => {
+      root.classList.remove("theme-transition");
+      storedTheme = null;
+      currentTheme = root.getAttribute("data-theme") as "light" | "dark" | null;
+      transitionTimer = null;
+    }, 550);
   }
 };
 

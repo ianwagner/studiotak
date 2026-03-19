@@ -203,48 +203,14 @@
   }
 }
 
-:root.theme-transition,
-:root.theme-transition body {
+:root.theme-transition * {
   transition:
-    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.06s;
-}
-
-:root.theme-transition main,
-:root.theme-transition header,
-:root.theme-transition footer,
-:root.theme-transition section,
-:root.theme-transition .card,
-:root.theme-transition .btn,
-:root.theme-transition .table,
-:root.theme-transition .tag,
-:root.theme-transition .nav-link,
-:root.theme-transition .nav-parent-trigger,
-:root.theme-transition .input,
-:root.theme-transition textarea,
-:root.theme-transition select,
-:root.theme-transition [data-nav-links],
-:root.theme-transition [data-nav-links] a,
-:root.theme-transition [data-site-footer],
-:root.theme-transition [data-logos-fade] {
-  transition:
-    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.04s,
-    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.04s,
-    color 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.06s;
-}
-
-:root.theme-transition h1,
-:root.theme-transition h2,
-:root.theme-transition h3,
-:root.theme-transition h4,
-:root.theme-transition h5,
-:root.theme-transition h6,
-:root.theme-transition p,
-:root.theme-transition span,
-:root.theme-transition a {
-  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.06s;
+    background-color 0.5s ease,
+    border-color 0.5s ease,
+    box-shadow 0.5s ease,
+    color 0.5s ease,
+    fill 0.5s ease,
+    stroke 0.5s ease !important;
 }
 
 * {
