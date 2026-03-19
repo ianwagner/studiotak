@@ -1090,7 +1090,7 @@ const renderStoryBlock = (block: StoryBlock, index: number) => {
   const sectionsList = renderBlockSections(block.sections);
   const storyOuterStyle: CSSProperties = {
     width: "100%",
-    maxWidth: "var(--max-width)",
+    maxWidth: 720,
     marginLeft: "auto",
     marginRight: "auto",
     paddingLeft: sectionPx,
@@ -1111,7 +1111,7 @@ const renderStoryBlock = (block: StoryBlock, index: number) => {
       <AnimatedSection key={block.id ?? index} index={index} variant="plain" style={storyOuterStyle}>
         <div
           className="grid"
-          style={{ gap: 18, alignItems: "start", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
+          style={{ gap: 18, alignItems: "start", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
         >
           <div className="grid" style={{ gap: 12 }}>
             {storyHeading}
@@ -1139,7 +1139,7 @@ const renderStoryBlock = (block: StoryBlock, index: number) => {
               <p style={{ margin: 0, fontSize: 18, lineHeight: 1.4 }}>{block.body}</p>
             </div>
           ) : null}
-          <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+          <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
             {storyHeading}
             {media}
           </div>
