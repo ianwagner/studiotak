@@ -2779,7 +2779,7 @@ export function PageForm({
                 secondary={
                   <div className="field-group">
                     <label>Variant</label>
-                    <select value={block.variant} onChange={(e) => handleStoryVariantChange(idx, e.target.value as StoryBlock["variant"])}>
+                    <select value={(block as StoryBlock).variant} onChange={(e) => handleStoryVariantChange(idx, e.target.value as StoryBlock["variant"])}>
                       <option value="single_column">Single column</option>
                       <option value="two_column">Two column</option>
                       <option value="split_with_quote">Split with quote</option>
