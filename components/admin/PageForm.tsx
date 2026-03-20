@@ -354,6 +354,25 @@ const newArticleGridBlock = (): ArticleGridBlock => ({
   enableDarkModeOnScroll: false
 });
 
+const newProductDemoBlock = (): ProductDemoBlock => ({
+  id: crypto.randomUUID(),
+  type: "product_demo",
+  adminLabel: "Product demo",
+  eyebrow: "See it in action",
+  heading: "",
+  body: "",
+  demoId: "ad_review",
+  exampleData: {
+    index: 1,
+    version: "V2",
+    status: "pending",
+    portraitAd: { imageUrl: "", brandName: "", headline: "" },
+    squareAd: { imageUrl: "", brandName: "", headline: "" },
+    copy: { primary: "", headline: "", description: "" },
+  },
+  enableDarkModeOnScroll: false,
+});
+
 const normalizeSlugLocal = (slug: string) => {
   const trimmed = slug.trim();
   if (!trimmed) return "/";
@@ -566,6 +585,8 @@ export function PageForm({
           return newArticleFeaturedBlock();
         case "article_grid":
           return newArticleGridBlock();
+        case "product_demo":
+          return newProductDemoBlock();
         default:
           return newStoryBlock();
       }
@@ -1330,6 +1351,7 @@ export function PageForm({
                 <option value="animated_headline">Animated headline</option>
                 <option value="article_featured">Featured article</option>
                 <option value="article_grid">Article grid</option>
+                <option value="product_demo">Product demo</option>
               </select>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
