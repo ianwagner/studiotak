@@ -19,7 +19,7 @@ No test suite is configured.
 
 Pages are stored in Firestore as documents with a `blocks` array. Each block defines a section type (hero, thirds, split, features, etc.). Components (reusable feature items) are stored separately and merged into blocks at render time via `lib/pageContent.ts`. When Firebase is unavailable, seed data from `lib/admin/pages.ts` and `lib/admin/components.ts` is used as fallback.
 
-Ghost CMS provides blog/article content at `/learn/`. Articles are fetched via the Ghost Content API (`lib/ghost.ts`) and rendered with `dangerouslySetInnerHTML`.
+Ghost CMS provides blog/article content at `/learn/`. Articles are fetched via the Ghost Content API (`lib/ghost.ts`) and rendered with `dangerouslySetInnerHTML`. Each article page includes a Campfire CTA and related posts section at the bottom — the CTA destination is determined by Ghost tags on the article (see "Learn Page SEO & Campfire Linking" below).
 
 ### Routing
 
@@ -136,6 +136,20 @@ Each block needs `id` + `type`. Full type definitions in `lib/admin/pages.ts`. R
 - All blocks support `enableDarkModeOnScroll` to toggle dark theme as the user scrolls into view
 - Feature items in `features` and `scroll_gallery` blocks can reference components via `componentId` — the component's data (title, body, icon) overwrites the item at render time
 - `showcase` and `logos` blocks pull media from the Firebase `media` collection, not from inline data
+
+### Learn Page SEO & Campfire Linking
+
+Article pages (`/learn/[slug]`) include JSON-LD Article structured data, OpenGraph article metadata, and `generateStaticParams` for build-time pre-rendering. The `/learn` listing includes JSON-LD Blog schema.
+
+Each article renders a **Campfire CTA** and **related posts** section. Ghost tags on the article control the CTA destination:
+
+| Ghost tag type | Examples | Effect |
+|----------------|----------|--------|
+| Page tags | `growth`, `brands`, `agencies` | Routes to `/campfire/growth`, `/campfire/brands`, `/campfire/agencies` |
+| Audience tags | `fashion`, `ecommerce`, `saas`, `fintech`, etc. | Appended as `?audience=<tag>` |
+| No match | — | Defaults to `/campfire` |
+
+Tag maps are in `app/learn/[slug]/page.tsx` (`CAMPFIRE_PAGE_TAGS`, `CAMPFIRE_AUDIENCE_TAGS`). Related posts are ranked by tag overlap with the current article, limited to 3.
 
 ### Components Data Model
 

@@ -1001,6 +1001,19 @@ main {
   align-items: center;
 }
 
+.learn-read-more {
+  display: grid;
+  gap: 32px;
+  padding: 48px 0 64px;
+  border-top: 1px solid var(--border);
+}
+
+.learn-campfire-cta {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
 @media (max-width: 800px) {
   .learn-article {
     padding: 72px 16px 120px;

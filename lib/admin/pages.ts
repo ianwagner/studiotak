@@ -946,5 +946,159 @@ export const seedPages: PageRecord[] = [
           "https://js-na2.hsforms.net/forms/embed/244262601.js",
       },
     ],
-  }
+  },
+  {
+    id: "campfire-growth",
+    slug: "/campfire/growth",
+    title: "Campfire for Growth Teams",
+    status: "published",
+    seoTitle:
+      "Campfire for Growth Teams — Bespoke Meta Ad Creative That Converts",
+    metaDescription:
+      "High-volume Meta ad creative built for performance. Fresh concepts on demand, fast turnaround, and a production pipeline that keeps up with your testing cadence.",
+    ogTitle: "Campfire for Growth Teams — Creative That Keeps Up With Your Spend",
+    ogDescription:
+      "Bespoke Meta ad creative built for media buyers and growth marketers. Fresh hooks, fast iterations, and a pipeline that matches your testing velocity.",
+    focusKeyword: "meta ad creative for growth marketers",
+    blocks: [
+      {
+        id: "cfg-hero",
+        type: "hero",
+        eyebrow: "Campfire / For Growth Teams",
+        title: "Creative that keeps up with your spend",
+        subtitle:
+          "You're scaling Meta ads and burning through creative faster than your team can make it. Campfire gives you a steady pipeline of bespoke ad creative — fresh hooks, new angles, fast iterations — without hiring another designer.",
+        primaryCtaLabel: "Let's talk creative",
+        primaryCtaHref: "#contact",
+        secondaryCtaLabel: "See what you get",
+        secondaryCtaHref: "#pipeline",
+        alignment: "centered",
+        mode: "dynamic",
+        mediaTypeTag: "Example",
+      },
+      {
+        id: "cfg-headline",
+        type: "animated_headline",
+        headline: "Test more. Win more. Burn out less.",
+        subtext:
+          "Your best-performing ad is only your best-performing ad until it fatigues. You need a creative partner who can keep pace.",
+        animationStyle: "fade_by_word",
+        animationMode: "scroll",
+        freezeOnScroll: true,
+        enableDarkModeOnScroll: true,
+      },
+      {
+        id: "cfg-pipeline",
+        type: "story",
+        anchor: "pipeline",
+        heading: "Your creative pipeline",
+        body: "Campfire is built for the way growth teams actually work — fast cycles, constant testing, and a need for creative that doesn't all look the same.",
+        variant: "two_column",
+        sections: [
+          {
+            title: "Brief it, ship it",
+            body: "Submit a brief, get bespoke ad creative back — designed by humans who understand Meta's ad ecosystem. No templates, no AI-generated filler. Every ad is made to perform.",
+          },
+          {
+            title: "Iterate on winners",
+            body: "Found a hook that's working? We'll spin variations — new formats, fresh angles, different aspect ratios — so you can test deeper without starting from scratch every time.",
+          },
+          {
+            title: "Review in one click",
+            body: "Ads and copy show up side by side in a single shareable link. Approve, reject, or request changes — feedback flows back to us in real time. No email threads, no Slack scavenger hunts.",
+          },
+          {
+            title: "Download and deploy",
+            body: "Approved creative is ready to pull into your ad manager immediately. Organized by campaign, sized for every placement. No reformatting, no hunting through Drive folders.",
+          },
+        ],
+      },
+      {
+        id: "cfg-built-for-testing",
+        type: "features",
+        anchor: "testing",
+        eyebrow: "Built for testing velocity",
+        heading: "The creative infrastructure you've been missing",
+        body: "You have the data, the budget, and the strategy. What you don't have is enough fresh creative to test against. That's what Campfire solves.",
+        columns: 3,
+        items: [
+          {
+            title: "Fresh concepts on demand",
+            body: "New hooks, new angles, new visual approaches — on your schedule. No waiting for a design queue or a creative director's calendar.",
+            badge: "Volume",
+          },
+          {
+            title: "Performance-informed",
+            body: "Our designers understand what works on Meta. Aspect ratio best practices, hook structures, thumb-stopping patterns — baked into every ad.",
+            badge: "Performance",
+          },
+          {
+            title: "Fast turnaround",
+            body: "Measured in days, not weeks. Your testing cadence shouldn't slow down because creative can't keep up.",
+            badge: "Speed",
+          },
+        ],
+      },
+      {
+        id: "cfg-split-fatigue",
+        type: "split",
+        eyebrow: "The real problem",
+        heading: "Creative fatigue is a growth problem",
+        body: "You already know: even your best ads have a shelf life. CPAs creep up, CTRs flatten, and suddenly your winning creative is yesterday's news. The brands that win on Meta are the ones that can keep feeding the machine with fresh, high-quality creative. Campfire makes that sustainable.",
+        mediaSide: "right",
+        ctaLabel: "See how it works",
+        ctaHref: "#pipeline",
+      },
+      {
+        id: "cfg-why",
+        type: "scroll_gallery",
+        eyebrow: "Why Campfire for growth",
+        heading: "Built for media buyers who care about creative",
+        body: "You know creative is the biggest lever in your account. You just need a partner who can pull it.",
+        items: [
+          {
+            title: "Pay per ad, scale on your terms",
+            body: "No retainers, no subscriptions, no minimum commitments. Order five ads or fifty — pricing stays the same. Scale up for a launch, scale down when you're optimizing.",
+            badge: "Flexible pricing",
+          },
+          {
+            title: "Human-made, Meta-optimized",
+            body: "Real designers who understand the platform. Creative decisions informed by what actually performs — made by people with taste, not a prompt.",
+            badge: "Quality",
+          },
+          {
+            title: "Your testing partner",
+            body: "Need three variations of a winning hook? A new concept for a cold audience? Static and video versions of the same angle? Just ask. We're built for iteration.",
+            badge: "Iteration",
+          },
+          {
+            title: "Zero production overhead",
+            body: "No hiring, no managing, no creative direction needed. Brief us, review the work, deploy. We handle everything in between.",
+            badge: "Effortless",
+          },
+        ],
+      },
+      {
+        id: "cfg-showcase",
+        type: "showcase",
+        typeFilter: "Example",
+        limit: 8,
+        featuredOnly: true,
+        animationPreset: "fan",
+      },
+      {
+        id: "cfg-contact",
+        type: "contact",
+        eyebrow: "Let's talk",
+        heading: "Tell us about your growth goals",
+        body: "Share your monthly ad volume, what's working (and what's not), and where creative is the bottleneck. We'll come back with a plan to keep your pipeline full.",
+        anchor: "contact",
+        formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
+        portalId: "244262601",
+        region: "na2",
+        formScriptSrc:
+          "https://js-na2.hsforms.net/forms/embed/244262601.js",
+      },
+    ],
+  },
 ];
