@@ -1325,13 +1325,11 @@ const ProductDemoBlockSection = ({ block, index }: { block: ProductDemoBlock; in
         @media (min-width: 900px) {
           #${sectionId} .product-demo-layout {
             flex-direction: row !important;
-            align-items: flex-start !important;
+            align-items: center !important;
           }
           #${sectionId} .product-demo-copy {
             flex: 1 1 0 !important;
             text-align: left !important;
-            position: sticky;
-            top: 120px;
           }
           #${sectionId} .product-demo-card {
             flex: 1 1 0 !important;
