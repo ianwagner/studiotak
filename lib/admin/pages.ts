@@ -1227,6 +1227,7 @@ export const seedPages: PageRecord[] = [
     id: "home",
     slug: "/",
     title: "Home",
+    status: "published",
     canonicalUrl: "https://studiotak.co/",
     ogTitle: "Studio Tak | Marketing Technology & Creative Production",
     ogDescription: "Creative production systems for brands and agencies running Meta ads at scale.",
@@ -1355,7 +1356,6 @@ export const seedPages: PageRecord[] = [
     ],
     seoTitle: "Studio Tak | Design Systems & Interactive Experiences",
     metaDescription: "Static-first marketing pages built with React islands where they matter.",
-    status: "draft",
   },
   {
     id: "work",
