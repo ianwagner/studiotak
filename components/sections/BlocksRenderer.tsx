@@ -661,7 +661,7 @@ const DynamicHeroColumns = ({
           borderRadius: 18,
           overflow: "hidden",
           background: "transparent",
-          boxShadow: "0 10px 24px rgba(0,0,0,0.1)",
+          boxShadow: "none",
           aspectRatio
         }}
       >
