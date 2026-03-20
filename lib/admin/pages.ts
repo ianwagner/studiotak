@@ -458,6 +458,38 @@ export const seedPages: PageRecord[] = [
         ],
       },
       {
+        id: "cfa-comparison",
+        type: "comparison",
+        eyebrow: "The difference",
+        heading: "Stop stitching tools together",
+        body: "Most agencies cobble together spreadsheets, Drive folders, and Slack threads to manage creative production. Campfire replaces all of it.",
+        columns: [
+          {
+            heading: "Without Campfire",
+            items: [
+              "Status updates via email and Slack",
+              "Creative shared through Drive links",
+              "Feedback scattered across threads",
+              "Manual reporting in spreadsheets",
+              "Client onboarding takes days",
+              "Brand assets live in shared folders",
+            ],
+          },
+          {
+            heading: "With Campfire",
+            highlighted: true,
+            items: [
+              "Real-time production dashboard",
+              "One-link review for every campaign",
+              "Feedback tied to the creative it\u2019s about",
+              "Automated reporting and exports",
+              "Clients are in within minutes",
+              "Brand profiles with everything in one place",
+            ],
+          },
+        ],
+      },
+      {
         id: "cfa-split-scale",
         type: "split",
         eyebrow: "At scale",
@@ -466,6 +498,19 @@ export const seedPages: PageRecord[] = [
         mediaSide: "left",
         ctaLabel: "See it in action",
         ctaHref: "#contact",
+      },
+      {
+        id: "cfa-stats",
+        type: "stats",
+        eyebrow: "By the numbers",
+        heading: "Built for agency-scale production",
+        variant: "card",
+        items: [
+          { value: "48", suffix: "hrs", label: "Average turnaround time" },
+          { value: "1", label: "Link to review every campaign" },
+          { value: "0", label: "Emails needed to review ads" },
+          { value: "100", suffix: "%", label: "Bespoke \u2014 no templates" },
+        ],
       },
       {
         id: "cfa-why",
@@ -639,6 +684,30 @@ export const seedPages: PageRecord[] = [
         ],
       },
       {
+        id: "cfb-spotlight",
+        type: "feature_spotlight",
+        eyebrow: "Your brand, your way",
+        heading: "Everything is built around you",
+        body: "Campfire isn\u2019t a self-serve tool. It\u2019s a creative partner that learns your brand and delivers work that feels like it came from your own team.",
+        items: [
+          {
+            title: "Dedicated brand profile",
+            body: "Your logos, tone of voice, product shots, brand guidelines, and past creative \u2014 all stored in one place. Every designer who touches your account starts from context, not a blank page.",
+            badge: "Brand",
+          },
+          {
+            title: "Direct line to your team",
+            body: "Questions, revision requests, and creative direction \u2014 all inside Campfire, tied to the campaign. No middlemen, no lost context.",
+            badge: "Communication",
+          },
+          {
+            title: "Gallery-ready downloads",
+            body: "Every approved ad is organized by campaign and sized for every Meta placement. Download individually or in bulk \u2014 ready to drop straight into Ads Manager.",
+            badge: "Delivery",
+          },
+        ],
+      },
+      {
         id: "cfb-split-bespoke",
         type: "split",
         eyebrow: "The creative",
@@ -647,6 +716,19 @@ export const seedPages: PageRecord[] = [
         mediaSide: "right",
         ctaLabel: "See how it works",
         ctaHref: "#how-it-works",
+      },
+      {
+        id: "cfb-stats",
+        type: "stats",
+        eyebrow: "Simple, transparent",
+        heading: "No retainers. No surprises.",
+        variant: "default",
+        items: [
+          { value: "1", label: "Price per ad \u2014 that\u2019s it" },
+          { value: "48", suffix: "hr", label: "Typical turnaround" },
+          { value: "0", label: "Subscriptions or lock-in" },
+          { value: "5", suffix: "min", label: "From link to first review" },
+        ],
       },
       {
         id: "cfb-why",
@@ -836,6 +918,19 @@ export const seedPages: PageRecord[] = [
         type: "features",
       },
       {
+        id: "cfg-stats",
+        type: "stats",
+        eyebrow: "The numbers",
+        heading: "Creative velocity, measured",
+        variant: "card",
+        items: [
+          { value: "48", suffix: "hr", label: "Brief to delivered creative" },
+          { value: "3", suffix: "x", label: "More concepts per testing cycle" },
+          { value: "0", label: "Minimum commitments" },
+          { value: "100", suffix: "%", label: "Human-designed, every ad" },
+        ],
+      },
+      {
         mediaSide: "right",
         body: "You already know: even your best ads have a shelf life. CPAs creep up, CTRs flatten, and suddenly your winning creative is yesterday's news. The brands that win on Meta are the ones that can keep feeding the machine with fresh, high-quality creative. Campfire makes that sustainable.",
         type: "split",
@@ -844,6 +939,38 @@ export const seedPages: PageRecord[] = [
         eyebrow: "The real problem",
         id: "cfg-split-fatigue",
         heading: "Creative fatigue is a growth problem",
+      },
+      {
+        id: "cfg-comparison",
+        type: "comparison",
+        eyebrow: "Choose your path",
+        heading: "Template tools vs. a creative partner",
+        body: "Self-serve design tools are great for social posts. But when performance matters, you need creative built for the platform.",
+        columns: [
+          {
+            heading: "Template tools",
+            items: [
+              "Same layouts everyone else uses",
+              "You do the design work",
+              "No Meta-specific optimization",
+              "Creative fatigue built in",
+              "Iteration means starting over",
+              "You manage the whole process",
+            ],
+          },
+          {
+            heading: "Campfire",
+            highlighted: true,
+            items: [
+              "Bespoke creative for your brand",
+              "Human designers do the work",
+              "Built for Meta\u2019s ad ecosystem",
+              "Fresh concepts on demand",
+              "Variations and iterations included",
+              "Brief it, review it, deploy it",
+            ],
+          },
+        ],
       },
       {
         heading: "Built for media buyers who care about creative",
