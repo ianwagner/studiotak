@@ -575,7 +575,7 @@ const DynamicHeroColumns = ({
   }, [industryTag, typeTag, maxItems]);
 
   const fallbackItems = useMemo(() => buildHeroPlaceholderMedia(maxItems, block.media), [block.media, maxItems]);
-  const resolvedItems = items.length ? items : fallbackItems;
+  const resolvedItems = items.length ? items : loading ? [] : fallbackItems;
   const columns = useMemo(() => {
     const buckets: HeroMediaItem[][] = [[], [], []];
     resolvedItems.forEach((item, idx) => {
@@ -1317,27 +1317,57 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
 };
 
 const ProductDemoBlockSection = ({ block, index }: { block: ProductDemoBlock; index: number }) => {
+  const hasCopy = !!(block.eyebrow || block.heading || block.body);
+  const sectionId = `product-demo-${block.id ?? index}`;
   return (
-    <section
-      key={block.id ?? index}
-      style={{
-        width: "100%",
-        maxWidth: "var(--max-width)",
-        margin: "0 auto",
-        padding: "var(--block-gap) var(--section-px)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 32,
-      }}
-    >
-      {(block.eyebrow || block.heading || block.body) && (
-        <SectionHeading eyebrow={block.eyebrow} title={block.heading ?? ""} kicker={block.body} />
-      )}
-      <AnimatedSection variant="plain" index={0} style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-        {block.demoId === "ad_review" ? <AdReviewDemo block={block} /> : null}
-      </AnimatedSection>
-    </section>
+    <>
+      <style>{`
+        @media (min-width: 900px) {
+          #${sectionId} .product-demo-layout {
+            flex-direction: row !important;
+            align-items: flex-start !important;
+          }
+          #${sectionId} .product-demo-copy {
+            flex: 1 1 0 !important;
+            text-align: left !important;
+            position: sticky;
+            top: 120px;
+          }
+          #${sectionId} .product-demo-card {
+            flex: 1 1 0 !important;
+          }
+        }
+      `}</style>
+      <section
+        id={sectionId}
+        key={block.id ?? index}
+        style={{
+          width: "100%",
+          maxWidth: "var(--max-width)",
+          margin: "0 auto",
+          padding: "var(--block-gap) var(--section-px)",
+        }}
+      >
+        <div
+          className="product-demo-layout"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 32,
+          }}
+        >
+          {hasCopy && (
+            <div className="product-demo-copy">
+              <SectionHeading eyebrow={block.eyebrow} title={block.heading ?? ""} kicker={block.body} />
+            </div>
+          )}
+          <AnimatedSection variant="plain" index={0} className="product-demo-card" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+            {block.demoId === "ad_review" ? <AdReviewDemo block={block} /> : null}
+          </AnimatedSection>
+        </div>
+      </section>
+    </>
   );
 };
 

@@ -146,6 +146,12 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
   };
 
   return (
+    <>
+    <style>{`
+      @media (max-width: 899px) {
+        .ad-review-portrait { display: none !important; }
+      }
+    `}</style>
     <div
       style={{
         background: "#ffffff",
@@ -228,8 +234,8 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
 
       {/* Main content: portrait ad + right column (equal widths) */}
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-        {/* 9:16 portrait ad */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        {/* 9:16 portrait ad — hidden on mobile */}
+        <div className="ad-review-portrait" style={{ flex: 1, minWidth: 0 }}>
           <AdCreative
             aspect="9x16"
             imageUrl={data.portraitAd?.imageUrl}
@@ -475,5 +481,6 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
         </DemoPopover>
       </div>
     </div>
+    </>
   );
 }
