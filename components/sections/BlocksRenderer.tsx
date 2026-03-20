@@ -2799,7 +2799,6 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
           display: "grid",
           gap: 0,
           alignContent: "start",
-          overflow: "hidden",
           position: "relative"
         }}
       >
@@ -2817,7 +2816,6 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
             gap: 10
           }}
         >
-          {col.icon && <img src={col.icon} alt="" aria-hidden style={{ width: 28, height: 28, objectFit: "contain" }} />}
           {col.heading}
         </h3>
         <motion.ul
