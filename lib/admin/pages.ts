@@ -735,28 +735,6 @@ export const seedPages: PageRecord[] = [
         ctaHref: "#how-it-works",
       },
       {
-        id: "cfb-how-it-works",
-        type: "story",
-        anchor: "how-it-works",
-        heading: "How it works",
-        body: "Three steps between you and ads that actually represent your brand.",
-        variant: "two_column",
-        sections: [
-          {
-            title: "1. Share your brand",
-            body: "Send us your brand guidelines, product pages, and any creative you like. We study what makes your brand yours — colors, tone, audience, the whole picture.",
-          },
-          {
-            title: "2. We make your ads",
-            body: "Our designers build bespoke static and video ads optimized for Meta. Every layout, headline, and visual choice is intentional — informed by what actually performs.",
-          },
-          {
-            title: "3. Review from a single link",
-            body: "Review your ads in Campfire. Approve, reject, or request edits — all from one link, no account required. Your feedback comes straight back to us in real time.",
-          },
-        ],
-      },
-      {
         id: "cfb-why",
         type: "scroll_gallery",
         eyebrow: "Why Campfire",
@@ -784,6 +762,14 @@ export const seedPages: PageRecord[] = [
             badge: "Results",
           },
         ],
+      },
+      {
+        id: "cfb-showcase",
+        type: "showcase",
+        typeFilter: "Example",
+        limit: 8,
+        featuredOnly: true,
+        animationPreset: "fan",
       },
       {
         id: "cfb-contact",
@@ -931,6 +917,14 @@ export const seedPages: PageRecord[] = [
             badge: "Quality",
           },
         ],
+      },
+      {
+        id: "cfa-showcase",
+        type: "showcase",
+        typeFilter: "Example",
+        limit: 8,
+        featuredOnly: true,
+        animationPreset: "fan",
       },
       {
         id: "cfa-contact",

@@ -2801,7 +2801,7 @@ const ShowcaseBlockSection = ({
   const maxCardWidth = 520;
   const computedFitWidth = (availableWidth + overlap * (cardCount - 1)) / cardCount;
   const fittedCardWidth = clampNumber(computedFitWidth, minCardWidth, maxCardWidth);
-  const forceScroll = (viewportWidth ?? Number.POSITIVE_INFINITY) < 1250;
+  const forceScroll = (viewportWidth ?? Number.POSITIVE_INFINITY) < 768;
   const shouldScroll = forceScroll || (fittedCardWidth === minCardWidth && cardCount > 1) || isNarrow;
   const cardWidth = shouldScroll ? Math.min(320, Math.max(minCardWidth, fittedCardWidth)) : fittedCardWidth;
   const maxCardHeight = shouldScroll
