@@ -3839,7 +3839,9 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
   const viewportWidth = useViewportWidth();
   const initialVisibleCount = 2;
   // Defer rendering everything after the first two blocks until the user scrolls toward it to reduce initial work.
-  const shouldLazyLoadRest = blocks.length > initialVisibleCount;
+  // In non-production environments, disable lazy loading so preview/testing tools can see all blocks.
+  const isDevMode = process.env.NODE_ENV !== "production";
+  const shouldLazyLoadRest = !isDevMode && blocks.length > initialVisibleCount;
   const lazyLoadRef = useRef<HTMLDivElement | null>(null);
   const lazyInView = useInView(lazyLoadRef, { once: true, margin: "35% 0px" });
   const [renderRest, setRenderRest] = useState(!shouldLazyLoadRest);

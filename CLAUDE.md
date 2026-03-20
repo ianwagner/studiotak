@@ -214,3 +214,5 @@ After making an API update:
 - **Seeing old data?** The dev server may have a cached ISR page. API writes call `revalidatePath()` automatically, but you may need to reload.
 - **Seed data showing instead of Firestore?** Check that Firebase env vars are set. The inspect endpoint's `source` field confirms this.
 - **Don't read seed files to understand page content** — use the inspect endpoint instead. Seed files may be stale.
+- **Only seeing 2 blocks in production?** BlocksRenderer lazy-loads blocks after the first 2 via IntersectionObserver. This is disabled in dev mode so preview tools see all blocks. In production, users must scroll to trigger loading.
+- **To verify page content, use the inspect endpoint** — it returns the full block list regardless of lazy loading.

@@ -164,15 +164,25 @@ export async function GET(request: NextRequest) {
   const blockSummary = blocks.map(summarizeBlock);
   const blockTypes = blocks.map((b) => b.type);
 
+  const warnings: string[] = [];
+  const effectiveStatus = page.status ?? "draft";
+  if (effectiveStatus !== "published") {
+    warnings.push(`Page status is "${effectiveStatus}" — it will NOT render on the public site. Set status to "published" to make it visible.`);
+  }
+  if (source === "seed" && !page.status) {
+    warnings.push(`Seed data is missing a "status" field — defaults to "draft". Add status: "published" to the seed entry.`);
+  }
+
   return NextResponse.json({
     source,
     page: {
       id: page.id,
       slug: page.slug,
       title: page.title,
-      status: page.status,
+      status: effectiveStatus,
       updatedAt: page.updatedAt,
     },
+    ...(warnings.length ? { warnings } : {}),
     blockCount: blocks.length,
     blockSequence: blockTypes.join(" → "),
     blocks: blockSummary,

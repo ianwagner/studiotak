@@ -12,7 +12,8 @@ import { useEffect, useState } from "react";
 
 interface InspectResult {
   source: "firestore" | "seed" | "not_found";
-  page?: { id: string; title: string; updatedAt?: string };
+  page?: { id: string; title: string; status?: string; updatedAt?: string };
+  warnings?: string[];
   blockCount?: number;
   blockSequence?: string;
 }
@@ -71,6 +72,11 @@ export function DevDataSourceBanner() {
           {info.blockCount} blocks: {info.blockSequence}
         </div>
       )}
+      {info.warnings?.map((w, i) => (
+        <div key={i} style={{ color: "#fca5a5", marginTop: 2, fontWeight: 600 }}>
+          ⚠ {w}
+        </div>
+      ))}
       {info.page?.updatedAt && (
         <div style={{ opacity: 0.7, marginTop: 2 }}>
           Updated: {new Date(info.page.updatedAt).toLocaleString()}
