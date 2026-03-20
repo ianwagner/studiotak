@@ -647,6 +647,34 @@ export const seedPages: PageRecord[] = [
         type: "story",
       },
       {
+        id: "cfg-ad-review-demo",
+        type: "product_demo",
+        eyebrow: "See it in action",
+        heading: "One link. Every ad. Total control.",
+        body: "This is what reviewing ads in Campfire actually looks like — creative and copy side by side, with one-click approval. No logins, no PDFs, no email threads.",
+        demoId: "ad_review",
+        exampleData: {
+          index: 1,
+          version: "V2",
+          status: "pending",
+          portraitAd: {
+            imageUrl: "",
+            brandName: "QUAY",
+            headline: "FRAMES WITH ATTITUDE",
+          },
+          squareAd: {
+            imageUrl: "",
+            brandName: "QUAY",
+            headline: "FRAMES WITH ATTITUDE",
+          },
+          copy: {
+            primary: "Designed to stand out. Eyewear for everywhere.",
+            headline: "SIGNATURE FRAMES",
+            description: "Made to be Seen",
+          },
+        },
+      },
+      {
         heading: "The creative infrastructure you've been missing",
         items: [
           {

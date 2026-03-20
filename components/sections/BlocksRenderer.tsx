@@ -20,7 +20,8 @@ import type {
   ScrollGalleryBlock,
   ShowcaseBlock,
   LogosBlock,
-  SplitBlock
+  SplitBlock,
+  ProductDemoBlock
 } from "@/lib/admin/pages";
 import { AnimatedSection, SectionHeading, Pill } from "./AnimatedSection";
 import { AnimatedHeadline } from "./AnimatedHeadline";
@@ -31,6 +32,7 @@ import { collection, getDocs, getFirestore, limit, query, where, type QueryConst
 import Script from "next/script";
 import Head from "next/head";
 import Link from "next/link";
+import AdReviewDemo from "@/components/demos/AdReviewDemo";
 
 const viewportWidthVar = "var(--full-bleed-width, 100vw)";
 const viewportShiftVar = "var(--full-bleed-shift, calc(50% - 50vw))";
@@ -1311,6 +1313,31 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
         {mediaFirst ? content : media}
       </div>
     </motion.section>
+  );
+};
+
+const ProductDemoBlockSection = ({ block, index }: { block: ProductDemoBlock; index: number }) => {
+  return (
+    <section
+      key={block.id ?? index}
+      style={{
+        width: "100%",
+        maxWidth: "var(--max-width)",
+        margin: "0 auto",
+        padding: "var(--block-gap) var(--section-px)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 32,
+      }}
+    >
+      {(block.eyebrow || block.heading || block.body) && (
+        <SectionHeading eyebrow={block.eyebrow} title={block.heading ?? ""} kicker={block.body} />
+      )}
+      <AnimatedSection variant="plain" index={0}>
+        {block.demoId === "ad_review" ? <AdReviewDemo block={block} /> : null}
+      </AnimatedSection>
+    </section>
   );
 };
 
@@ -3333,6 +3360,8 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
             element = <ArticleGridBlockSection key={key} block={block} />;
           } else if (block.type === "contact") {
             element = <ContactBlockSection key={key} block={block} index={index} />;
+          } else if (block.type === "product_demo") {
+            element = <ProductDemoBlockSection key={key} block={block} index={index} />;
           } else if (block.type === "divider") {
             element = renderDividerBlock(block, index);
           } else {

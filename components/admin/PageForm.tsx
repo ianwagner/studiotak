@@ -22,7 +22,8 @@ import type {
   ContactBlock,
   ArticleFeaturedBlock,
   ArticleGridBlock,
-  BlockMedia
+  BlockMedia,
+  ProductDemoBlock
 } from "@/lib/admin/pages";
 import { animationPresets, defaultAnimationPreset, type AnimationPresetName } from "@/components/sections/animationPresets";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
@@ -65,7 +66,7 @@ type PageFormProps = {
   isDeleting?: boolean;
 };
 
-type MediaTarget = "media" | "background" | "featureIcon";
+type MediaTarget = "media" | "background" | "featureIcon" | "portraitAd" | "squareAd";
 
 function AlignmentSelect({
   value,
@@ -121,6 +122,7 @@ const isShowcaseBlock = (block: EditableBlock): block is ShowcaseBlock => block.
 const isLogosBlock = (block: EditableBlock): block is LogosBlock => block.type === "logos";
 const isContactBlock = (block: EditableBlock): block is ContactBlock => block.type === "contact";
 const isDividerBlock = (block: EditableBlock): block is DividerBlock => block.type === "divider";
+const isProductDemoBlock = (block: EditableBlock): block is ProductDemoBlock => block.type === "product_demo";
 const isArticleFeaturedBlock = (block: EditableBlock): block is ArticleFeaturedBlock => block.type === "article_featured";
 const isArticleGridBlock = (block: EditableBlock): block is ArticleGridBlock => block.type === "article_grid";
 const isFeatureItemsBlock = (block: EditableBlock): block is FeaturesBlock | ScrollGalleryBlock =>
@@ -621,6 +623,50 @@ export function PageForm({
     updateBlock(idx, (block) => (isStoryBlock(block) ? { ...block, variant } : block));
   };
 
+  const handleProductDemoFieldChange = (idx: number, field: string, value: string) => {
+    updateBlock(idx, (block) => {
+      if (!isProductDemoBlock(block)) return block;
+      // Top-level fields
+      if (field === "eyebrow" || field === "heading" || field === "body") {
+        return { ...block, [field]: value };
+      }
+      // Nested exampleData fields use dot notation: "copy.primary", "portraitAd.imageUrl", etc.
+      const parts = field.split(".");
+      if (parts.length === 2) {
+        const [group, key] = parts;
+        const existing = (block.exampleData ?? {}) as Record<string, unknown>;
+        const groupObj = (existing[group] ?? {}) as Record<string, string>;
+        return {
+          ...block,
+          exampleData: {
+            ...existing,
+            [group]: { ...groupObj, [key]: value },
+          },
+        };
+      }
+      // Simple exampleData fields: "index", "version", "status"
+      return {
+        ...block,
+        exampleData: { ...(block.exampleData ?? {}), [field]: value },
+      };
+    });
+  };
+
+  const handleProductDemoMediaChange = (idx: number, target: "portraitAd" | "squareAd", url: string, mediaType?: string) => {
+    updateBlock(idx, (block) => {
+      if (!isProductDemoBlock(block)) return block;
+      const existing = block.exampleData ?? {};
+      const ad = (existing[target] ?? { brandName: "", headline: "", imageUrl: "" }) as Record<string, string>;
+      return {
+        ...block,
+        exampleData: {
+          ...existing,
+          [target]: { ...ad, imageUrl: url },
+        },
+      };
+    });
+  };
+
   const handleSplitFieldChange = (
     idx: number,
     field: keyof Omit<SplitBlock, "id" | "type" | "media">,
@@ -793,6 +839,11 @@ export function PageForm({
       updateBlock(idx, (current) => {
         if (target === "background" && isHeroLikeBlock(current)) {
           return { ...current, background: updatedMedia };
+        }
+        if ((target === "portraitAd" || target === "squareAd") && isProductDemoBlock(current)) {
+          const existing = current.exampleData ?? {};
+          const ad = (existing[target] ?? { brandName: "", headline: "", imageUrl: "" }) as Record<string, string>;
+          return { ...current, exampleData: { ...existing, [target]: { ...ad, imageUrl: url } } };
         }
         return { ...current, media: updatedMedia };
       });
@@ -1203,6 +1254,8 @@ export function PageForm({
         ? "Featured article"
         : block.type === "article_grid"
         ? "Article grid"
+        : block.type === "product_demo"
+        ? "Product demo"
         : "Animated headline";
       const blockLabel = block.adminLabel?.trim() || baseLabel;
       const blockId = block.id ?? `block-${idx}`;
@@ -2545,6 +2598,156 @@ export function PageForm({
                 </p>
               </div>
             </div>
+          ) : block.type === "product_demo" ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "eyebrow", e.target.value)}
+                    placeholder="See it in action"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Demo type</label>
+                  <select value={block.demoId} disabled>
+                    <option value="ad_review">Ad Review</option>
+                  </select>
+                </div>
+              </div>
+              <div className="field-group">
+                <label>Heading</label>
+                <input
+                  className="input"
+                  value={block.heading ?? ""}
+                  onChange={(e) => handleProductDemoFieldChange(idx, "heading", e.target.value)}
+                  placeholder="Section heading"
+                />
+              </div>
+              <div className="field-group">
+                <label>Body</label>
+                <textarea
+                  rows={2}
+                  value={block.body ?? ""}
+                  onChange={(e) => handleProductDemoFieldChange(idx, "body", e.target.value)}
+                  placeholder="Supporting copy below the heading"
+                />
+              </div>
+
+              <h4 style={{ margin: "8px 0 0" }}>Ad Copy</h4>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "1fr 1fr" }}>
+                <div className="field-group">
+                  <label>Brand name</label>
+                  <input
+                    className="input"
+                    value={block.exampleData?.portraitAd?.brandName ?? ""}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "portraitAd.brandName", e.target.value)}
+                    placeholder="QUAY"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Ad headline</label>
+                  <input
+                    className="input"
+                    value={block.exampleData?.portraitAd?.headline ?? ""}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "portraitAd.headline", e.target.value)}
+                    placeholder="FRAMES WITH ATTITUDE"
+                  />
+                </div>
+              </div>
+              <div className="field-group">
+                <label>Primary copy</label>
+                <input
+                  className="input"
+                  value={block.exampleData?.copy?.primary ?? ""}
+                  onChange={(e) => handleProductDemoFieldChange(idx, "copy.primary", e.target.value)}
+                  placeholder="Designed to stand out. Eyewear for everywhere."
+                />
+              </div>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "1fr 1fr" }}>
+                <div className="field-group">
+                  <label>Copy headline</label>
+                  <input
+                    className="input"
+                    value={block.exampleData?.copy?.headline ?? ""}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "copy.headline", e.target.value)}
+                    placeholder="SIGNATURE FRAMES"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Copy description</label>
+                  <input
+                    className="input"
+                    value={block.exampleData?.copy?.description ?? ""}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "copy.description", e.target.value)}
+                    placeholder="Made to be Seen"
+                  />
+                </div>
+              </div>
+
+              <h4 style={{ margin: "8px 0 0" }}>Ad Creative</h4>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "1fr 1fr" }}>
+                <MediaField
+                  blockId={blockId}
+                  blockIdx={idx}
+                  media={block.exampleData?.portraitAd?.imageUrl ? { url: block.exampleData.portraitAd.imageUrl, type: "image" } : undefined}
+                  uploading={uploadingBlock === `${blockId}-portraitAd`}
+                  uploadError={uploadError}
+                  onUpload={(bi, file) => handleMediaUpload(bi, file, "portraitAd")}
+                  onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target: "portraitAd", filterType })}
+                  label="Portrait (9:16)"
+                  accept="image/*"
+                  onClear={() => handleProductDemoMediaChange(idx, "portraitAd", "")}
+                />
+                <MediaField
+                  blockId={blockId}
+                  blockIdx={idx}
+                  media={block.exampleData?.squareAd?.imageUrl ? { url: block.exampleData.squareAd.imageUrl, type: "image" } : undefined}
+                  uploading={uploadingBlock === `${blockId}-squareAd`}
+                  uploadError={uploadError}
+                  onUpload={(bi, file) => handleMediaUpload(bi, file, "squareAd")}
+                  onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target: "squareAd", filterType })}
+                  label="Square (1:1)"
+                  accept="image/*"
+                  onClear={() => handleProductDemoMediaChange(idx, "squareAd", "")}
+                />
+              </div>
+
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "1fr 1fr 1fr" }}>
+                <div className="field-group">
+                  <label>Version badge</label>
+                  <input
+                    className="input"
+                    value={block.exampleData?.version ?? "V8"}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "version", e.target.value)}
+                    placeholder="V8"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Index number</label>
+                  <input
+                    className="input"
+                    type="number"
+                    value={block.exampleData?.index ?? 1}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "index", e.target.value)}
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Default status</label>
+                  <select
+                    value={block.exampleData?.status ?? "pending"}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "status", e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="edit_requested">Edits Requested</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="grid" style={{ gap: 12, padding: 12 }}>
               <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
@@ -2664,6 +2867,8 @@ export function PageForm({
       ? mediaModalBlock.items?.[mediaModal.itemIdx]?.icon?.url ?? ""
       : mediaModal.target === "background" && mediaModalBlock && isHeroLikeBlock(mediaModalBlock)
       ? mediaModalBlock.background?.url ?? ""
+      : (mediaModal.target === "portraitAd" || mediaModal.target === "squareAd") && mediaModalBlock && isProductDemoBlock(mediaModalBlock)
+      ? (mediaModalBlock.exampleData?.[mediaModal.target] as { imageUrl?: string } | undefined)?.imageUrl ?? ""
       : mediaModalBlock && "media" in mediaModalBlock
       ? mediaModalBlock.media?.url ?? ""
       : "";
@@ -3097,6 +3302,8 @@ export function PageForm({
                 url,
                 type: mediaType ?? "image",
               });
+            } else if (mediaModal.target === "portraitAd" || mediaModal.target === "squareAd") {
+              handleProductDemoMediaChange(mediaModal.blockIdx as number, mediaModal.target, url, mediaType);
             } else {
               updateBlock(mediaModal.blockIdx as number, (current) => {
                 const mediaPayload = { url, type: mediaType ?? "image" };
