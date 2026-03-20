@@ -9,6 +9,17 @@ import { useDarkModeShift } from "./useDarkModeShift";
 const viewportWidthVar = "var(--full-bleed-width, 100vw)";
 const viewportShiftVar = "var(--full-bleed-shift, calc(50% - 50vw))";
 
+const useViewportWidth = () => {
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const update = () => setWidth(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  return width;
+};
+
 type TextAnimationVariant = AnimatedHeadlineBlock["animationStyle"];
 type AnimationMode = AnimatedHeadlineBlock["animationMode"];
 
@@ -160,6 +171,7 @@ export function AnimatedHeadline({
 }) {
   const { headline, subtext, animationMode, animationStyle, freezeOnScroll, enableDarkModeOnScroll } = block;
   const enableThemeShift = !!enableDarkModeOnScroll;
+  const viewportWidth = useViewportWidth();
   const containerRef = useRef<HTMLElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const freezeEnabled = freezeOnScroll;
@@ -207,11 +219,22 @@ export function AnimatedHeadline({
       }
     : { position: "relative", width: "100%", marginTop: 15, marginBottom: 15 };
 
+  const isMobile = viewportWidth !== null && viewportWidth < 680;
+  const gutter = isMobile ? 0 : 30;
+  const mobileInset = "var(--full-bleed-mobile-inset, var(--section-px, 15px))";
+  const leftInset = isMobile ? `max(${mobileInset}, env(safe-area-inset-left, 0px))` : `${gutter / 2}px`;
+  const rightInset = isMobile ? `max(${mobileInset}, env(safe-area-inset-right, 0px))` : `${gutter / 2}px`;
+  const bleedWidth = isMobile
+    ? `calc(${viewportWidthVar} - ${leftInset} - ${rightInset})`
+    : `calc(${viewportWidthVar} - ${gutter}px)`;
+  const bleedShiftLeft = `calc(${viewportShiftVar} + ${leftInset})`;
+  const bleedShiftRight = `calc(${viewportShiftVar} + ${rightInset})`;
+
   const wrapperStyle: CSSProperties = {
-    width: `calc(${viewportWidthVar} - 30px)`,
-    maxWidth: `calc(${viewportWidthVar} - 30px)`,
-    marginLeft: `calc(${viewportShiftVar} + 15px)`,
-    marginRight: `calc(${viewportShiftVar} + 15px)`,
+    width: bleedWidth,
+    maxWidth: bleedWidth,
+    marginLeft: bleedShiftLeft,
+    marginRight: bleedShiftRight,
     minHeight,
     padding: "16px",
     display: "flex",

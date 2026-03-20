@@ -1967,15 +1967,23 @@ const FeaturesBlockSection = ({
   const galleryPreset = animationPresets[defaultAnimationPreset];
   const galleryRef = useRef<HTMLDivElement | null>(null);
   const galleryInView = useInView(galleryRef, { amount: 0.3, once: true });
+  const featVW = useViewportWidth();
+  const featIsMobile = featVW !== null && featVW < 680;
+  const featMobileInset = "var(--full-bleed-mobile-inset, var(--section-px, 15px))";
+  const featLeftInset = featIsMobile ? `max(${featMobileInset}, env(safe-area-inset-left, 0px))` : "0px";
+  const featRightInset = featIsMobile ? `max(${featMobileInset}, env(safe-area-inset-right, 0px))` : "0px";
+  const featWidth = featIsMobile
+    ? `calc(${viewportWidthVar} - ${featLeftInset} - ${featRightInset})`
+    : viewportWidthVar;
 
   return (
     <section
       key={block.id ?? index}
       style={{
-        width: viewportWidthVar,
-        maxWidth: viewportWidthVar,
-        marginLeft: viewportShiftVar,
-        marginRight: viewportShiftVar,
+        width: featWidth,
+        maxWidth: featWidth,
+        marginLeft: `calc(${viewportShiftVar} + ${featLeftInset})`,
+        marginRight: `calc(${viewportShiftVar} + ${featRightInset})`,
         padding: "36px 0 42px"
       }}
     >
@@ -2084,11 +2092,21 @@ const ScrollGalleryBlockSection = ({
   const isMobile = (viewportWidth ?? Number.POSITIVE_INFINITY) <= 768;
   const mobileCardWidth = "100%";
   const contentPaddingX = 12;
+  const isMobileBleed = viewportWidth !== null && viewportWidth < 680;
+  const bleedGutter = isMobileBleed ? 0 : 30;
+  const mobileInset = "var(--full-bleed-mobile-inset, var(--section-px, 15px))";
+  const bleedLeftInset = isMobileBleed ? `max(${mobileInset}, env(safe-area-inset-left, 0px))` : `${bleedGutter / 2}px`;
+  const bleedRightInset = isMobileBleed ? `max(${mobileInset}, env(safe-area-inset-right, 0px))` : `${bleedGutter / 2}px`;
+  const bleedWidth = isMobileBleed
+    ? `calc(${viewportWidthVar} - ${bleedLeftInset} - ${bleedRightInset})`
+    : `calc(${viewportWidthVar} - ${bleedGutter}px)`;
+  const bleedShiftLeft = `calc(${viewportShiftVar} + ${bleedLeftInset})`;
+  const bleedShiftRight = `calc(${viewportShiftVar} + ${bleedRightInset})`;
   const bleedContentStyle: CSSProperties = {
-    width: `calc(${viewportWidthVar} - 30px)`,
-    maxWidth: `calc(${viewportWidthVar} - 30px)`,
-    marginLeft: `calc(${viewportShiftVar} + 15px)`,
-    marginRight: `calc(${viewportShiftVar} + 15px)`,
+    width: bleedWidth,
+    maxWidth: bleedWidth,
+    marginLeft: bleedShiftLeft,
+    marginRight: bleedShiftRight,
     display: "grid",
     justifyContent: "center"
   };
@@ -2096,11 +2114,16 @@ const ScrollGalleryBlockSection = ({
     width: "100%",
     maxWidth: "var(--max-width)"
   };
+  const fullBleedLeftInset = isMobileBleed ? `max(${mobileInset}, env(safe-area-inset-left, 0px))` : "0px";
+  const fullBleedRightInset = isMobileBleed ? `max(${mobileInset}, env(safe-area-inset-right, 0px))` : "0px";
+  const fullBleedWidth = isMobileBleed
+    ? `calc(${viewportWidthVar} - ${fullBleedLeftInset} - ${fullBleedRightInset})`
+    : viewportWidthVar;
   const fullBleedStyle: CSSProperties = {
-    width: viewportWidthVar,
-    maxWidth: viewportWidthVar,
-    marginLeft: viewportShiftVar,
-    marginRight: viewportShiftVar,
+    width: fullBleedWidth,
+    maxWidth: fullBleedWidth,
+    marginLeft: `calc(${viewportShiftVar} + ${fullBleedLeftInset})`,
+    marginRight: `calc(${viewportShiftVar} + ${fullBleedRightInset})`,
     padding: "36px 0 42px",
     display: "flex",
     alignItems: "center",
