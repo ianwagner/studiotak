@@ -13,15 +13,15 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const status = url.searchParams.get("status");
 
-    let q: FirebaseFirestore.Query = db.collection("pages").orderBy("title", "asc");
+    let q: FirebaseFirestore.Query = db.collection("pages");
     if (status) {
-      q = db.collection("pages").where("status", "==", status).orderBy("title", "asc");
+      q = q.where("status", "==", status);
     }
 
     const snapshot = await q.get();
-    const data = snapshot.docs.map((docSnap) =>
-      normalizePageShape({ id: docSnap.id, ...docSnap.data() })
-    );
+    const data = snapshot.docs
+      .map((docSnap) => normalizePageShape({ id: docSnap.id, ...docSnap.data() }))
+      .sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
     return NextResponse.json({ data, total: data.length });
   } catch (error) {
     console.error("Failed to list pages", error);
