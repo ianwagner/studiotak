@@ -1334,7 +1334,7 @@ const ProductDemoBlockSection = ({ block, index }: { block: ProductDemoBlock; in
       {(block.eyebrow || block.heading || block.body) && (
         <SectionHeading eyebrow={block.eyebrow} title={block.heading ?? ""} kicker={block.body} />
       )}
-      <AnimatedSection variant="plain" index={0}>
+      <AnimatedSection variant="plain" index={0} style={{ width: "100%", display: "flex", justifyContent: "center" }}>
         {block.demoId === "ad_review" ? <AdReviewDemo block={block} /> : null}
       </AnimatedSection>
     </section>
