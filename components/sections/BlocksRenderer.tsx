@@ -17,6 +17,7 @@ import type {
   StoryBlock,
   FeaturesBlock,
   FeatureItem,
+  FeatureSpotlightBlock,
   ScrollGalleryBlock,
   ShowcaseBlock,
   LogosBlock,
@@ -2033,6 +2034,75 @@ const FeaturesBlockSection = ({
     ? `calc(${viewportWidthVar} - ${featLeftInset} - ${featRightInset})`
     : viewportWidthVar;
 
+  if (block.variant === "stacked") {
+    return (
+      <section
+        key={block.id ?? index}
+        style={{ padding: "48px 0 56px" }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "var(--max-width)",
+            margin: "0 auto",
+            padding: `0 ${paddingX}px`
+          }}
+        >
+          <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} align="center" />
+          <motion.div
+            ref={galleryRef}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 0,
+              marginTop: 32
+            }}
+            variants={galleryPreset.container}
+            initial="hidden"
+            animate={galleryInView ? "visible" : "hidden"}
+          >
+            {items.map((item, idx) => (
+              <motion.div
+                key={`${item.title}-${idx}`}
+                variants={galleryPreset.item}
+                className="features-stacked-item"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: featIsMobile ? "1fr" : "auto 1fr",
+                  gap: featIsMobile ? 8 : 24,
+                  alignItems: "start",
+                  padding: featIsMobile ? "24px 0" : "28px 0",
+                  borderBottom: idx < items.length - 1 ? "1px solid var(--border)" : "none"
+                }}
+              >
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  minWidth: featIsMobile ? undefined : 200
+                }}>
+                  {item.badge ? (
+                    <Pill>{item.badge}</Pill>
+                  ) : null}
+                  <strong style={{ fontSize: 20 }}>{item.title}</strong>
+                </div>
+                <p style={{
+                  margin: 0,
+                  color: "var(--muted)",
+                  fontSize: 15,
+                  lineHeight: 1.6,
+                  maxWidth: 540
+                }}>
+                  {item.body}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       key={block.id ?? index}
@@ -2085,6 +2155,164 @@ const FeaturesBlockSection = ({
             ))}
           </motion.div>
         </div>
+      </div>
+    </section>
+  );
+};
+
+const FeatureSpotlightBlockSection = ({
+  block,
+  index
+}: {
+  block: FeatureSpotlightBlock;
+  index: number;
+}) => {
+  const items = block.items ?? [];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeItem = items[activeIndex] ?? items[0];
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(sectionRef, { amount: 0.3, once: true });
+  const vw = useViewportWidth();
+  const isMobile = vw !== null && vw < 768;
+
+  if (!items.length) return null;
+
+  return (
+    <section
+      key={block.id ?? index}
+      ref={sectionRef}
+      style={{ padding: "48px 0 56px" }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "var(--max-width)",
+          margin: "0 auto",
+          padding: "0 16px"
+        }}
+      >
+        <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} align="center" />
+        <motion.div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "280px 1fr",
+            gap: isMobile ? 16 : 0,
+            marginTop: 32,
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius)",
+            overflow: "hidden",
+            background: "var(--surface)"
+          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          {/* Tab list */}
+          <div
+            className="spotlight-tabs"
+            style={{
+              display: "flex",
+              flexDirection: isMobile ? "row" : "column",
+              borderRight: isMobile ? "none" : "1px solid var(--border)",
+              borderBottom: isMobile ? "1px solid var(--border)" : "none",
+              overflow: isMobile ? "auto" : undefined
+            }}
+          >
+            {items.map((item, idx) => (
+              <button
+                key={`${item.title}-${idx}`}
+                onClick={() => setActiveIndex(idx)}
+                className={`spotlight-tab${idx === activeIndex ? " spotlight-tab-active" : ""}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: isMobile ? "12px 16px" : "16px 20px",
+                  background: idx === activeIndex ? "var(--accent-subtle, rgba(255,107,53,0.08))" : "transparent",
+                  border: "none",
+                  borderLeft: !isMobile && idx === activeIndex ? "3px solid var(--accent)" : !isMobile ? "3px solid transparent" : "none",
+                  borderBottom: isMobile && idx === activeIndex ? "2px solid var(--accent)" : isMobile ? "2px solid transparent" : "none",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  width: isMobile ? "auto" : "100%",
+                  whiteSpace: isMobile ? "nowrap" : undefined,
+                  transition: "background 0.2s ease, border-color 0.2s ease",
+                  color: "var(--text)",
+                  fontFamily: "inherit",
+                  fontSize: 15,
+                  fontWeight: idx === activeIndex ? 600 : 400
+                }}
+              >
+                {item.badge ? (
+                  <span style={{
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    color: idx === activeIndex ? "var(--accent)" : "var(--muted)",
+                    fontWeight: 600,
+                    marginRight: 4
+                  }}>
+                    {item.badge}
+                  </span>
+                ) : null}
+                <span>{item.title}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Active content panel */}
+          <motion.div
+            key={activeIndex}
+            style={{
+              padding: isMobile ? "24px 20px" : "32px 36px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: 16,
+              minHeight: isMobile ? undefined : 200
+            }}
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {activeItem.icon?.url ? (
+                <img
+                  src={activeItem.icon.url}
+                  alt={activeItem.icon.alt ?? ""}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    border: "1px solid var(--border)",
+                    objectFit: activeItem.mediaFit === "contain" ? "contain" : "cover"
+                  }}
+                />
+              ) : null}
+              <h3 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>{activeItem.title}</h3>
+            </div>
+            <p style={{
+              margin: 0,
+              color: "var(--muted)",
+              fontSize: 16,
+              lineHeight: 1.7,
+              maxWidth: 520
+            }}>
+              {activeItem.body}
+            </p>
+            {activeItem.href ? (
+              <AnchorAwareLink
+                href={activeItem.href}
+                className="nav-link"
+                trackingName="content_link_click"
+                trackingSection="feature_spotlight"
+                style={{ width: "fit-content" }}
+              >
+                Learn more
+              </AnchorAwareLink>
+            ) : null}
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );
@@ -2500,15 +2728,48 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
   const inView = useInView(gridRef, { amount: 0.3, once: true });
   const [colA, colB] = block.columns ?? [];
 
+  const staggerItems = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.06 } }
+  };
+  const fadeUp = {
+    hidden: { opacity: 0, y: 8 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }
+  };
+
   const CheckIcon = () => (
-    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: 22,
+      height: 22,
+      borderRadius: "50%",
+      background: "var(--accent)",
+      flexShrink: 0,
+      marginTop: 1
+    }}>
+      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    </span>
   );
   const XIcon = () => (
-    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
-      <path d="M18 6 6 18M6 6l12 12" />
-    </svg>
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: 22,
+      height: 22,
+      borderRadius: "50%",
+      background: "var(--border-strong)",
+      flexShrink: 0,
+      marginTop: 1
+    }}>
+      <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+        <path d="M18 6 6 18M6 6l12 12" />
+      </svg>
+    </span>
   );
 
   const renderColumn = (col: typeof colA, isHighlighted: boolean) => {
@@ -2517,45 +2778,64 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
       <div
         style={{
           padding: 28,
-          borderRadius: 16,
-          border: isHighlighted ? "1px solid var(--accent)" : "1px solid var(--border-strong)",
-          background: isHighlighted ? "rgba(var(--accent-rgb, 99,102,241), 0.04)" : "rgba(255,255,255,0.02)",
+          borderRadius: 20,
+          border: isHighlighted ? "2px solid var(--accent)" : "1px solid var(--border-strong)",
+          background: isHighlighted ? "var(--accent-soft)" : "rgba(255,255,255,0.02)",
           display: "grid",
           gap: 0,
-          alignContent: "start"
+          alignContent: "start",
+          overflow: "hidden",
+          position: "relative"
         }}
       >
         <h3
           style={{
             margin: 0,
-            fontSize: 20,
-            fontWeight: 600,
+            fontSize: 22,
+            fontWeight: 700,
             paddingBottom: 16,
-            borderBottom: "1px solid var(--border-strong)"
+            borderBottom: isHighlighted ? "1px solid var(--accent)" : "1px solid var(--border-strong)",
+            color: isHighlighted ? "var(--accent)" : "var(--muted)",
+            letterSpacing: "-0.01em",
+            display: "flex",
+            alignItems: "center",
+            gap: 10
           }}
         >
+          {isHighlighted && <span style={{ fontSize: 28, lineHeight: 1 }}>🔥</span>}
           {col.heading}
         </h3>
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+        <motion.ul
+          style={{ listStyle: "none", margin: 0, padding: 0 }}
+          variants={staggerItems}
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+        >
           {(col.items ?? []).map((item, idx) => (
-            <li
+            <motion.li
               key={idx}
+              variants={fadeUp}
               style={{
                 display: "flex",
                 alignItems: "flex-start",
-                gap: 10,
-                padding: "12px 0",
-                borderBottom: idx < col.items.length - 1 ? "1px solid var(--border-strong)" : "none",
+                gap: 12,
+                padding: "14px 0",
+                borderBottom: idx < col.items.length - 1
+                  ? `1px solid ${isHighlighted ? "rgba(255,112,11,0.15)" : "var(--border-strong)"}`
+                  : "none",
                 fontSize: 15,
                 color: isHighlighted ? "var(--fg)" : "var(--muted)",
-                lineHeight: 1.45
+                lineHeight: 1.5,
+                textDecoration: isHighlighted ? "none" : "none",
               }}
             >
               {isHighlighted ? <CheckIcon /> : <XIcon />}
-              <span>{item}</span>
-            </li>
+              <span style={{
+                opacity: isHighlighted ? 1 : 0.7,
+              }}>{item}</span>
+            </motion.li>
           ))}
-        </ul>
+        </motion.ul>
       </div>
     );
   };
@@ -2600,7 +2880,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
           className="grid"
           style={{
             gridTemplateColumns: "1fr 1fr",
-            gap: 16,
+            gap: 20,
             alignItems: "start"
           }}
           variants={preset.container}
@@ -3606,6 +3886,8 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
             element = renderSplitBlock(block, index);
           } else if (block.type === "features") {
             element = <FeaturesBlockSection key={key} block={block} index={index} />;
+          } else if (block.type === "feature_spotlight") {
+            element = <FeatureSpotlightBlockSection key={key} block={block} index={index} />;
           } else if (block.type === "article_featured") {
             element = <ArticleFeaturedBlockSection key={key} block={block} />;
           } else if (block.type === "article_grid") {

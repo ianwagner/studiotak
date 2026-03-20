@@ -1139,6 +1139,15 @@ main {
   padding-top: 6px;
 }
 
+/* Feature spotlight tabs */
+.spotlight-tab:hover {
+  background: var(--accent-subtle, rgba(255, 107, 53, 0.05));
+}
+
+.spotlight-tab-active:hover {
+  background: var(--accent-subtle, rgba(255, 107, 53, 0.08));
+}
+
 /* Features gallery */
 @media (max-width: 960px) {
   .features-gallery-track {

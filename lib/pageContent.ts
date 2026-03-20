@@ -8,6 +8,7 @@ import type {
   StoryBlock,
   FeatureItem,
   FeaturesBlock,
+  FeatureSpotlightBlock,
   ScrollGalleryBlock
 } from "./admin/pages";
 import { seedPages } from "./admin/pages";
@@ -137,13 +138,17 @@ const mergeBlocksWithComponents = (blocks: BlockRecord[], map: Record<string, Co
       const items = (block.items ?? []).map((item) => mergeFeatureItemWithComponent(item, map));
       return { ...(block as ScrollGalleryBlock), items };
     }
+    if (block.type === "feature_spotlight") {
+      const items = (block.items ?? []).map((item) => mergeFeatureItemWithComponent(item, map));
+      return { ...(block as FeatureSpotlightBlock), items };
+    }
     return block;
   });
 
 const collectComponentIds = (blocks: BlockRecord[]): string[] => {
   const ids = new Set<string>();
   blocks.forEach((block) => {
-    if (block.type === "features" || block.type === "scroll_gallery") {
+    if (block.type === "features" || block.type === "scroll_gallery" || block.type === "feature_spotlight") {
       (block.items ?? []).forEach((item) => {
         if (item.componentId) ids.add(item.componentId);
       });

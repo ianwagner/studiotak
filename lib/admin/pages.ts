@@ -116,6 +116,19 @@ export type FeaturesBlock = {
   body?: string;
   columns?: number;
   items: FeatureItem[];
+  variant?: "default" | "stacked";
+  enableDarkModeOnScroll?: boolean;
+};
+
+export type FeatureSpotlightBlock = {
+  id: string;
+  type: "feature_spotlight";
+  adminLabel?: string;
+  anchor?: string;
+  eyebrow?: string;
+  heading: string;
+  body?: string;
+  items: FeatureItem[];
   enableDarkModeOnScroll?: boolean;
 };
 
@@ -274,6 +287,7 @@ export type BlockRecord =
   | StoryBlock
   | SplitBlock
   | FeaturesBlock
+  | FeatureSpotlightBlock
   | AnimatedHeadlineBlock
   | ScrollGalleryBlock
   | ShowcaseBlock
@@ -1002,11 +1016,10 @@ export const seedPages: PageRecord[] = [
       },
       {
         id: "cf-platform",
-        type: "features",
+        type: "feature_spotlight",
         eyebrow: "The platform",
         heading: "Everything in one place",
         body: "Campfire isn't just where ads get made \u2014 it's where you manage the whole relationship. Review creative, track progress, and access everything we've delivered.",
-        columns: 3,
         items: [
           {
             title: "One-link review",
@@ -1028,25 +1041,26 @@ export const seedPages: PageRecord[] = [
       {
         id: "cf-who-its-for",
         type: "features",
+        variant: "stacked",
         eyebrow: "Built for",
-        heading: "You've outgrown Canva. You're not ready for an agency.",
-        body: "Campfire fills the gap between DIY and enterprise \u2014 professional creative for brands that are growing fast and need ads that keep up.",
+        heading: "Creative firepower for every stage of growth",
+        body: "Whether you're running lean or scaling fast, Campfire gives you professional creative without the overhead of an agency or a full-time hire.",
         columns: 3,
         items: [
           {
-            title: "Scaling founders",
-            body: "You're spending $10K\u2013$100K/month on Meta and you know your creative could be better. You need great ads without hiring a full-time designer.",
-            badge: "Entrepreneurs",
+            title: "Creative ops teams",
+            body: "You're juggling briefs, brand guidelines, and a backlog that never shrinks. Campfire becomes your on-demand production arm \u2014 consistent quality, zero onboarding.",
+            badge: "Creative ops",
           },
           {
-            title: "Growth & media buyers",
-            body: "You know what to test but can't get creative made fast enough. Campfire keeps your ad account fed with fresh, on-brand creative.",
-            badge: "Performance teams",
+            title: "Growth leads",
+            body: "You know what to test but can't get creative made fast enough. Campfire keeps your ad account fed with fresh, on-brand assets so you never stall a winning campaign.",
+            badge: "Growth",
           },
           {
-            title: "Marketing teams at SMBs",
-            body: "Your team is growing but your creative resources aren't. We work like an extension of your team \u2014 learning your brand, not just filling a queue.",
-            badge: "Growing brands",
+            title: "Solo entrepreneurs",
+            body: "You'd rather spend your time on the business than inside Canva. We handle the creative so you can focus on what actually moves the needle.",
+            badge: "Founders",
           },
         ],
       },
@@ -1062,31 +1076,33 @@ export const seedPages: PageRecord[] = [
       },
       {
         id: "cf-vs-alternatives",
-        type: "features",
+        type: "comparison",
         eyebrow: "Honest comparison",
         heading: "How Campfire stacks up",
-        body: "We're not the right fit for everyone. But if you're scaling Meta ads and want creative that performs, here's why brands choose us.",
-        columns: 2,
-        items: [
+        body: "We're not the right fit for everyone. But if you want creative that performs, here's why brands choose us.",
+        columns: [
           {
-            title: "vs. Design subscriptions",
-            body: "Services like Design Pickle charge $2K+/month for a general design queue. We specialize in Meta ads, charge per ad, and you talk to people who know your brand.",
-            badge: "No subscription",
+            heading: "The other guys",
+            items: [
+              "Generic design queues with no ad expertise",
+              "AI-generated ads with no brand nuance",
+              "Freelancers who disappear mid-project",
+              "Monthly subscriptions whether you need them or not",
+              "Endless revisions with no strategic input",
+              "One-size-fits-all templates",
+            ],
           },
           {
-            title: "vs. AI ad tools",
-            body: "AI can generate an ad. We make your ad. Human taste, brand nuance, and creative direction that AI can't replicate \u2014 yet.",
-            badge: "Human-led",
-          },
-          {
-            title: "vs. Freelancers",
-            body: "Stop rolling the dice. We bring consistent quality, Meta ad expertise, and a real creative relationship \u2014 not a one-off transaction.",
-            badge: "Consistent",
-          },
-          {
-            title: "vs. Doing it yourself",
-            body: "Your time is worth more than another hour in Canva. Focus on running your business \u2014 we'll handle the creative.",
-            badge: "Your time back",
+            heading: "Campfire",
+            highlighted: true,
+            items: [
+              "Specialists in Meta ad creative that converts",
+              "Human-led creative with real brand understanding",
+              "A consistent team that learns your brand over time",
+              "Pay per ad \u2014 scale up or down as you need",
+              "Strategic creative direction baked into every asset",
+              "Custom creative tailored to your audience and goals",
+            ],
           },
         ],
       },

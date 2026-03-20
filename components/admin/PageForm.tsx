@@ -25,7 +25,8 @@ import type {
   BlockMedia,
   ProductDemoBlock,
   StatsBlock,
-  ComparisonBlock
+  ComparisonBlock,
+  FeatureSpotlightBlock
 } from "@/lib/admin/pages";
 import { animationPresets, defaultAnimationPreset, type AnimationPresetName } from "@/components/sections/animationPresets";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
@@ -127,8 +128,9 @@ const isDividerBlock = (block: EditableBlock): block is DividerBlock => block.ty
 const isProductDemoBlock = (block: EditableBlock): block is ProductDemoBlock => block.type === "product_demo";
 const isArticleFeaturedBlock = (block: EditableBlock): block is ArticleFeaturedBlock => block.type === "article_featured";
 const isArticleGridBlock = (block: EditableBlock): block is ArticleGridBlock => block.type === "article_grid";
-const isFeatureItemsBlock = (block: EditableBlock): block is FeaturesBlock | ScrollGalleryBlock =>
-  isFeaturesBlock(block) || isScrollGalleryBlock(block);
+const isFeatureSpotlightBlock = (block: EditableBlock): block is FeatureSpotlightBlock => block.type === "feature_spotlight";
+const isFeatureItemsBlock = (block: EditableBlock): block is FeaturesBlock | ScrollGalleryBlock | FeatureSpotlightBlock =>
+  isFeaturesBlock(block) || isScrollGalleryBlock(block) || isFeatureSpotlightBlock(block);
 const isAnimatedHeadlineBlock = (block: EditableBlock): block is AnimatedHeadlineBlock => block.type === "animated_headline";
 const isStatsBlock = (block: EditableBlock): block is StatsBlock => block.type === "stats";
 const isComparisonBlock = (block: EditableBlock): block is ComparisonBlock => block.type === "comparison";
@@ -716,6 +718,14 @@ export function PageForm({
     updateBlock(idx, (block) => (isFeaturesBlock(block) ? { ...block, [field]: value } : block));
   };
 
+  const handleSpotlightFieldChange = (
+    idx: number,
+    field: keyof Omit<FeatureSpotlightBlock, "id" | "type" | "items">,
+    value: FeatureSpotlightBlock[keyof Omit<FeatureSpotlightBlock, "id" | "type" | "items">]
+  ) => {
+    updateBlock(idx, (block) => (isFeatureSpotlightBlock(block) ? { ...block, [field]: value } : block));
+  };
+
   const handleScrollGalleryFieldChange = (
     idx: number,
     field: keyof Omit<ScrollGalleryBlock, "id" | "type" | "items">,
@@ -1267,6 +1277,8 @@ export function PageForm({
         ? "Split block"
         : block.type === "features"
         ? "Features block"
+        : block.type === "feature_spotlight"
+        ? "Feature spotlight"
         : block.type === "scroll_gallery"
         ? "Scroll gallery"
         : block.type === "showcase"
@@ -1352,6 +1364,7 @@ export function PageForm({
                 <option value="story">Story / Text</option>
                 <option value="split">Split</option>
                 <option value="features">Features</option>
+                <option value="feature_spotlight">Feature spotlight</option>
                 <option value="logos">Logos</option>
                 <option value="scroll_gallery">Scroll gallery</option>
                 <option value="showcase">Showcase</option>
@@ -2579,6 +2592,100 @@ export function PageForm({
                       style={{ width: "fit-content" }}
                     >
                       Remove feature
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : isFeatureSpotlightBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => handleSpotlightFieldChange(idx, "eyebrow", e.target.value)}
+                    placeholder="Section label"
+                  />
+                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => handleSpotlightFieldChange(idx, "anchor", value)}
+                  placeholder={block.anchor || "spotlight"}
+                />
+              </div>
+              <div className="field-group">
+                <label>Heading</label>
+                <input
+                  className="input"
+                  value={block.heading}
+                  onChange={(e) => handleSpotlightFieldChange(idx, "heading", e.target.value)}
+                  placeholder="Spotlight heading"
+                />
+              </div>
+              <div className="field-group">
+                <label>Body / kicker</label>
+                <textarea
+                  rows={3}
+                  value={block.body ?? ""}
+                  onChange={(e) => handleSpotlightFieldChange(idx, "body", e.target.value)}
+                  placeholder="Brief description"
+                />
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!block.enableDarkModeOnScroll}
+                  onChange={(e) => handleSpotlightFieldChange(idx, "enableDarkModeOnScroll", e.target.checked)}
+                />
+                <span>Trigger dark mode while this section is in view</span>
+              </label>
+              <div className="grid" style={{ gap: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                  <h4 style={{ margin: 0 }}>Spotlight items</h4>
+                  <button type="button" className="btn secondary" onClick={() => addFeatureItem(idx)}>
+                    + Add item
+                  </button>
+                </div>
+                {(block.items ?? []).map((item, itemIdx) => (
+                  <div key={`${item.title}-${itemIdx}`} className="card" style={{ padding: 12 }}>
+                    <div className="grid" style={{ gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                      <div className="field-group">
+                        <label>Title</label>
+                        <input
+                          className="input"
+                          value={item.title}
+                          onChange={(e) => updateFeatureItem(idx, itemIdx, "title", e.target.value)}
+                          placeholder="Tab label"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label>Badge (optional)</label>
+                        <input
+                          className="input"
+                          value={item.badge ?? ""}
+                          onChange={(e) => updateFeatureItem(idx, itemIdx, "badge", e.target.value)}
+                          placeholder="Category label"
+                        />
+                      </div>
+                    </div>
+                    <div className="field-group">
+                      <label>Body</label>
+                      <textarea
+                        rows={3}
+                        value={item.body}
+                        onChange={(e) => updateFeatureItem(idx, itemIdx, "body", e.target.value)}
+                        placeholder="Detail shown when this tab is active"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => removeFeatureItem(idx, itemIdx)}
+                      style={{ width: "fit-content" }}
+                    >
+                      Remove item
                     </button>
                   </div>
                 ))}
