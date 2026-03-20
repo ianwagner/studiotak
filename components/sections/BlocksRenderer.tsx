@@ -2795,14 +2795,14 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
             fontWeight: 700,
             paddingBottom: 16,
             borderBottom: isHighlighted ? "1px solid var(--accent)" : "1px solid var(--border-strong)",
-            color: isHighlighted ? "var(--accent)" : "var(--muted)",
+            color: isHighlighted ? "var(--fg)" : "var(--muted)",
             letterSpacing: "-0.01em",
             display: "flex",
             alignItems: "center",
             gap: 10
           }}
         >
-          {isHighlighted && <span style={{ fontSize: 28, lineHeight: 1 }}>🔥</span>}
+          {col.icon && <img src={col.icon} alt="" aria-hidden style={{ width: 28, height: 28 }} />}
           {col.heading}
         </h3>
         <motion.ul

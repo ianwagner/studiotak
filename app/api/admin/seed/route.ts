@@ -61,6 +61,23 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Validate no duplicate slugs in seed data before pushing
+    const slugMap = new Map<string, string>();
+    const conflicts: string[] = [];
+    for (const page of seedPages) {
+      const existing = slugMap.get(page.slug);
+      if (existing) {
+        conflicts.push(`slug "${page.slug}" claimed by "${existing}" and "${page.id}"`);
+      }
+      slugMap.set(page.slug, page.id);
+    }
+    if (conflicts.length > 0) {
+      return NextResponse.json(
+        { error: "Duplicate slugs in seed data", conflicts },
+        { status: 400 }
+      );
+    }
+
     const db = getDb();
     const batch = db.batch();
 

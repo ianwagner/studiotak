@@ -266,6 +266,7 @@ export type ComparisonColumn = {
   heading: string;
   items: string[];
   highlighted?: boolean;
+  icon?: string;
 };
 
 export type ComparisonBlock = {
@@ -1095,6 +1096,7 @@ export const seedPages: PageRecord[] = [
           {
             heading: "Campfire",
             highlighted: true,
+            icon: "/campfire-icon.png",
             items: [
               "Specialists in Meta ad creative that converts",
               "Human-led creative with real brand understanding",
@@ -1184,40 +1186,6 @@ export const seedPages: PageRecord[] = [
         heading: "Pull up a chair.",
       },
     ],
-  },
-  {
-    id: "sXWpx8DgXVqcDnCYJ9XG",
-    title: "Home",
-    slug: "/",
-    noindex: false,
-    nofollow: false,
-    sitemapExclude: false,
-    canonicalUrl: "https://www.studiotak.co/",
-    socialImage: {
-      url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1765343575514-Ian%20Wagner%C2%A0BW.webp?alt=media&token=59af2921-1ea9-4fea-b343-81288d41d434",
-      type: "image",
-    },
-    seoTitle: "Studio Tak | Design Systems & Interactive Experiences",
-    blocks: [
-      {
-        secondaryCtaLabel: "Log in",
-        eyebrow: "Studio Tak",
-        enableDarkModeOnScroll: false,
-        id: "c9657663-de24-4b74-87c2-730cd94ef3a7",
-        type: "hero",
-        secondaryCtaHref: "https://campfire.studiotak.co/login",
-        alignment: "centered",
-        primaryCtaLabel: "Learn about Campfire ",
-        background: {
-          url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1765343575514-Ian%20Wagner%C2%A0BW.webp?alt=media&token=59af2921-1ea9-4fea-b343-81288d41d434",
-          type: "image",
-        },
-        title: "Design & Build",
-        primaryCtaHref: "/campfire",
-        overlayStyle: "full",
-      },
-    ],
-    status: "published",
   },
   {
     id: "about",
@@ -1390,166 +1358,6 @@ export const seedPages: PageRecord[] = [
     status: "draft",
   },
   {
-    id: "vuh98yDJC4GRHkBBAdEX",
-    title: "Campfire",
-    slug: "/campfire",
-    noindex: false,
-    sitemapExclude: false,
-    twitterTitle: "Campfire from Studio Tak | Your on demand Meta creative team",
-    canonicalUrl: "https://studiotak.co/campfire",
-    twitterDescription: "Campfire is a creative system built for ad volume so your brand can launch and test high performing ads.",
-    ogTitle: "Campfire from Studio Tak | Your on demand Meta creative team",
-    socialImage: {
-      url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/social-media%2F1765477501105-campfire.webp?alt=media&token=e7ce8040-3838-46a9-85aa-eb1132af6bcf",
-      alt: "campfire.png",
-      type: "image",
-    },
-    ogDescription: "Campfire is a creative system built for ad volume so your brand can launch and test high performing ads.",
-    seoTitle: "Campfire from Studio Tak | Your on demand Meta creative team",
-    metaDescription: "Campfire is a creative system built for ad volume so your brand can launch and test high performing ads.",
-    nofollow: false,
-    focusKeyword: "Meta Ads",
-    blocks: [
-      {
-        enableDarkModeOnScroll: true,
-        primaryCtaHref: "#how-it-works",
-        type: "hero",
-        secondaryCtaHref: "/campfire/demo",
-        mediaTypeTag: "Example",
-        subtitle: "High-performing ads. Built fast. Grounded in your brand.",
-        alignment: "centered",
-        title: "Your on demand Meta creative team.",
-        primaryCtaLabel: "How it works",
-        adminLabel: "Campfire Hero",
-        mode: "dynamic",
-        eyebrow: "Meet Campfire",
-        secondaryCtaLabel: "Get started",
-        id: "64750003-8354-4fde-90ac-43f3533cdca6",
-      },
-      {
-        eyebrow: "Built for your brand",
-        adminLabel: "Example Ads - Featured",
-        limit: 6,
-        id: "560c7587-3d2b-48de-bf9c-bb3bf4674b4c",
-        featuredOnly: true,
-        typeFilter: "Example",
-        enableDarkModeOnScroll: false,
-        subhead: "We match your style so every asset feels authentic even at high volume.",
-        heading: "Creative that belongs to you, not a template.",
-        type: "showcase",
-        animationPreset: "lift",
-      },
-      {
-        body: "Brand safe, Meta ready, and fully streamlined so your team can move faster.\n",
-        columns: 3,
-        enableDarkModeOnScroll: false,
-        eyebrow: "How we keep the fire burning",
-        heading: "A system that works while you grow.",
-        id: "29fff391-7637-4972-a209-58c81495c817",
-        items: [
-          {
-            type: "Feature",
-            title: "Design systems",
-            icon: {
-              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343941137-03.webp?alt=media&token=442804d3-ac26-4a96-9b00-2e6b568e3b91",
-              type: "image",
-              alt: "Design systems icon",
-            },
-            body: "Token-driven systems with responsive, animated components.",
-            componentId: "feature-design-systems",
-            industry: "SaaS",
-          },
-          {
-            type: "Feature",
-            icon: {
-              type: "image",
-              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343922083-01.webp?alt=media&token=9198ee90-4e0d-4569-b279-04ef402e721d",
-              alt: "Launch icon",
-            },
-            industry: "Growth",
-            title: "Launch ops",
-            body: "CMS schemas, QA scripts, and rollout playbooks for marketing.",
-            componentId: "feature-launch",
-          },
-          {
-            body: "Choreographed interactions tested in the browser early.",
-            title: "Motion-led UX",
-            componentId: "feature-motion",
-            type: "Feature",
-            industry: "Product",
-            icon: {
-              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343932988-02.webp?alt=media&token=eb2cdf34-89c5-49de-aa02-a5a09f1e275d",
-              alt: "Motion icon",
-              type: "image",
-            },
-          },
-        ],
-        type: "features",
-      },
-      {
-        alignment: "image_right",
-        eyebrow: "Crafted by People",
-        subtitle: "Creative is more than pixels. We pair smart tooling with a team that obsesses over your voice, protects your identity, and makes choices no model can guess.",
-        title: "If it looks like we're having fun, we are.",
-        type: "thirds",
-        id: "6e576fb0-d7ee-47cf-8344-66a53749af1d",
-        enableDarkModeOnScroll: false,
-        media: {
-          url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343950557-04.webp?alt=media&token=6500082a-80a6-4a1e-a01d-adfb4293693a",
-          type: "image",
-        },
-      },
-      {
-        id: "dcacd309-23ee-4ad9-8f84-d6a30f9f16fd",
-        items: [
-          {
-            type: "Step",
-            componentId: "pNO61TjszP44YMwzkwP3",
-            body: "After your initial call, we align on your brand. Upload your guidelines, tone, assets, and examples so our your Campfire team can get to work!",
-            title: "Align Your Brand",
-          },
-          {
-            type: "Step",
-            body: "Share your needs and priorities. Product, angle, audience, and ad type. Detailed brief or simple notes both work.",
-            title: "Set Goals for This Round",
-            componentId: "L3NooCAAw9IW98SknUkX",
-          },
-          {
-            componentId: "p3OufBybGhJfiLa9q73K",
-            title: "Review and Approve Creative",
-            type: "Step",
-            body: "Review your ads inside Campfire\u2019s streamlined approval system. Leave comments, request edits, and approve creative in one place so nothing slows down your momentum.",
-          },
-          {
-            componentId: "O0RItZf6VrRu2c5sToOp",
-            title: "Launch and Learn",
-            body: "Launch fast with export ready ads. Share performance insights so the Campfire team can refine what works and improve each round.",
-            type: "Step",
-          },
-        ],
-        enableDarkModeOnScroll: false,
-        body: "Campfire keeps things moving. Clear steps, real people, and a system built to help great ideas turn into live ads quickly.",
-        eyebrow: "How it Works",
-        type: "scroll_gallery",
-        anchor: "how-it-works",
-        heading: "Where creative comes together.",
-      },
-      {
-        alignment: "centered",
-        primaryCtaLabel: "Get a demo",
-        title: "Want to learn more?",
-        layout: "centered",
-        subtitle: "Schedule a demo to walk through Campfire and see how we help brands produce and test more Meta creative every week, without adding chaos to their workflow.",
-        type: "thirds",
-        eyebrow: "Let's Chat",
-        enableDarkModeOnScroll: false,
-        primaryCtaHref: "/campfire/demo",
-        id: "31aa4c1b-824a-4d38-8522-1d793ce79acf",
-      },
-    ],
-    status: "draft",
-  },
-  {
     id: "work",
     blocks: [
       {
@@ -1587,3 +1395,14 @@ export const seedPages: PageRecord[] = [
   }
 ];
 
+// Dev-time guard: surface duplicate slugs immediately when the dev server starts.
+if (process.env.NODE_ENV === "development") {
+  const slugMap = new Map<string, string>();
+  for (const page of seedPages) {
+    const existing = slugMap.get(page.slug);
+    if (existing) {
+      console.warn(`⚠ Duplicate slug "${page.slug}" in seed data: "${existing}" and "${page.id}"`);
+    }
+    slugMap.set(page.slug, page.id);
+  }
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { isAuthorized, getDb, stripUndefined, unauthorized, missingFirebase, firebaseConfigured } from "@/lib/adminApi";
+import { isAuthorized, getDb, stripUndefined, unauthorized, missingFirebase, firebaseConfigured, findConflictingSlug } from "@/lib/adminApi";
 import { normalizePageShape } from "@/lib/pageContent";
 import type { PageRecord } from "@/lib/admin/pages";
 
@@ -37,6 +37,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (!body.id || !body.slug) {
       return NextResponse.json({ error: "id and slug are required" }, { status: 400 });
+    }
+
+    const conflict = await findConflictingSlug(body.slug, body.id);
+    if (conflict) {
+      return NextResponse.json(
+        { error: `Slug "${body.slug}" is already used by page "${conflict}"` },
+        { status: 409 }
+      );
     }
 
     const db = getDb();

@@ -61,3 +61,21 @@ export function missingFirebase() {
 export function firebaseConfigured(): boolean {
   return !!(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
 }
+
+/**
+ * Check that no other page document uses the given slug.
+ * Returns the conflicting page ID if one exists, or null if the slug is available.
+ */
+export async function findConflictingSlug(slug: string, excludeId: string): Promise<string | null> {
+  const db = getDb();
+  const snapshot = await db
+    .collection("pages")
+    .where("slug", "==", slug)
+    .limit(10)
+    .get();
+
+  for (const doc of snapshot.docs) {
+    if (doc.id !== excludeId) return doc.id;
+  }
+  return null;
+}
