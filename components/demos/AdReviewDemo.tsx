@@ -251,10 +251,10 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
             <div
               style={{
                 fontSize: 9,
-                fontWeight: 600,
+                fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#9ca3af",
+                color: "#6b7280",
                 marginBottom: 6,
               }}
             >
@@ -286,10 +286,10 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
             <div
               style={{
                 fontSize: 9,
-                fontWeight: 600,
+                fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#9ca3af",
+                color: "#6b7280",
                 marginBottom: 4,
               }}
             >
@@ -301,10 +301,10 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
             <div
               style={{
                 fontSize: 9,
-                fontWeight: 600,
+                fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#9ca3af",
+                color: "#6b7280",
                 marginBottom: 4,
               }}
             >
