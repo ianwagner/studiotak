@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
 import Script from "next/script";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { DevDataSourceBanner } from "@/components/DevDataSourceBanner";
 import "./globals.css";
 
 const rubik = Rubik({
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         ) : null}
         {children}
+        <DevDataSourceBanner />
       </body>
     </html>
   );

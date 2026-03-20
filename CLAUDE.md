@@ -156,3 +156,61 @@ Tag maps are in `app/learn/[slug]/page.tsx` (`CAMPFIRE_PAGE_TAGS`, `CAMPFIRE_AUD
 ### Components Data Model
 
 Components require `id` + `kind` ("feature"). Fields: `title`, `body`, `icon` (BlockMedia), `industry`, `type`, `mediaFit`. Components are referenced from feature items in blocks via `componentId`.
+
+## Content Update Workflow
+
+**IMPORTANT: Firestore is the source of truth.** When Firebase is configured, the dev server and production site read from Firestore. Seed data in `lib/admin/pages.ts` is only a build-time fallback.
+
+### Quick Decision Tree
+
+1. **Editing an existing page?** → Use `PATCH /api/admin/pages/:id` with only the changed fields. Done.
+2. **Replacing all blocks on a page?** → Use `PUT /api/admin/pages/:id` with the full page object. Done.
+3. **Creating a new page?** → Use `POST /api/admin/pages` with full page data. Done.
+4. **Need seed data in sync for deploys?** → First `GET /api/admin/seed?collection=pages` to pull live state, then update the seed file.
+5. **NEVER edit seed data as the primary update method** — edit Firestore via the API, then optionally sync seed data afterward.
+
+### Inspecting Page Structure
+
+Use the inspect endpoint to see what blocks are on any page and where the data comes from:
+
+```bash
+# Inspect by slug (most common)
+curl http://localhost:3000/api/admin/inspect?slug=/
+
+# Inspect by page ID
+curl http://localhost:3000/api/admin/inspect?id=home
+```
+
+Returns a compact summary:
+```json
+{
+  "source": "firestore",
+  "page": { "id": "home", "slug": "/", "title": "Home", "status": "published" },
+  "blockCount": 8,
+  "blockSequence": "hero → animated_headline → features → split → logos → contact",
+  "blocks": [ { "id": "...", "type": "hero", "title": "..." }, ... ]
+}
+```
+
+The `source` field tells you whether data came from `"firestore"` or `"seed"` fallback.
+
+### Dev-Mode Data Source Banner
+
+In development, a small fixed banner appears in the bottom-right corner of every page showing:
+- **Source**: FIRESTORE (green) or SEED (amber) or NOT_FOUND (red)
+- **Block sequence**: compact list of block types on the page
+- **Last updated**: timestamp
+
+Click the banner to dismiss it. It only renders in development (`NODE_ENV !== "production"`).
+
+### Verifying Changes
+
+After making an API update:
+1. Call the inspect endpoint to confirm the data was written correctly
+2. Reload the page — ISR revalidation happens automatically on writes
+3. Use `preview_snapshot` to verify the rendered output if needed
+
+### Common Pitfalls
+- **Seeing old data?** The dev server may have a cached ISR page. API writes call `revalidatePath()` automatically, but you may need to reload.
+- **Seed data showing instead of Firestore?** Check that Firebase env vars are set. The inspect endpoint's `source` field confirms this.
+- **Don't read seed files to understand page content** — use the inspect endpoint instead. Seed files may be stale.
