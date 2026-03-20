@@ -2714,6 +2714,7 @@ export function PageForm({
                 <MediaField
                   blockId={blockId}
                   blockIdx={idx}
+                  target="portraitAd"
                   media={block.exampleData?.portraitAd?.imageUrl ? { url: block.exampleData.portraitAd.imageUrl, type: "image" } : undefined}
                   uploading={uploadingBlock === `${blockId}-portraitAd`}
                   uploadError={uploadError}
@@ -2726,6 +2727,7 @@ export function PageForm({
                 <MediaField
                   blockId={blockId}
                   blockIdx={idx}
+                  target="squareAd"
                   media={block.exampleData?.squareAd?.imageUrl ? { url: block.exampleData.squareAd.imageUrl, type: "image" } : undefined}
                   uploading={uploadingBlock === `${blockId}-squareAd`}
                   uploadError={uploadError}
@@ -2742,9 +2744,9 @@ export function PageForm({
                   <label>Version badge</label>
                   <input
                     className="input"
-                    value={block.exampleData?.version ?? "V8"}
+                    value={block.exampleData?.version ?? "V2"}
                     onChange={(e) => handleProductDemoFieldChange(idx, "version", e.target.value)}
-                    placeholder="V8"
+                    placeholder="V2"
                   />
                 </div>
                 <div className="field-group">

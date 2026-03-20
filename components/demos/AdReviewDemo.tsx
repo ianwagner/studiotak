@@ -33,16 +33,12 @@ const DEFAULT_DATA = {
   },
 };
 
-/** Fake ad creative — gradient + overlay text to simulate a real ad */
+/** Ad creative — shows uploaded image or a neutral placeholder */
 function AdCreative({
   aspect,
-  brandName,
-  headline,
   imageUrl,
 }: {
   aspect: "9x16" | "1x1";
-  brandName: string;
-  headline: string;
   imageUrl?: string;
 }) {
   const isPortrait = aspect === "9x16";
@@ -56,64 +52,8 @@ function AdCreative({
         background: imageUrl
           ? `url(${imageUrl}) center / cover no-repeat`
           : "linear-gradient(145deg, #e8c4a0 0%, #c69060 40%, #a07050 100%)",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "flex-end",
-        padding: isPortrait ? "40px 24px" : "20px 16px",
       }}
-    >
-      {/* Subtle warm overlay */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.12) 100%)",
-          pointerEvents: "none",
-        }}
-      />
-      {/* Silhouette shape */}
-      <div
-        style={{
-          position: "absolute",
-          left: isPortrait ? "10%" : "5%",
-          bottom: 0,
-          width: isPortrait ? "65%" : "55%",
-          height: isPortrait ? "85%" : "90%",
-          background: "linear-gradient(180deg, rgba(160,100,60,0.6) 0%, rgba(120,70,40,0.8) 100%)",
-          borderRadius: "40% 40% 0 0",
-          filter: "blur(1px)",
-        }}
-      />
-      <div style={{ position: "relative", zIndex: 1, textAlign: "right" }}>
-        <div
-          style={{
-            fontFamily: "system-ui, -apple-system, sans-serif",
-            fontWeight: 900,
-            fontSize: isPortrait ? 28 : 18,
-            color: "#0b0c10",
-            letterSpacing: "-0.02em",
-            lineHeight: 1,
-            marginBottom: isPortrait ? 24 : 12,
-          }}
-        >
-          {brandName}
-        </div>
-        <div
-          style={{
-            fontFamily: "system-ui, -apple-system, sans-serif",
-            fontWeight: 900,
-            fontSize: isPortrait ? 32 : 20,
-            color: "#0b0c10",
-            letterSpacing: "-0.01em",
-            lineHeight: 1.1,
-            maxWidth: isPortrait ? 220 : 160,
-          }}
-        >
-          {headline}
-        </div>
-      </div>
-    </div>
+    />
   );
 }
 
@@ -213,7 +153,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
         border: "1px solid rgba(10, 15, 26, 0.08)",
         boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
         padding: "20px 24px",
-        maxWidth: 720,
+        maxWidth: 710,
         width: "100%",
         fontFamily: "var(--font-body, system-ui, -apple-system, sans-serif)",
         position: "relative",
@@ -292,8 +232,6 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <AdCreative
             aspect="9x16"
-            brandName={data.portraitAd?.brandName ?? "QUAY"}
-            headline={data.portraitAd?.headline ?? "FRAMES WITH ATTITUDE"}
             imageUrl={data.portraitAd?.imageUrl}
           />
         </div>
@@ -312,11 +250,11 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
           >
             <div
               style={{
-                fontSize: 10,
-                fontWeight: 700,
+                fontSize: 9,
+                fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#6b7280",
+                color: "#9ca3af",
                 marginBottom: 6,
               }}
             >
@@ -331,8 +269,6 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
           <div style={rightContentStyle}>
             <AdCreative
               aspect="1x1"
-              brandName={data.squareAd?.brandName ?? "QUAY"}
-              headline={data.squareAd?.headline ?? "FRAMES WITH ATTITUDE"}
               imageUrl={data.squareAd?.imageUrl}
             />
           </div>
@@ -349,11 +285,11 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
           >
             <div
               style={{
-                fontSize: 10,
-                fontWeight: 700,
+                fontSize: 9,
+                fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#6b7280",
+                color: "#9ca3af",
                 marginBottom: 4,
               }}
             >
@@ -364,11 +300,11 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
             </div>
             <div
               style={{
-                fontSize: 10,
-                fontWeight: 700,
+                fontSize: 9,
+                fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#6b7280",
+                color: "#9ca3af",
                 marginBottom: 4,
               }}
             >
