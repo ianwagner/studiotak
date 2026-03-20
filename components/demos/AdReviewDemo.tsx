@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { ProductDemoBlock } from "@/lib/admin/pages";
 
 type Status = "pending" | "approved" | "rejected" | "edit_requested";
 
-const STATUS_CONFIG: Record<Status, { label: string; color: string; bg: string; dot: string }> = {
-  pending: { label: "Pending", color: "#4b5563", bg: "#f3f4f6", dot: "#9ca3af" },
-  approved: { label: "Approved", color: "#16a34a", bg: "#dcfce7", dot: "#22c55e" },
-  rejected: { label: "Rejected", color: "#dc2626", bg: "#fee2e2", dot: "#ef4444" },
-  edit_requested: { label: "Edits Requested", color: "#d97706", bg: "#fef3c7", dot: "#f59e0b" },
+const STATUS_CONFIG: Record<Status, { label: string; color: string; darkColor?: string; bg: string; darkBg?: string; dot: string }> = {
+  pending: { label: "Pending", color: "#4b5563", darkColor: "#9ca3af", bg: "#f3f4f6", darkBg: "rgba(156,163,175,0.12)", dot: "#9ca3af" },
+  approved: { label: "Approved", color: "#16a34a", darkColor: "#4ade80", bg: "#dcfce7", darkBg: "rgba(34,197,94,0.12)", dot: "#22c55e" },
+  rejected: { label: "Rejected", color: "#dc2626", darkColor: "#f87171", bg: "#fee2e2", darkBg: "rgba(239,68,68,0.12)", dot: "#ef4444" },
+  edit_requested: { label: "Edits Requested", color: "#d97706", darkColor: "#fbbf24", bg: "#fef3c7", darkBg: "rgba(245,158,11,0.12)", dot: "#f59e0b" },
 };
 
 const DEFAULT_DATA = {
@@ -63,11 +63,17 @@ function DemoPopover({
   onClose,
   anchorRef,
   children,
+  bg,
+  border,
+  shadow,
 }: {
   open: boolean;
   onClose: () => void;
   anchorRef?: React.RefObject<HTMLElement | null>;
   children: React.ReactNode;
+  bg?: string;
+  border?: string;
+  shadow?: string;
 }) {
   if (!open) return null;
   return (
@@ -81,10 +87,10 @@ function DemoPopover({
           position: "absolute",
           bottom: "calc(100% + 8px)",
           left: 0,
-          background: "#ffffff",
-          border: "1px solid rgba(10,15,26,0.10)",
+          background: bg ?? "#ffffff",
+          border: `1px solid ${border ?? "rgba(10,15,26,0.10)"}`,
           borderRadius: 12,
-          boxShadow: "0 8px 28px rgba(0,0,0,0.14)",
+          boxShadow: shadow ?? "0 8px 28px rgba(0,0,0,0.14)",
           padding: "14px 16px",
           zIndex: 20,
           minWidth: 220,
@@ -97,16 +103,64 @@ function DemoPopover({
   );
 }
 
+function useIsDark() {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const check = () => {
+      const attr = document.documentElement.getAttribute("data-theme");
+      // Explicit data-theme wins; otherwise fall back to system preference
+      setDark(attr ? attr === "dark" : mq.matches);
+    };
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    mq.addEventListener("change", check);
+    return () => {
+      obs.disconnect();
+      mq.removeEventListener("change", check);
+    };
+  }, []);
+  return dark;
+}
+
 export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
   const data = { ...DEFAULT_DATA, ...block.exampleData };
   const [status, setStatus] = useState<Status>((data.status as Status) ?? "pending");
+  const isDark = useIsDark();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeVersion, setActiveVersion] = useState(1); // 0 = V1, 1 = V2 (current)
   const [versionPopoverOpen, setVersionPopoverOpen] = useState(false);
   const [copyPopoverOpen, setCopyPopoverOpen] = useState(false);
   const [statusPopoverOpen, setStatusPopoverOpen] = useState(false);
 
-  const cfg = STATUS_CONFIG[status];
+  const cfgRaw = STATUS_CONFIG[status];
+  const cfg = {
+    ...cfgRaw,
+    color: isDark && cfgRaw.darkColor ? cfgRaw.darkColor : cfgRaw.color,
+    bg: isDark && cfgRaw.darkBg ? cfgRaw.darkBg : cfgRaw.bg,
+  };
+
+  // Dark-mode-aware palette
+  const card = isDark ? "var(--surface)" : "#ffffff";
+  const cardBorder = isDark ? "var(--border)" : "rgba(10, 15, 26, 0.08)";
+  const cardShadow = isDark ? "0 4px 24px rgba(0,0,0,0.24)" : "0 4px 24px rgba(0,0,0,0.06)";
+  const fg = isDark ? "var(--text)" : "#0b0c10";
+  const fgSecondary = isDark ? "var(--muted)" : "#4b5563";
+  const fgTertiary = isDark ? "rgba(255,255,255,0.4)" : "#6b7280";
+  const subtleBg = isDark ? "rgba(255,255,255,0.04)" : "#f9fafb";
+  const subtleBorder = isDark ? "var(--border)" : "rgba(10,15,26,0.06)";
+  const btnBg = isDark ? "var(--surface)" : "#ffffff";
+  const btnBorder = isDark ? "var(--border-strong)" : "rgba(10,15,26,0.12)";
+  const btnHoverBg = isDark ? "rgba(255,255,255,0.06)" : "#f9fafb";
+  const badgeBg = isDark ? "rgba(255,255,255,0.08)" : "#f3f4f6";
+  const dividerColor = isDark ? "var(--border)" : "rgba(10,15,26,0.08)";
+  const popoverBg = isDark ? "var(--surface)" : "#ffffff";
+  const popoverBorder = isDark ? "var(--border-strong)" : "rgba(10,15,26,0.10)";
+  const popoverShadow = isDark ? "0 8px 28px rgba(0,0,0,0.36)" : "0 8px 28px rgba(0,0,0,0.14)";
+  const dropdownItemHover = isDark ? "rgba(255,255,255,0.06)" : "#f9fafb";
+  const fgBody = isDark ? "var(--text)" : "#1f2937";
+  const fgButton = isDark ? "var(--muted)" : "#374151";
 
   const handleStatusChange = useCallback((newStatus: Status) => {
     setStatus(newStatus);
@@ -154,20 +208,21 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
     `}</style>
     <div
       style={{
-        background: "#ffffff",
+        background: card,
         borderRadius: 16,
-        border: "1px solid rgba(10, 15, 26, 0.08)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+        border: `1px solid ${cardBorder}`,
+        boxShadow: cardShadow,
         padding: "20px 24px",
         maxWidth: 710,
         width: "100%",
         fontFamily: "var(--font-body, system-ui, -apple-system, sans-serif)",
         position: "relative",
+        transition: "background 0.3s, border-color 0.3s, box-shadow 0.3s",
       }}
     >
       {/* Header: index + version badge */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <span style={{ fontSize: 20, fontWeight: 700, color: "#0b0c10" }}>{data.index}</span>
+        <span style={{ fontSize: 20, fontWeight: 700, color: fg }}>{data.index}</span>
         <div style={{ position: "relative" }}>
           <button
             type="button"
@@ -175,8 +230,8 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
             style={{
               fontSize: 11,
               fontWeight: 600,
-              color: "#4b5563",
-              background: "#f3f4f6",
+              color: fgSecondary,
+              background: badgeBg,
               borderRadius: 6,
               padding: "3px 8px",
               letterSpacing: "0.02em",
@@ -185,20 +240,20 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
               transition: "border-color 0.15s, background 0.15s",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(10,15,26,0.12)";
-              e.currentTarget.style.background = "#eef0f3";
+              e.currentTarget.style.borderColor = btnBorder;
+              e.currentTarget.style.background = btnHoverBg;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.borderColor = "transparent";
-              e.currentTarget.style.background = "#f3f4f6";
+              e.currentTarget.style.background = badgeBg;
             }}
           >
             {data.version}
           </button>
 
           {/* Version switcher popover */}
-          <DemoPopover open={versionPopoverOpen} onClose={() => setVersionPopoverOpen(false)}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+          <DemoPopover open={versionPopoverOpen} onClose={() => setVersionPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: fgTertiary, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
               Versions
             </div>
             <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
@@ -213,9 +268,9 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                     padding: "4px 12px",
                     borderRadius: 6,
                     border: "1px solid",
-                    borderColor: activeVersion === i ? "#ff700b" : "rgba(10,15,26,0.10)",
-                    background: activeVersion === i ? "#fff5ee" : "#ffffff",
-                    color: activeVersion === i ? "#ff700b" : "#4b5563",
+                    borderColor: activeVersion === i ? "#ff700b" : popoverBorder,
+                    background: activeVersion === i ? (isDark ? "rgba(255,112,11,0.12)" : "#fff5ee") : card,
+                    color: activeVersion === i ? "#ff700b" : fgSecondary,
                     cursor: "pointer",
                     transition: "all 0.12s",
                   }}
@@ -224,7 +279,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                 </button>
               ))}
             </div>
-            <div style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.4 }}>
+            <div style={{ fontSize: 13, color: fgTertiary, lineHeight: 1.4 }}>
               Toggle between creative versions to compare iterations side by side.
             </div>
             {demoCta}
@@ -248,10 +303,10 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
           <div
             style={{
               ...rightContentStyle,
-              background: "#f9fafb",
+              background: subtleBg,
               borderRadius: 10,
               padding: "10px 14px",
-              border: "1px solid rgba(10,15,26,0.06)",
+              border: `1px solid ${subtleBorder}`,
             }}
           >
             <div
@@ -260,13 +315,13 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                 fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#6b7280",
+                color: fgTertiary,
                 marginBottom: 6,
               }}
             >
               Primary Copy
             </div>
-            <div style={{ fontSize: 14, color: "#1f2937", lineHeight: 1.5 }}>
+            <div style={{ fontSize: 14, color: fgBody, lineHeight: 1.5 }}>
               {data.copy?.primary}
             </div>
           </div>
@@ -283,10 +338,10 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
           <div
             style={{
               ...rightContentStyle,
-              background: "#f9fafb",
+              background: subtleBg,
               borderRadius: 10,
               padding: "10px 14px",
-              border: "1px solid rgba(10,15,26,0.06)",
+              border: `1px solid ${subtleBorder}`,
             }}
           >
             <div
@@ -295,13 +350,13 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                 fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#6b7280",
+                color: fgTertiary,
                 marginBottom: 4,
               }}
             >
               Headline
             </div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#0b0c10", marginBottom: 10 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: fg, marginBottom: 10 }}>
               {data.copy?.headline}
             </div>
             <div
@@ -310,13 +365,13 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                 fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: "#6b7280",
+                color: fgTertiary,
                 marginBottom: 4,
               }}
             >
               Description
             </div>
-            <div style={{ fontSize: 14, color: "#1f2937" }}>{data.copy?.description}</div>
+            <div style={{ fontSize: 14, color: fgBody }}>{data.copy?.description}</div>
           </div>
 
           {/* Edit platform copy button */}
@@ -329,16 +384,16 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                 gap: 6,
                 fontSize: 13,
                 fontWeight: 500,
-                color: "#374151",
-                background: "#ffffff",
-                border: "1px solid rgba(10,15,26,0.12)",
+                color: fgButton,
+                background: btnBg,
+                border: `1px solid ${btnBorder}`,
                 borderRadius: 8,
                 padding: "7px 14px",
                 cursor: "pointer",
                 transition: "background 0.15s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#f9fafb")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = btnHoverBg)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = btnBg)}
               onClick={() => setCopyPopoverOpen((o) => !o)}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -349,8 +404,8 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
             </button>
 
             {/* Edit copy popover */}
-            <DemoPopover open={copyPopoverOpen} onClose={() => setCopyPopoverOpen(false)}>
-              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>
+            <DemoPopover open={copyPopoverOpen} onClose={() => setCopyPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
+              <div style={{ fontSize: 13, color: fgButton, lineHeight: 1.5 }}>
                 Tailor headlines and descriptions for each Meta placement — Feed, Stories, Reels — right from the review link.
               </div>
               {demoCta}
@@ -360,7 +415,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
       </div>
 
       {/* Divider */}
-      <div style={{ borderTop: "1px solid rgba(10,15,26,0.08)", margin: "16px 0 12px" }} />
+      <div style={{ borderTop: `1px solid ${dividerColor}`, margin: "16px 0 12px" }} />
 
       {/* Status selector */}
       <div style={{ position: "relative", display: "inline-block" }}>
@@ -375,7 +430,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
             fontWeight: 500,
             color: cfg.color,
             background: "transparent",
-            border: "1px solid rgba(10,15,26,0.10)",
+            border: `1px solid ${popoverBorder}`,
             borderRadius: 8,
             padding: "8px 14px",
             cursor: "pointer",
@@ -420,16 +475,19 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                 position: "absolute",
                 bottom: "calc(100% + 6px)",
                 left: 0,
-                background: "#ffffff",
-                border: "1px solid rgba(10,15,26,0.10)",
+                background: popoverBg,
+                border: `1px solid ${popoverBorder}`,
                 borderRadius: 10,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                boxShadow: popoverShadow,
                 padding: 4,
                 zIndex: 10,
                 minWidth: 180,
               }}
             >
-              {(Object.entries(STATUS_CONFIG) as [Status, typeof cfg][]).map(([key, val]) => (
+              {(Object.entries(STATUS_CONFIG) as [Status, typeof cfgRaw][]).map(([key, val]) => {
+                const itemColor = isDark && val.darkColor ? val.darkColor : val.color;
+                const itemBg = isDark && val.darkBg ? val.darkBg : val.bg;
+                return (
                 <button
                   key={key}
                   type="button"
@@ -442,15 +500,15 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                     padding: "8px 12px",
                     fontSize: 13,
                     fontWeight: 500,
-                    color: val.color,
-                    background: status === key ? val.bg : "transparent",
+                    color: itemColor,
+                    background: status === key ? itemBg : "transparent",
                     border: "none",
                     borderRadius: 6,
                     cursor: "pointer",
                     transition: "background 0.12s",
                   }}
                   onMouseEnter={(e) => {
-                    if (status !== key) e.currentTarget.style.background = "#f9fafb";
+                    if (status !== key) e.currentTarget.style.background = dropdownItemHover;
                   }}
                   onMouseLeave={(e) => {
                     if (status !== key) e.currentTarget.style.background = "transparent";
@@ -467,14 +525,15 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                   />
                   {val.label}
                 </button>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
 
         {/* Status change popover */}
-        <DemoPopover open={statusPopoverOpen} onClose={() => setStatusPopoverOpen(false)}>
-          <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>
+        <DemoPopover open={statusPopoverOpen} onClose={() => setStatusPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
+          <div style={{ fontSize: 13, color: fgButton, lineHeight: 1.5 }}>
             Your feedback flows back to us in real time. Approve, request edits, or reject — we act on it immediately.
           </div>
           {demoCta}

@@ -184,7 +184,7 @@ export function AnimatedHeadline({
   const springProgress = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
   const manualProgress = useMotionValue(0);
   const inView = useInView(containerRef, { margin: "-20% 0px", amount: 0.35, once: true });
-  const themeSectionInView = useInView(containerRef, { margin: "-10% 0px", amount: 0.1 });
+  const [themeShouldActivate, setThemeShouldActivate] = useState(false);
   const [progressValue, setProgressValue] = useState(0);
 
   useEffect(() => {
@@ -293,8 +293,31 @@ export function AnimatedHeadline({
   const subtextOpacity = clamp01((progressValue - 0.2) / 0.4);
   const subtextY = (1 - subtextOpacity) * 12;
 
-  const themeActive = enableThemeShift && themeSectionInView && progressValue > 0.32;
-  useDarkModeShift(enableThemeShift, themeActive);
+  // Use scroll position (not IntersectionObserver) to control dark mode.
+  // IntersectionObserver re-fires when theme changes cause layout shifts, creating a feedback loop.
+  useEffect(() => {
+    if (!enableThemeShift) {
+      setThemeShouldActivate(false);
+      return;
+    }
+    const check = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const margin = vh * 0.15;
+      const visible = rect.bottom > margin && rect.top < vh - margin;
+      setThemeShouldActivate(visible);
+    };
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => {
+      window.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
+  }, [enableThemeShift]);
+  useDarkModeShift(enableThemeShift, themeShouldActivate);
 
   return (
     <section ref={containerRef} style={containerStyle} aria-label={headline}>

@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 let activeShifts = 0;
 let storedTheme: "light" | "dark" | null = null;
 let transitionTimer: number | null = null;
-let applyFrame: number | null = null;
 let currentTheme: "light" | "dark" | null = null;
 
 const readBaseTheme = (): "light" | "dark" => {
@@ -43,14 +42,8 @@ const applyTheme = (theme: "light" | "dark") => {
   if (root.getAttribute("data-theme") === theme && currentTheme === theme) return;
 
   ensureTransitionClass();
-  if (applyFrame !== null) {
-    cancelAnimationFrame(applyFrame);
-  }
-  applyFrame = window.requestAnimationFrame(() => {
-    root.setAttribute("data-theme", theme);
-    currentTheme = theme;
-    applyFrame = null;
-  });
+  root.setAttribute("data-theme", theme);
+  currentTheme = theme;
 };
 
 const applyDarkMode = () => {
@@ -64,10 +57,6 @@ const releaseDarkMode = () => {
   if (!root) return;
   activeShifts = Math.max(0, activeShifts - 1);
   if (activeShifts === 0) {
-    if (applyFrame !== null) {
-      cancelAnimationFrame(applyFrame);
-      applyFrame = null;
-    }
     const nextTheme = getStoredTheme();
     applyTheme(nextTheme);
     transitionTimer = window.setTimeout(() => {
@@ -82,12 +71,24 @@ const releaseDarkMode = () => {
 /**
  * Toggles the global dark theme while `active` is true.
  * Multiple callers are reference-counted, and the original theme is restored when all release.
+ *
+ * Uses useLayoutEffect so theme changes apply before the browser paints,
+ * preventing visible flashes during React strict mode or rapid state changes.
+ * Deactivation is debounced to prevent flicker from scroll boundary toggling.
  */
 export function useDarkModeShift(enabled: boolean, active: boolean) {
   const appliedRef = useRef(false);
+  const releaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
+  // useLayoutEffect fires synchronously before paint — no visible intermediate states.
+  // Intentionally no cleanup return: cleanup would fire on every dep change and in
+  // strict mode, causing release→reapply flashes. Unmount cleanup is handled separately.
+  useLayoutEffect(() => {
     if (!enabled) {
+      if (releaseTimerRef.current) {
+        clearTimeout(releaseTimerRef.current);
+        releaseTimerRef.current = null;
+      }
       if (appliedRef.current) {
         releaseDarkMode();
         appliedRef.current = false;
@@ -95,19 +96,39 @@ export function useDarkModeShift(enabled: boolean, active: boolean) {
       return;
     }
 
-    if (active && !appliedRef.current) {
-      applyDarkMode();
-      appliedRef.current = true;
-    } else if (!active && appliedRef.current) {
-      releaseDarkMode();
-      appliedRef.current = false;
+    if (active) {
+      // Activate immediately, cancel any pending release
+      if (releaseTimerRef.current) {
+        clearTimeout(releaseTimerRef.current);
+        releaseTimerRef.current = null;
+      }
+      if (!appliedRef.current) {
+        applyDarkMode();
+        appliedRef.current = true;
+      }
+    } else if (appliedRef.current && !releaseTimerRef.current) {
+      // Debounce deactivation — prevents flicker from brief "not visible" blips
+      releaseTimerRef.current = setTimeout(() => {
+        releaseTimerRef.current = null;
+        if (appliedRef.current) {
+          releaseDarkMode();
+          appliedRef.current = false;
+        }
+      }, 250);
     }
+  }, [enabled, active]);
 
+  // Separate unmount-only cleanup
+  useEffect(() => {
     return () => {
+      if (releaseTimerRef.current) {
+        clearTimeout(releaseTimerRef.current);
+        releaseTimerRef.current = null;
+      }
       if (appliedRef.current) {
         releaseDarkMode();
         appliedRef.current = false;
       }
     };
-  }, [enabled, active]);
+  }, []);
 }
