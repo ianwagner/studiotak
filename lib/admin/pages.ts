@@ -468,6 +468,8 @@ export const seedPages: PageRecord[] = [
         secondaryCtaLabel: "See how it works",
         secondaryCtaHref: "#how-it-works",
         alignment: "centered",
+        mode: "dynamic",
+        mediaTypeTag: "Example",
       },
       {
         id: "cf-headline",
@@ -661,6 +663,8 @@ export const seedPages: PageRecord[] = [
         secondaryCtaLabel: "See how it works",
         secondaryCtaHref: "#review",
         alignment: "centered",
+        mode: "dynamic",
+        mediaTypeTag: "Example",
       },
       {
         id: "cfb-headline",
@@ -811,6 +815,8 @@ export const seedPages: PageRecord[] = [
         secondaryCtaLabel: "See what you get",
         secondaryCtaHref: "#agency-tools",
         alignment: "centered",
+        mode: "dynamic",
+        mediaTypeTag: "Example",
       },
       {
         id: "cfa-headline",
