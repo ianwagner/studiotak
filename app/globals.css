@@ -1141,11 +1141,16 @@ main {
 
 /* Feature spotlight tabs */
 .spotlight-tab:hover {
-  background: var(--accent-subtle, rgba(255, 107, 53, 0.05));
+  background: var(--accent-subtle, rgba(255, 107, 53, 0.06));
+  border-color: var(--border-hover, rgba(0, 0, 0, 0.15));
 }
 
+.spotlight-tab-active,
 .spotlight-tab-active:hover {
-  background: var(--accent-subtle, rgba(255, 107, 53, 0.08));
+  background: rgba(255, 107, 53, 0.1) !important;
+  border-color: rgba(255, 107, 53, 0.3) !important;
+  color: var(--text) !important;
+  font-weight: 600 !important;
 }
 
 /* Features gallery */

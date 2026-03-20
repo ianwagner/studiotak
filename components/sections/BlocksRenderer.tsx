@@ -2038,7 +2038,7 @@ const FeaturesBlockSection = ({
     return (
       <section
         key={block.id ?? index}
-        style={{ padding: "48px 0 56px" }}
+        style={{ padding: featIsMobile ? "48px 0 56px" : "64px 0 72px" }}
       >
         <div
           style={{
@@ -2052,10 +2052,10 @@ const FeaturesBlockSection = ({
           <motion.div
             ref={galleryRef}
             style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 0,
-              marginTop: 32
+              display: "grid",
+              gridTemplateColumns: featIsMobile ? "1fr" : `repeat(${Math.min(items.length, 3)}, 1fr)`,
+              gap: featIsMobile ? 0 : 24,
+              marginTop: featIsMobile ? 32 : 48
             }}
             variants={galleryPreset.container}
             initial="hidden"
@@ -2067,31 +2067,45 @@ const FeaturesBlockSection = ({
                 variants={galleryPreset.item}
                 className="features-stacked-item"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: featIsMobile ? "1fr" : "auto 1fr",
-                  gap: featIsMobile ? 8 : 24,
-                  alignItems: "start",
-                  padding: featIsMobile ? "24px 0" : "28px 0",
-                  borderBottom: idx < items.length - 1 ? "1px solid var(--border)" : "none"
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 14,
+                  padding: featIsMobile ? "24px 0" : "28px 24px",
+                  borderBottom: featIsMobile && idx < items.length - 1 ? "1px solid var(--border)" : "none",
+                  border: featIsMobile ? undefined : "1px solid var(--border)",
+                  borderRadius: featIsMobile ? undefined : "var(--radius)",
+                  background: featIsMobile ? undefined : "var(--surface)"
                 }}
               >
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  minWidth: featIsMobile ? undefined : 200
-                }}>
-                  {item.badge ? (
-                    <Pill>{item.badge}</Pill>
-                  ) : null}
-                  <strong style={{ fontSize: 20 }}>{item.title}</strong>
-                </div>
+                {item.badge ? (
+                  <span style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    color: "var(--accent)"
+                  }}>
+                    {item.badge}
+                  </span>
+                ) : null}
+                {item.icon?.url ? (
+                  <img
+                    src={item.icon.url}
+                    alt={item.icon.alt ?? ""}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      objectFit: "contain",
+                      borderRadius: 8
+                    }}
+                  />
+                ) : null}
+                <strong style={{ fontSize: featIsMobile ? 20 : 20, lineHeight: 1.3 }}>{item.title}</strong>
                 <p style={{
                   margin: 0,
                   color: "var(--muted)",
                   fontSize: 15,
-                  lineHeight: 1.6,
-                  maxWidth: 540
+                  lineHeight: 1.7
                 }}>
                   {item.body}
                 </p>
@@ -2171,7 +2185,7 @@ const FeatureSpotlightBlockSection = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const activeItem = items[activeIndex] ?? items[0];
   const sectionRef = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(sectionRef, { amount: 0.3, once: true });
+  const inView = useInView(sectionRef, { amount: 0.15, once: true });
   const vw = useViewportWidth();
   const isMobile = vw !== null && vw < 768;
 
@@ -2194,27 +2208,24 @@ const FeatureSpotlightBlockSection = ({
         <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} align="center" />
         <motion.div
           style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "280px 1fr",
-            gap: isMobile ? 16 : 0,
-            marginTop: 32,
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius)",
-            overflow: "hidden",
-            background: "var(--surface)"
+            display: "flex",
+            flexDirection: "column",
+            gap: 0,
+            marginTop: isMobile ? 28 : 40
           }}
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          {/* Tab list */}
+          {/* Tab pills row */}
           <div
             className="spotlight-tabs"
             style={{
-              display: "flex",
-              flexDirection: isMobile ? "row" : "column",
-              borderRight: isMobile ? "none" : "1px solid var(--border)",
-              borderBottom: isMobile ? "1px solid var(--border)" : "none",
+              display: "grid",
+              gridTemplateColumns: isMobile ? undefined : `repeat(${items.length}, 1fr)`,
+              gridAutoFlow: isMobile ? "column" : undefined,
+              gridAutoColumns: isMobile ? "auto" : undefined,
+              gap: isMobile ? 8 : 12,
               overflow: isMobile ? "auto" : undefined
             }}
           >
@@ -2226,36 +2237,22 @@ const FeatureSpotlightBlockSection = ({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 10,
-                  padding: isMobile ? "12px 16px" : "16px 20px",
-                  background: idx === activeIndex ? "var(--accent-subtle, rgba(255,107,53,0.08))" : "transparent",
-                  border: "none",
-                  borderLeft: !isMobile && idx === activeIndex ? "3px solid var(--accent)" : !isMobile ? "3px solid transparent" : "none",
-                  borderBottom: isMobile && idx === activeIndex ? "2px solid var(--accent)" : isMobile ? "2px solid transparent" : "none",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: isMobile ? "12px 20px" : "14px 24px",
+                  background: idx === activeIndex ? "rgba(255, 107, 53, 0.1)" : "transparent",
+                  border: idx === activeIndex ? "1px solid rgba(255, 107, 53, 0.3)" : "1px solid var(--border)",
+                  borderRadius: "var(--radius)",
                   cursor: "pointer",
-                  textAlign: "left",
-                  width: isMobile ? "auto" : "100%",
-                  whiteSpace: isMobile ? "nowrap" : undefined,
-                  transition: "background 0.2s ease, border-color 0.2s ease",
-                  color: "var(--text)",
+                  whiteSpace: "nowrap",
+                  transition: "background 0.2s ease, border-color 0.2s ease, color 0.2s ease",
+                  color: idx === activeIndex ? "var(--text)" : "var(--muted)",
                   fontFamily: "inherit",
-                  fontSize: 15,
+                  fontSize: isMobile ? 14 : 15,
                   fontWeight: idx === activeIndex ? 600 : 400
                 }}
               >
-                {item.badge ? (
-                  <span style={{
-                    fontSize: 11,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    color: idx === activeIndex ? "var(--accent)" : "var(--muted)",
-                    fontWeight: 600,
-                    marginRight: 4
-                  }}>
-                    {item.badge}
-                  </span>
-                ) : null}
-                <span>{item.title}</span>
+                <span>{item.badge || item.title}</span>
               </button>
             ))}
           </div>
@@ -2264,52 +2261,70 @@ const FeatureSpotlightBlockSection = ({
           <motion.div
             key={activeIndex}
             style={{
-              padding: isMobile ? "24px 20px" : "32px 36px",
+              padding: isMobile ? "28px 20px" : "48px 48px",
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : activeItem.icon?.url ? "5fr 6fr" : "1fr",
+              gap: isMobile ? 24 : 56,
+              alignItems: "center",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius)",
+              marginTop: isMobile ? 12 : 16,
+              minHeight: isMobile ? undefined : 320
+            }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <div style={{
               display: "flex",
               flexDirection: "column",
-              justifyContent: "center",
               gap: 16,
-              minHeight: isMobile ? undefined : 200
-            }}
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              {activeItem.icon?.url ? (
+              padding: isMobile ? 0 : "24px 0",
+              justifyContent: "center"
+            }}>
+              <h3 style={{ margin: 0, fontSize: isMobile ? 22 : 26, fontWeight: 700, lineHeight: 1.25 }}>{activeItem.title}</h3>
+              <p style={{
+                margin: 0,
+                color: "var(--muted)",
+                fontSize: 16,
+                lineHeight: 1.7
+              }}>
+                {activeItem.body}
+              </p>
+              {activeItem.href ? (
+                <AnchorAwareLink
+                  href={activeItem.href}
+                  className="nav-link"
+                  trackingName="content_link_click"
+                  trackingSection="feature_spotlight"
+                  style={{ width: "fit-content", marginTop: 8 }}
+                >
+                  Learn more
+                </AnchorAwareLink>
+              ) : null}
+            </div>
+            {activeItem.icon?.url ? (
+              <div style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                order: isMobile ? -1 : undefined,
+                overflow: "hidden",
+                borderRadius: 12
+              }}>
                 <img
                   src={activeItem.icon.url}
                   alt={activeItem.icon.alt ?? ""}
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                    border: "1px solid var(--border)",
+                    width: "100%",
+                    maxWidth: 520,
+                    height: "auto",
+                    borderRadius: 12,
                     objectFit: activeItem.mediaFit === "contain" ? "contain" : "cover"
                   }}
                 />
-              ) : null}
-              <h3 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>{activeItem.title}</h3>
-            </div>
-            <p style={{
-              margin: 0,
-              color: "var(--muted)",
-              fontSize: 16,
-              lineHeight: 1.7,
-              maxWidth: 520
-            }}>
-              {activeItem.body}
-            </p>
-            {activeItem.href ? (
-              <AnchorAwareLink
-                href={activeItem.href}
-                className="nav-link"
-                trackingName="content_link_click"
-                trackingSection="feature_spotlight"
-                style={{ width: "fit-content" }}
-              >
-                Learn more
-              </AnchorAwareLink>
+              </div>
             ) : null}
           </motion.div>
         </motion.div>
@@ -2802,7 +2817,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
             gap: 10
           }}
         >
-          {col.icon && <img src={col.icon} alt="" aria-hidden style={{ width: 28, height: 28 }} />}
+          {col.icon && <img src={col.icon} alt="" aria-hidden style={{ width: 28, height: 28, objectFit: "contain" }} />}
           {col.heading}
         </h3>
         <motion.ul
