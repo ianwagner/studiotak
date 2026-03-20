@@ -196,6 +196,39 @@ export type ArticleGridBlock = {
   enableDarkModeOnScroll?: boolean;
 };
 
+export type ProductDemoAd = {
+  imageUrl: string;
+  brandName: string;
+  headline: string;
+  overlayText?: string;
+};
+
+export type ProductDemoCopyCard = {
+  primary: string;
+  headline: string;
+  description: string;
+};
+
+export type ProductDemoBlock = {
+  id: string;
+  type: "product_demo";
+  adminLabel?: string;
+  anchor?: string;
+  eyebrow?: string;
+  heading?: string;
+  body?: string;
+  demoId: "ad_review";
+  exampleData?: {
+    index?: number;
+    version?: string;
+    status?: string;
+    portraitAd?: ProductDemoAd;
+    squareAd?: ProductDemoAd;
+    copy?: ProductDemoCopyCard;
+  };
+  enableDarkModeOnScroll?: boolean;
+};
+
 export type BlockRecord =
   | DividerBlock
   | HeroBlock
@@ -209,7 +242,8 @@ export type BlockRecord =
   | LogosBlock
   | ContactBlock
   | ArticleFeaturedBlock
-  | ArticleGridBlock;
+  | ArticleGridBlock
+  | ProductDemoBlock;
 
 export type RedirectRule = {
   from: string;
@@ -241,228 +275,498 @@ export type PageRecord = {
   updatedAt?: string;
 };
 
+
 export const seedPages: PageRecord[] = [
   {
-    id: "home",
-    slug: "/",
-    title: "Home",
+    id: "campfire-agencies",
+    slug: "/campfire/agencies",
+    title: "Campfire for Agencies",
     status: "published",
-    seoTitle: "Studio Tak | Design Systems & Interactive Experiences",
-    metaDescription: "Static-first marketing pages built with React islands where they matter.",
-    canonicalUrl: "https://studiotak.co/",
+    seoTitle: "Campfire for Agencies \u2014 Bespoke Ad Creative at Scale",
+    metaDescription: "Your clients get bespoke ads and a great experience. You get production visibility, brand management, and the tools to run creative at scale.",
+    nofollow: false,
+    noindex: false,
+    sitemapExclude: false,
+    focusKeyword: "meta ad creative agency",
+    ogTitle: "Campfire for Agencies \u2014 Creative Production at Scale",
+    ogDescription: "Manage brands, track production, and give your clients a frictionless review experience. Bespoke Meta ad creative, built for agency workflows.",
     blocks: [
       {
-        id: "home-hero",
+        id: "cfa-hero",
         type: "hero",
-        eyebrow: "Studio Tak / Marketing Engineering",
-        title: "Design systems with expressive motion",
-        subtitle: "Static-first marketing pages built with React islands where they matter.",
-        primaryCtaLabel: "Plan a launch",
+        eyebrow: "Campfire / For Agency Partners",
+        title: "Your clients get great ads. You get real visibility.",
+        subtitle: "Bespoke Meta ad creative, a frictionless client experience, and the production tools to manage it all \u2014 across every brand in your portfolio.",
+        primaryCtaLabel: "Partner with us",
         primaryCtaHref: "#contact",
-        secondaryCtaLabel: "View capabilities",
-        secondaryCtaHref: "#capabilities",
-        alignment: "centered"
+        secondaryCtaLabel: "See what you get",
+        secondaryCtaHref: "#agency-tools",
+        alignment: "centered",
+        mode: "dynamic",
+        mediaTypeTag: "Example",
       },
       {
-        id: "home-animated-headline",
+        id: "cfa-headline",
         type: "animated_headline",
-        headline: "Full-screen animated headlines",
-        subtext: "Pick a motion preset or tie the reveal to scroll to choreograph the story beat.",
-        animationStyle: "scramble",
+        headline: "Scale creative without scaling chaos",
+        subtext: "Whether you're managing three brands or thirty, Campfire keeps production organized, tracked, and on schedule.",
+        animationStyle: "fade_by_word",
         animationMode: "scroll",
-        freezeOnScroll: true
+        freezeOnScroll: true,
+        enableDarkModeOnScroll: true,
       },
       {
-        id: "home-scroll-gallery",
-        type: "scroll_gallery",
-        eyebrow: "Scroll gallery",
-        heading: "Swipe through featured work",
-        body: "Full-bleed, full-height carousel of cards you can source from the component library or craft per page.",
-        items: [
-          {
-            title: "Component-powered",
-            body: "Pull in existing feature components to keep cards consistent across pages.",
-            badge: "Reusable",
-            industry: "Marketing systems"
-          },
-          {
-            title: "Horizontal scroll",
-            body: "Full-width track with snap points keeps the story feeling cinematic.",
-            badge: "Motion",
-            type: "Scroll"
-          },
-          {
-            title: "Page-specific cards",
-            body: "Layer in bespoke highlights without touching code—edit right in Admin.",
-            badge: "Custom",
-            type: "Content"
-          }
-        ]
-      },
-      {
-        id: "home-features",
-        type: "features",
-        anchor: "capabilities",
-        eyebrow: "Capabilities",
-        heading: "Blocks built as a component library",
-        body: "Each block maps to content schema fields so marketing can ship pages without engineering.",
-        columns: 3,
-        items: [
-          {
-            title: "Hero",
-            body: "Above-the-fold intro with inline or background media plus two CTAs.",
-            badge: "CTA-ready"
-          },
-          {
-            title: "Animated headline",
-            body: "Full-screen headline with reusable text motion presets and scroll-linking.",
-            badge: "Motion"
-          },
-          {
-            title: "Story",
-            body: "Multi-column story block with variants and nested sections for process steps.",
-            badge: "Rich copy"
-          },
-          {
-            title: "Features",
-            body: "Badge + title + body cards laid out in responsive columns.",
-            badge: "New"
-          }
-        ]
-      },
-      {
-        id: "home-story",
+        id: "cfa-client-experience",
         type: "story",
-        anchor: "process",
-        heading: "Process",
-        body: "Edit these steps in /admin → Pages to update the live site.",
+        heading: "What your clients see",
+        body: "Your clients get a simple, frictionless experience \u2014 and because you're on the platform, you can see exactly what they see.",
         variant: "two_column",
         sections: [
-          { title: "Discovery & storyboard", body: "We map the emotional beats, target metrics, and hero moments." },
-          { title: "Design system + tokens", body: "Design tokens, content schemas, and motion systems to keep every section coherent." },
-          { title: "Build & QA", body: "Static-first builds with selective React islands and Framer Motion choreography." }
-        ]
+          {
+            title: "One-link review",
+            body: "Clients review and approve ads from a single shareable link \u2014 no account needed. Ads and ad copy show up side by side, with approve/reject/edit controls on every piece.",
+          },
+          {
+            title: "Client dashboard",
+            body: "Approved ads, campaign status, and download links in one place. A gallery view makes it easy for clients to share creative with their own stakeholders.",
+          },
+          {
+            title: "Slack notifications",
+            body: "Clients get notified right in Slack when ads are ready for review or campaigns hit milestones \u2014 in the channels they're already using.",
+          },
+          {
+            title: "Built-in support",
+            body: "Clients can raise questions or revision requests directly inside Campfire, tied to the campaign they're about. No email chains, no lost context.",
+          },
+        ],
       },
       {
-        id: "home-contact",
+        id: "cfa-agency-tools",
+        type: "features",
+        anchor: "agency-tools",
+        eyebrow: "Your toolkit",
+        heading: "Built for how agencies actually work",
+        body: "Campfire isn't repurposed project management software. It's designed specifically for teams producing ad creative at volume.",
+        columns: 2,
+        items: [
+          {
+            title: "Production workspace",
+            body: "See every campaign's status, timeline, and assignments across all your brands. Filter by brand, month, review status, or any combination. Share a specific view with a colleague in one click.",
+            badge: "Visibility",
+          },
+          {
+            title: "Brand management",
+            body: "Each brand gets a dedicated profile: logos, products, campaigns, tone of voice, staff assignments, contract terms, and internal notes. When anyone picks up a new brief, everything they need is in one place.",
+            badge: "Organization",
+          },
+          {
+            title: "Integrations",
+            body: "Campfire connects to your existing tools \u2014 trafficking systems, DAMs, and other production tools \u2014 so it fits into how you already work.",
+            badge: "Your stack",
+          },
+          {
+            title: "Scoped permissions",
+            body: "You only see what's relevant to your portfolio. Each team member gets the right level of access for their role \u2014 from read-only visibility to full production management.",
+            badge: "Access control",
+          },
+        ],
+      },
+      {
+        id: "cfa-split-scale",
+        type: "split",
+        eyebrow: "At scale",
+        heading: "Everything lives together",
+        body: "Ads, copy, feedback, status, reporting, and integrations \u2014 all in one place. No more stitching together spreadsheets, Drive folders, and Slack threads. Whether you're running five campaigns or fifty, Campfire keeps production organized.",
+        mediaSide: "left",
+        ctaLabel: "See it in action",
+        ctaHref: "#contact",
+      },
+      {
+        id: "cfa-why",
+        type: "scroll_gallery",
+        eyebrow: "Why Campfire for agencies",
+        heading: "The creative production partner your portfolio needs",
+        body: "Bespoke ad creative your clients will love, with the operational depth you need to manage it.",
+        items: [
+          {
+            title: "Your clients get a great experience",
+            body: "One-link review, real-time updates, zero onboarding friction. They see the work, not the process.",
+            badge: "Client experience",
+          },
+          {
+            title: "You get real visibility",
+            body: "Production boards and brand management \u2014 purpose-built for high-volume creative work. No more asking for status updates.",
+            badge: "Visibility",
+          },
+          {
+            title: "It scales with your portfolio",
+            body: "Three brands or thirty \u2014 Campfire keeps production organized, tracked, and on schedule without adding overhead.",
+            badge: "Scale",
+          },
+          {
+            title: "Bespoke creative, always",
+            body: "Every ad is made for each brand specifically. Human-led, Meta-optimized, performance-focused. No templates, no AI slop.",
+            badge: "Quality",
+          },
+        ],
+      },
+      {
+        id: "cfa-showcase",
+        type: "showcase",
+        typeFilter: "Example",
+        limit: 8,
+        featuredOnly: true,
+        animationPreset: "fan",
+      },
+      {
+        id: "cfa-contact",
         type: "contact",
-        eyebrow: "Contact",
-        heading: "Plan your launch with Studio Tak",
-        body: "Tell us about your product, timeline, and the outcomes you want. We'll follow up with a focused plan.",
+        eyebrow: "Let's talk",
+        heading: "See how Campfire fits your agency",
+        body: "Tell us about your brands, your creative volume, and how your team works today. We'll show you how Campfire can fit into your workflow.",
         anchor: "contact",
-        media: {
-          url: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
-          type: "image",
-          alt: "Designers collaborating at a table"
-        },
         formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
         portalId: "244262601",
         region: "na2",
-        formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js"
-      }
-    ]
-  },
-  {
-    id: "about",
-    slug: "/about",
-    title: "About",
-    status: "draft",
-    metaDescription: "Small, senior team working at the intersection of brand and product.",
-    blocks: [
-      {
-        id: "about-hero",
-        type: "hero",
-        eyebrow: "About",
-        title: "Small, senior team working at the intersection of brand and product.",
-        subtitle: "We blend design systems thinking with expressive visuals.",
-        primaryCtaLabel: "Meet the team",
-        primaryCtaHref: "/about#team",
-        alignment: "centered"
+        formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
       },
-      {
-        id: "about-story",
-        type: "story",
-        heading: "Approach",
-        body: "We prototype in the browser early to validate motion.",
-        variant: "split_with_quote",
-        sections: [
-          { title: "Approach", body: "We prototype in the browser early to validate motion." },
-          { title: "Stack", body: "Next.js app router, Framer Motion, content schemas mapped to design tokens." }
-        ]
-      }
-    ]
+    ],
   },
   {
-    id: "work",
-    slug: "/work",
-    title: "Work",
-    status: "draft",
-    metaDescription: "Selected launches across SaaS, fintech, and climate.",
-    blocks: [
-      {
-        id: "work-hero",
-        type: "hero",
-        eyebrow: "Work",
-        title: "Selected launches across SaaS, fintech, and climate.",
-        subtitle: "We pair narrative with purposeful motion to drive activation.",
-        primaryCtaLabel: "View case studies",
-        primaryCtaHref: "/work",
-        alignment: "image_left"
-      },
-      {
-        id: "work-story",
-        type: "story",
-        heading: "Collaboration",
-        body: "Work directly with senior designers and engineers.",
-        variant: "single_column",
-        sections: [
-          { title: "Case studies", body: "Narratives anchored by metrics and motion." },
-          { title: "Collaboration", body: "Work directly with senior designers and engineers." }
-        ]
-      }
-    ]
-  },
-  {
-    id: "learn",
-    slug: "/learn",
-    title: "Learn",
+    id: "campfire-brands",
+    slug: "/campfire/brands",
+    title: "Campfire for Brands",
     status: "published",
-    seoTitle: "Learn | Studio Tak",
-    metaDescription: "Insights, case studies, and notes from Studio Tak.",
+    seoTitle: "Campfire for Brands \u2014 Bespoke Meta Ad Creative, Made for You",
+    metaDescription: "Review and approve bespoke Meta ad creative from a single link. Your dashboard, your ads, your brand \u2014 all in one place. Pay per ad, no subscriptions.",
+    nofollow: false,
+    noindex: false,
+    sitemapExclude: false,
+    focusKeyword: "meta ad creative for brands",
+    ogTitle: "Campfire for Brands \u2014 Your Ads, Your Way",
+    ogDescription: "Bespoke Meta ad creative with a frictionless review experience. One link, real-time updates, and a dashboard built for your brand.",
     blocks: [
       {
-        id: "learn-featured",
-        type: "article_featured",
-        adminLabel: "Featured article"
+        id: "cfb-hero",
+        type: "hero",
+        eyebrow: "Campfire / For Brands",
+        title: "Your ads, reviewed and delivered \u2014 without the back-and-forth",
+        subtitle: "Campfire is where you review ads, approve creative, track campaigns, and access your delivered work \u2014 all from one place. No email chains, no lost notes.",
+        primaryCtaLabel: "Get started",
+        primaryCtaHref: "#contact",
+        secondaryCtaLabel: "See how it works",
+        secondaryCtaHref: "#review",
+        alignment: "centered",
+        mode: "dynamic",
+        mediaTypeTag: "Example",
       },
       {
-        id: "learn-grid",
-        type: "article_grid",
-        adminLabel: "Article grid",
-        offset: 1
-      }
-    ]
+        id: "cfb-headline",
+        type: "animated_headline",
+        headline: "One link. Your ads. Done.",
+        subtext: "No account to create, no app to install. Click, review, and respond. It's that simple.",
+        animationStyle: "fade_by_word",
+        animationMode: "scroll",
+        freezeOnScroll: true,
+        enableDarkModeOnScroll: true,
+      },
+      {
+        id: "cfb-review",
+        type: "story",
+        anchor: "review",
+        heading: "Reviewing your ads",
+        body: "When your creative is ready, you get a single link. Click it, enter a password, and you're in.",
+        variant: "two_column",
+        sections: [
+          {
+            title: "Ads and copy, side by side",
+            body: "See your visuals alongside the ad copy so you always know what the messaging says. Approve, reject, or request edits on each piece \u2014 feedback flows back to us in real time.",
+          },
+          {
+            title: "Progress tracks itself",
+            body: "You can always see where things stand without having to ask. No checking in, no status meetings \u2014 just the current state of your work with us.",
+          },
+          {
+            title: "Your dashboard",
+            body: "Approved ads ready to use, campaign status at a glance, and quick download links. A gallery view makes it easy to share creative with your own team or stakeholders.",
+          },
+          {
+            title: "Raise a question anytime",
+            body: "A note about an ad, a revision request, a question for our team \u2014 raise it directly inside Campfire. It stays connected to the campaign, so nothing gets lost.",
+          },
+        ],
+      },
+      {
+        id: "cfb-platform-features",
+        type: "features",
+        eyebrow: "The experience",
+        heading: "Everything stays connected",
+        body: "From the brief to the final ad, nothing falls through the cracks. Campfire is built to make working with your creative team feel effortless.",
+        columns: 3,
+        items: [
+          {
+            title: "Slack notifications",
+            body: "When ads are ready for review or campaigns hit milestones, you get notified right in Slack \u2014 in the channels your team already uses.",
+            badge: "Stay in the loop",
+          },
+          {
+            title: "Reporting & exports",
+            body: "Ad counts by campaign, aspect ratio coverage, and status breakdowns. Export everything to CSV for your own reporting.",
+            badge: "Data",
+          },
+          {
+            title: "Always up to date",
+            body: "Everything syncs live. When new ads are uploaded or a status changes, you see it immediately. No refreshing, no waiting.",
+            badge: "Real-time",
+          },
+        ],
+      },
+      {
+        id: "cfb-split-bespoke",
+        type: "split",
+        eyebrow: "The creative",
+        heading: "Bespoke ads, not templates",
+        body: "Every ad is made for your brand. No stock imagery, no cookie-cutter layouts, no AI slop. High volume, still intentional. Human designers who understand Meta's ad ecosystem \u2014 what hooks, what converts, what scales.",
+        mediaSide: "right",
+        ctaLabel: "See how it works",
+        ctaHref: "#how-it-works",
+      },
+      {
+        id: "cfb-why",
+        type: "scroll_gallery",
+        eyebrow: "Why Campfire",
+        heading: "Built for brands scaling Meta ads",
+        body: "You've outgrown Canva but you're not ready for a $5K/month agency retainer. Campfire fills that gap.",
+        items: [
+          {
+            title: "Pay per ad, no gotchas",
+            body: "One ad, one price. No subscriptions, no retainers, no lock-in. Scale up or down whenever you need to.",
+            badge: "Simple pricing",
+          },
+          {
+            title: "Human-led, Meta-optimized",
+            body: "Real designers who understand Meta's ad ecosystem. Creative decisions informed by what actually performs, made by people with taste.",
+            badge: "Performance",
+          },
+          {
+            title: "Zero friction",
+            body: "One link to review. Live updates. Slack notifications. Everything in one place. Working with us should feel easy \u2014 because it is.",
+            badge: "Effortless",
+          },
+          {
+            title: "Performance is the point",
+            body: "We care about whether the ad works, not just how it looks. Beautiful creative that actually converts.",
+            badge: "Results",
+          },
+        ],
+      },
+      {
+        id: "cfb-showcase",
+        type: "showcase",
+        typeFilter: "Example",
+        limit: 8,
+        featuredOnly: true,
+        animationPreset: "fan",
+      },
+      {
+        id: "cfb-contact",
+        type: "contact",
+        eyebrow: "Let's talk",
+        heading: "Tell us about your brand",
+        body: "Share a bit about your business, your Meta ad goals, and the kind of creative you're looking for. We'll follow up with a plan \u2014 no pitch deck, no pressure.",
+        anchor: "contact",
+        formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
+        portalId: "244262601",
+        region: "na2",
+        formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
+      },
+    ],
+  },
+  {
+    id: "campfire-growth",
+    focusKeyword: "meta ad creative for growth marketers",
+    ogTitle: "Campfire for Growth Teams \u2014 Creative That Keeps Up With Your Spend",
+    ogDescription: "Bespoke Meta ad creative built for media buyers and growth marketers. Fresh hooks, fast iterations, and a pipeline that matches your testing velocity.",
+    seoTitle: "Campfire for Growth Teams \u2014 Bespoke Meta Ad Creative That Converts",
+    title: "Campfire for Growth Teams",
+    metaDescription: "High-volume Meta ad creative built for performance. Fresh concepts on demand, fast turnaround, and a production pipeline that keeps up with your testing cadence.",
+    slug: "/campfire/growth",
+    status: "published",
+    nofollow: false,
+    noindex: false,
+    sitemapExclude: false,
+    blocks: [
+      {
+        eyebrow: "Campfire / For Growth Teams",
+        primaryCtaHref: "#contact",
+        mode: "dynamic",
+        secondaryCtaHref: "#pipeline",
+        mediaTypeTag: "Example",
+        primaryCtaLabel: "Let's talk creative",
+        title: "Creative that keeps up with your spend",
+        subtitle: "You're scaling Meta ads and burning through creative faster than your team can make it. Campfire gives you a steady pipeline of bespoke ad creative \u2014 fresh hooks, new angles, fast iterations \u2014 without hiring another designer.",
+        secondaryCtaLabel: "See what you get",
+        id: "cfg-hero",
+        alignment: "centered",
+        type: "hero",
+      },
+      {
+        freezeOnScroll: true,
+        type: "animated_headline",
+        enableDarkModeOnScroll: true,
+        headline: "Test more. Win more. Burn out less.",
+        id: "cfg-headline",
+        subtext: "Your best-performing ad is only your best-performing ad until it fatigues. You need a creative partner who can keep pace.",
+        animationMode: "scroll",
+        animationStyle: "fade_by_word",
+      },
+      {
+        id: "cfg-pipeline",
+        heading: "Your creative pipeline",
+        sections: [
+          {
+            body: "Submit a brief, get bespoke ad creative back \u2014 designed by humans who understand Meta's ad ecosystem. No templates, no AI-generated filler. Every ad is made to perform.",
+            title: "Brief it, ship it",
+          },
+          {
+            body: "Found a hook that's working? We'll spin variations \u2014 new formats, fresh angles, different aspect ratios \u2014 so you can test deeper without starting from scratch every time.",
+            title: "Iterate on winners",
+          },
+          {
+            title: "Review in one click",
+            body: "Ads and copy show up side by side in a single shareable link. Approve, reject, or request changes \u2014 feedback flows back to us in real time. No email threads, no Slack scavenger hunts.",
+          },
+          {
+            body: "Approved creative is ready to pull into your ad manager immediately. Organized by campaign, sized for every placement. No reformatting, no hunting through Drive folders.",
+            title: "Download and deploy",
+          },
+        ],
+        variant: "two_column",
+        body: "Campfire is built for the way growth teams actually work \u2014 fast cycles, constant testing, and a need for creative that doesn't all look the same.",
+        anchor: "pipeline",
+        type: "story",
+      },
+      {
+        heading: "The creative infrastructure you've been missing",
+        items: [
+          {
+            body: "New hooks, new angles, new visual approaches \u2014 on your schedule. No waiting for a design queue or a creative director's calendar.",
+            title: "Fresh concepts on demand",
+            mediaFit: "contain",
+            icon: {
+              type: "image",
+              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343922083-01.webp?alt=media&token=9198ee90-4e0d-4569-b279-04ef402e721d",
+            },
+            badge: "Volume",
+          },
+          {
+            badge: "Performance",
+            icon: {
+              type: "image",
+              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343941137-03.webp?alt=media&token=442804d3-ac26-4a96-9b00-2e6b568e3b91",
+            },
+            mediaFit: "contain",
+            title: "Performance-informed",
+            body: "Our designers understand what works on Meta. Aspect ratio best practices, hook structures, thumb-stopping patterns \u2014 baked into every ad.",
+          },
+          {
+            icon: {
+              type: "image",
+              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343932988-02.webp?alt=media&token=eb2cdf34-89c5-49de-aa02-a5a09f1e275d",
+            },
+            badge: "Speed",
+            body: "Measured in days, not weeks. Your testing cadence shouldn't slow down because creative can't keep up.",
+            title: "Fast turnaround",
+            mediaFit: "contain",
+          },
+        ],
+        id: "cfg-built-for-testing",
+        eyebrow: "Built for testing velocity",
+        columns: 3,
+        anchor: "testing",
+        body: "You have the data, the budget, and the strategy. What you don't have is enough fresh creative to test against. That's what Campfire solves.",
+        type: "features",
+      },
+      {
+        mediaSide: "right",
+        body: "You already know: even your best ads have a shelf life. CPAs creep up, CTRs flatten, and suddenly your winning creative is yesterday's news. The brands that win on Meta are the ones that can keep feeding the machine with fresh, high-quality creative. Campfire makes that sustainable.",
+        type: "split",
+        ctaLabel: "See how it works",
+        ctaHref: "#pipeline",
+        eyebrow: "The real problem",
+        id: "cfg-split-fatigue",
+        heading: "Creative fatigue is a growth problem",
+      },
+      {
+        heading: "Built for media buyers who care about creative",
+        eyebrow: "Why Campfire for growth",
+        id: "cfg-why",
+        items: [
+          {
+            badge: "Flexible pricing",
+            title: "Pay per ad, scale on your terms",
+            body: "No retainers, no subscriptions, no minimum commitments. Order five ads or fifty \u2014 pricing stays the same. Scale up for a launch, scale down when you're optimizing.",
+          },
+          {
+            badge: "Quality",
+            body: "Real designers who understand the platform. Creative decisions informed by what actually performs \u2014 made by people with taste, not a prompt.",
+            title: "Human-made, Meta-optimized",
+          },
+          {
+            badge: "Iteration",
+            body: "Need three variations of a winning hook? A new concept for a cold audience? Static and video versions of the same angle? Just ask. We're built for iteration.",
+            title: "Your testing partner",
+          },
+          {
+            title: "Zero production overhead",
+            body: "No hiring, no managing, no creative direction needed. Brief us, review the work, deploy. We handle everything in between.",
+            badge: "Effortless",
+          },
+        ],
+        body: "You know creative is the biggest lever in your account. You just need a partner who can pull it.",
+        type: "scroll_gallery",
+      },
+      {
+        type: "showcase",
+        limit: 8,
+        typeFilter: "Example",
+        animationPreset: "fan",
+        id: "cfg-showcase",
+        featuredOnly: true,
+      },
+      {
+        id: "cfg-contact",
+        formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
+        heading: "Tell us about your growth goals",
+        region: "na2",
+        anchor: "contact",
+        type: "contact",
+        body: "Share your monthly ad volume, what's working (and what's not), and where creative is the bottleneck. We'll come back with a plan to keep your pipeline full.",
+        eyebrow: "Let's talk",
+        portalId: "244262601",
+        formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
+      },
+    ],
   },
   {
     id: "campfire-test",
-    slug: "/campfire-test",
     title: "Campfire",
     status: "published",
-    seoTitle: "Campfire — Bespoke Meta Ad Creative, Sold Per Ad",
-    metaDescription:
-      "High-volume Meta ad creative that still feels intentional. Human-led, performance-focused, priced per ad. No subscriptions, no lock-in.",
-    ogTitle: "Campfire — Bespoke Meta Ad Creative",
-    ogDescription:
-      "Every ad made for your brand. Human designers who know what converts on Meta. Pay per ad, not per month.",
+    seoTitle: "Campfire \u2014 Bespoke Meta Ad Creative, Sold Per Ad",
+    metaDescription: "High-volume Meta ad creative that still feels intentional. Human-led, performance-focused, priced per ad. No subscriptions, no lock-in.",
+    ogTitle: "Campfire \u2014 Bespoke Meta Ad Creative",
+    ogDescription: "Every ad made for your brand. Human designers who know what converts on Meta. Pay per ad, not per month.",
     focusKeyword: "meta ad creative",
+    nofollow: false,
+    noindex: false,
+    sitemapExclude: false,
     blocks: [
       {
         id: "cf-hero",
         type: "hero",
         eyebrow: "Campfire / Bespoke Ad Creative",
-        title: "Ad creative, delivered — without the back-and-forth",
-        subtitle:
-          "Campfire is where you review ads, approve creative, and track campaigns — all from one place. Human-led, Meta-optimized, priced per ad.",
+        title: "Ad creative, delivered \u2014 without the back-and-forth",
+        subtitle: "Campfire is where you review ads, approve creative, and track campaigns \u2014 all from one place. Human-led, Meta-optimized, priced per ad.",
         primaryCtaLabel: "Get started",
         primaryCtaHref: "#contact",
         secondaryCtaLabel: "See how it works",
@@ -475,8 +779,7 @@ export const seedPages: PageRecord[] = [
         id: "cf-headline",
         type: "animated_headline",
         headline: "High volume doesn't have to mean low quality",
-        subtext:
-          "Every ad is made for your brand specifically. No templates. No AI slop. Just intentional creative that performs.",
+        subtext: "Every ad is made for your brand specifically. No templates. No AI slop. Just intentional creative that performs.",
         animationStyle: "fade_by_word",
         animationMode: "scroll",
         freezeOnScroll: true,
@@ -506,7 +809,7 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "Zero friction",
-            body: "One link to review. Live updates. Everything in one place. Working with us should feel easy — because it is.",
+            body: "One link to review. Live updates. Everything in one place. Working with us should feel easy \u2014 because it is.",
             badge: "Effortless",
           },
         ],
@@ -521,15 +824,15 @@ export const seedPages: PageRecord[] = [
         sections: [
           {
             title: "1. Share your brand",
-            body: "Send us your brand guidelines, product pages, and any creative you like. We study what makes your brand yours — colors, tone, audience, the whole picture.",
+            body: "Send us your brand guidelines, product pages, and any creative you like. We study what makes your brand yours \u2014 colors, tone, audience, the whole picture.",
           },
           {
             title: "2. We make your ads",
-            body: "Our designers build bespoke static and video ads optimized for Meta. Every layout, headline, and visual choice is intentional — informed by what actually performs.",
+            body: "Our designers build bespoke static and video ads optimized for Meta. Every layout, headline, and visual choice is intentional \u2014 informed by what actually performs.",
           },
           {
             title: "3. Review, approve, launch",
-            body: "Review your ads from a single link — no account needed. Approve, reject, or request edits on each piece. Your feedback flows back to us in real time.",
+            body: "Review your ads from a single link \u2014 no account needed. Approve, reject, or request edits on each piece. Your feedback flows back to us in real time.",
           },
         ],
       },
@@ -538,12 +841,12 @@ export const seedPages: PageRecord[] = [
         type: "features",
         eyebrow: "The platform",
         heading: "Everything in one place",
-        body: "Campfire isn't just where ads get made — it's where you manage the whole relationship. Review creative, track progress, and access everything we've delivered.",
+        body: "Campfire isn't just where ads get made \u2014 it's where you manage the whole relationship. Review creative, track progress, and access everything we've delivered.",
         columns: 3,
         items: [
           {
             title: "One-link review",
-            body: "Click a link, enter a password, and you're in. See your ads and ad copy side by side. Approve, reject, or request edits — feedback flows back to us instantly.",
+            body: "Click a link, enter a password, and you're in. See your ads and ad copy side by side. Approve, reject, or request edits \u2014 feedback flows back to us instantly.",
             badge: "Review",
           },
           {
@@ -553,7 +856,7 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "Slack notifications",
-            body: "When ads are ready for review or a campaign hits a milestone, you get notified right in Slack — in the channels your team already uses.",
+            body: "When ads are ready for review or a campaign hits a milestone, you get notified right in Slack \u2014 in the channels your team already uses.",
             badge: "Stay in the loop",
           },
         ],
@@ -563,12 +866,12 @@ export const seedPages: PageRecord[] = [
         type: "features",
         eyebrow: "Built for",
         heading: "You've outgrown Canva. You're not ready for an agency.",
-        body: "Campfire fills the gap between DIY and enterprise — professional creative for brands that are growing fast and need ads that keep up.",
+        body: "Campfire fills the gap between DIY and enterprise \u2014 professional creative for brands that are growing fast and need ads that keep up.",
         columns: 3,
         items: [
           {
             title: "Scaling founders",
-            body: "You're spending $10K–$100K/month on Meta and you know your creative could be better. You need great ads without hiring a full-time designer.",
+            body: "You're spending $10K\u2013$100K/month on Meta and you know your creative could be better. You need great ads without hiring a full-time designer.",
             badge: "Entrepreneurs",
           },
           {
@@ -578,7 +881,7 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "Marketing teams at SMBs",
-            body: "Your team is growing but your creative resources aren't. We work like an extension of your team — learning your brand, not just filling a queue.",
+            body: "Your team is growing but your creative resources aren't. We work like an extension of your team \u2014 learning your brand, not just filling a queue.",
             badge: "Growing brands",
           },
         ],
@@ -588,7 +891,7 @@ export const seedPages: PageRecord[] = [
         type: "split",
         eyebrow: "The point",
         heading: "Beautiful creative that actually converts",
-        body: "We care about whether the ad works, not just how it looks. Every creative decision is informed by Meta ad performance data — what hooks, what converts, what scales. Pretty ads that don't perform aren't good ads.",
+        body: "We care about whether the ad works, not just how it looks. Every creative decision is informed by Meta ad performance data \u2014 what hooks, what converts, what scales. Pretty ads that don't perform aren't good ads.",
         mediaSide: "right",
         ctaLabel: "See the work",
         ctaHref: "#contact",
@@ -608,17 +911,17 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "vs. AI ad tools",
-            body: "AI can generate an ad. We make your ad. Human taste, brand nuance, and creative direction that AI can't replicate — yet.",
+            body: "AI can generate an ad. We make your ad. Human taste, brand nuance, and creative direction that AI can't replicate \u2014 yet.",
             badge: "Human-led",
           },
           {
             title: "vs. Freelancers",
-            body: "Stop rolling the dice. We bring consistent quality, Meta ad expertise, and a real creative relationship — not a one-off transaction.",
+            body: "Stop rolling the dice. We bring consistent quality, Meta ad expertise, and a real creative relationship \u2014 not a one-off transaction.",
             badge: "Consistent",
           },
           {
             title: "vs. Doing it yourself",
-            body: "Your time is worth more than another hour in Canva. Focus on running your business — we'll handle the creative.",
+            body: "Your time is worth more than another hour in Canva. Focus on running your business \u2014 we'll handle the creative.",
             badge: "Your time back",
           },
         ],
@@ -628,477 +931,479 @@ export const seedPages: PageRecord[] = [
         type: "contact",
         eyebrow: "Let's talk",
         heading: "Tell us about your brand",
-        body: "Share a bit about your business, your Meta ad goals, and the kind of creative you're looking for. We'll follow up with a plan — no pitch deck, no pressure.",
+        body: "Share a bit about your business, your Meta ad goals, and the kind of creative you're looking for. We'll follow up with a plan \u2014 no pitch deck, no pressure.",
         anchor: "contact",
         formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
         portalId: "244262601",
         region: "na2",
-        formScriptSrc:
-          "https://js-na2.hsforms.net/forms/embed/244262601.js",
+        formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
+      },
+    ],
+    slug: "/campfire",
+  },
+  {
+    id: "learn",
+    slug: "/learn",
+    title: "Learn",
+    status: "published",
+    seoTitle: "Learn | Studio Tak",
+    nofollow: false,
+    noindex: false,
+    sitemapExclude: false,
+    focusKeyword: "Learn",
+    twitterTitle: "Learn",
+    canonicalUrl: "https://studiotak.co/learn",
+    ogTitle: "Learn",
+    blocks: [
+      {
+        id: "learn-featured",
+        type: "article_featured",
+        adminLabel: "Featured article",
+      },
+      {
+        id: "learn-grid",
+        type: "article_grid",
+        adminLabel: "Article grid",
+        offset: 1,
+      },
+    ],
+    metaDescription: "Insights, case studies, and notes from Studio Tak.",
+  },
+  {
+    id: "lvGVSzmisEW5fqnHH1Ao",
+    slug: "/campfire/demo",
+    status: "published",
+    noindex: false,
+    nofollow: false,
+    sitemapExclude: false,
+    title: "Book a Demo",
+    focusKeyword: "Book a Demo",
+    twitterTitle: "Book a Demo",
+    canonicalUrl: "https://studiotak.co/campfire/demo",
+    twitterDescription: "We partner with DTC teams to produce, and ship performance-ready ads every week. Book a demo and we\u2019ll walk through how Campfire can work for you.",
+    ogTitle: "Book a Demo",
+    ogDescription: "We partner with DTC teams to produce, and ship performance-ready ads every week. Book a demo and we\u2019ll walk through how Campfire can work for you.",
+    seoTitle: "Book a Demo",
+    metaDescription: "We partner with DTC teams to produce, and ship performance-ready ads every week. Book a demo and we\u2019ll walk through how Campfire can work for you.",
+    blocks: [
+      {
+        type: "contact",
+        formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
+        eyebrow: "Let's Chat",
+        formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
+        enableDarkModeOnScroll: false,
+        id: "a7f124d8-f9a0-4a1b-b126-7eb0d0ff7314",
+        media: {
+          type: "image",
+          url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1765343575514-Ian%20Wagner%C2%A0BW.webp?alt=media&token=59af2921-1ea9-4fea-b343-81288d41d434",
+        },
+        region: "na2",
+        portalId: "244262601",
+        anchor: "contact",
+        body: "We partner with DTC teams to produce, and ship performance-ready ads every week.\nBook a demo and we\u2019ll walk through how Campfire can work for you.",
+        heading: "Pull up a chair.",
       },
     ],
   },
   {
-    id: "campfire-brands",
-    slug: "/campfire/brands",
-    title: "Campfire for Brands",
-    status: "published",
-    seoTitle: "Campfire for Brands — Bespoke Meta Ad Creative, Made for You",
-    metaDescription:
-      "Review and approve bespoke Meta ad creative from a single link. Your dashboard, your ads, your brand — all in one place. Pay per ad, no subscriptions.",
-    ogTitle: "Campfire for Brands — Your Ads, Your Way",
-    ogDescription:
-      "Bespoke Meta ad creative with a frictionless review experience. One link, real-time updates, and a dashboard built for your brand.",
-    focusKeyword: "meta ad creative for brands",
+    id: "sXWpx8DgXVqcDnCYJ9XG",
+    title: "Home",
+    slug: "/",
+    noindex: false,
+    nofollow: false,
+    sitemapExclude: false,
+    canonicalUrl: "https://www.studiotak.co/",
+    socialImage: {
+      url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1765343575514-Ian%20Wagner%C2%A0BW.webp?alt=media&token=59af2921-1ea9-4fea-b343-81288d41d434",
+      type: "image",
+    },
+    seoTitle: "Studio Tak | Design Systems & Interactive Experiences",
     blocks: [
       {
-        id: "cfb-hero",
+        secondaryCtaLabel: "Log in",
+        eyebrow: "Studio Tak",
+        enableDarkModeOnScroll: false,
+        id: "c9657663-de24-4b74-87c2-730cd94ef3a7",
         type: "hero",
-        eyebrow: "Campfire / For Brands",
-        title: "Your ads, reviewed and delivered — without the back-and-forth",
-        subtitle:
-          "Campfire is where you review ads, approve creative, track campaigns, and access your delivered work — all from one place. No email chains, no lost notes.",
-        primaryCtaLabel: "Get started",
-        primaryCtaHref: "#contact",
-        secondaryCtaLabel: "See how it works",
-        secondaryCtaHref: "#review",
+        secondaryCtaHref: "https://campfire.studiotak.co/login",
         alignment: "centered",
-        mode: "dynamic",
-        mediaTypeTag: "Example",
+        primaryCtaLabel: "Learn about Campfire ",
+        background: {
+          url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1765343575514-Ian%20Wagner%C2%A0BW.webp?alt=media&token=59af2921-1ea9-4fea-b343-81288d41d434",
+          type: "image",
+        },
+        title: "Design & Build",
+        primaryCtaHref: "/campfire",
+        overlayStyle: "full",
+      },
+    ],
+    status: "published",
+  },
+  {
+    id: "about",
+    blocks: [
+      {
+        id: "about-hero",
+        type: "hero",
+        eyebrow: "About",
+        title: "Small, senior team working at the intersection of brand and product.",
+        subtitle: "We blend design systems thinking with expressive visuals.",
+        primaryCtaLabel: "Meet the team",
+        primaryCtaHref: "/about#team",
+        alignment: "centered",
       },
       {
-        id: "cfb-headline",
-        type: "animated_headline",
-        headline: "One link. Your ads. Done.",
-        subtext:
-          "No account to create, no app to install. Click, review, and respond. It's that simple.",
-        animationStyle: "fade_by_word",
-        animationMode: "scroll",
-        freezeOnScroll: true,
-        enableDarkModeOnScroll: true,
-      },
-      {
-        id: "cfb-review",
+        id: "about-story",
         type: "story",
-        anchor: "review",
-        heading: "Reviewing your ads",
-        body: "When your creative is ready, you get a single link. Click it, enter a password, and you're in.",
-        variant: "two_column",
+        heading: "Approach",
+        body: "We prototype in the browser early to validate motion.",
+        variant: "split_with_quote",
         sections: [
           {
-            title: "Ads and copy, side by side",
-            body: "See your visuals alongside the ad copy so you always know what the messaging says. Approve, reject, or request edits on each piece — feedback flows back to us in real time.",
+            title: "Approach",
+            body: "We prototype in the browser early to validate motion.",
           },
           {
-            title: "Progress tracks itself",
-            body: "You can always see where things stand without having to ask. No checking in, no status meetings — just the current state of your work with us.",
+            title: "Stack",
+            body: "Next.js app router, Framer Motion, content schemas mapped to design tokens.",
+          },
+        ],
+      },
+    ],
+    title: "About",
+    metaDescription: "Small, senior team working at the intersection of brand and product.",
+    slug: "/about",
+    status: "draft",
+  },
+  {
+    id: "home",
+    slug: "/",
+    title: "Home",
+    canonicalUrl: "https://studiotak.co/",
+    ogTitle: "Studio Tak | Marketing Technology & Creative Production",
+    ogDescription: "Creative production systems for brands and agencies running Meta ads at scale.",
+    nofollow: false,
+    noindex: false,
+    sitemapExclude: false,
+    blocks: [
+      {
+        id: "home-hero",
+        type: "hero",
+        eyebrow: "Studio Tak / Marketing Engineering",
+        title: "Design systems with expressive motion",
+        subtitle: "Static-first marketing pages built with React islands where they matter.",
+        primaryCtaLabel: "Plan a launch",
+        primaryCtaHref: "#contact",
+        secondaryCtaLabel: "View capabilities",
+        secondaryCtaHref: "#capabilities",
+        alignment: "centered",
+      },
+      {
+        id: "home-animated-headline",
+        type: "animated_headline",
+        headline: "Full-screen animated headlines",
+        subtext: "Pick a motion preset or tie the reveal to scroll to choreograph the story beat.",
+        animationStyle: "scramble",
+        animationMode: "scroll",
+        freezeOnScroll: true,
+      },
+      {
+        id: "home-scroll-gallery",
+        type: "scroll_gallery",
+        eyebrow: "Scroll gallery",
+        heading: "Swipe through featured work",
+        body: "Full-bleed, full-height carousel of cards you can source from the component library or craft per page.",
+        items: [
+          {
+            title: "Component-powered",
+            body: "Pull in existing feature components to keep cards consistent across pages.",
+            badge: "Reusable",
+            industry: "Marketing systems",
           },
           {
-            title: "Your dashboard",
-            body: "Approved ads ready to use, campaign status at a glance, and quick download links. A gallery view makes it easy to share creative with your own team or stakeholders.",
+            title: "Horizontal scroll",
+            body: "Full-width track with snap points keeps the story feeling cinematic.",
+            badge: "Motion",
+            type: "Scroll",
           },
           {
-            title: "Raise a question anytime",
-            body: "A note about an ad, a revision request, a question for our team — raise it directly inside Campfire. It stays connected to the campaign, so nothing gets lost.",
+            title: "Page-specific cards",
+            body: "Layer in bespoke highlights without touching code\u2014edit right in Admin.",
+            badge: "Custom",
+            type: "Content",
           },
         ],
       },
       {
-        id: "cfb-platform-features",
+        id: "home-features",
         type: "features",
-        eyebrow: "The experience",
-        heading: "Everything stays connected",
-        body: "From the brief to the final ad, nothing falls through the cracks. Campfire is built to make working with your creative team feel effortless.",
+        anchor: "capabilities",
+        eyebrow: "Capabilities",
+        heading: "Blocks built as a component library",
+        body: "Each block maps to content schema fields so marketing can ship pages without engineering.",
         columns: 3,
         items: [
           {
-            title: "Slack notifications",
-            body: "When ads are ready for review or campaigns hit milestones, you get notified right in Slack — in the channels your team already uses.",
-            badge: "Stay in the loop",
+            title: "Hero",
+            body: "Above-the-fold intro with inline or background media plus two CTAs.",
+            badge: "CTA-ready",
           },
           {
-            title: "Reporting & exports",
-            body: "Ad counts by campaign, aspect ratio coverage, and status breakdowns. Export everything to CSV for your own reporting.",
-            badge: "Data",
+            title: "Animated headline",
+            body: "Full-screen headline with reusable text motion presets and scroll-linking.",
+            badge: "Motion",
           },
           {
-            title: "Always up to date",
-            body: "Everything syncs live. When new ads are uploaded or a status changes, you see it immediately. No refreshing, no waiting.",
-            badge: "Real-time",
+            title: "Story",
+            body: "Multi-column story block with variants and nested sections for process steps.",
+            badge: "Rich copy",
+          },
+          {
+            title: "Features",
+            body: "Badge + title + body cards laid out in responsive columns.",
+            badge: "New",
           },
         ],
       },
       {
-        id: "cfb-split-bespoke",
-        type: "split",
-        eyebrow: "The creative",
-        heading: "Bespoke ads, not templates",
-        body: "Every ad is made for your brand. No stock imagery, no cookie-cutter layouts, no AI slop. High volume, still intentional. Human designers who understand Meta's ad ecosystem — what hooks, what converts, what scales.",
-        mediaSide: "right",
-        ctaLabel: "See how it works",
-        ctaHref: "#how-it-works",
-      },
-      {
-        id: "cfb-why",
-        type: "scroll_gallery",
-        eyebrow: "Why Campfire",
-        heading: "Built for brands scaling Meta ads",
-        body: "You've outgrown Canva but you're not ready for a $5K/month agency retainer. Campfire fills that gap.",
-        items: [
-          {
-            title: "Pay per ad, no gotchas",
-            body: "One ad, one price. No subscriptions, no retainers, no lock-in. Scale up or down whenever you need to.",
-            badge: "Simple pricing",
-          },
-          {
-            title: "Human-led, Meta-optimized",
-            body: "Real designers who understand Meta's ad ecosystem. Creative decisions informed by what actually performs, made by people with taste.",
-            badge: "Performance",
-          },
-          {
-            title: "Zero friction",
-            body: "One link to review. Live updates. Slack notifications. Everything in one place. Working with us should feel easy — because it is.",
-            badge: "Effortless",
-          },
-          {
-            title: "Performance is the point",
-            body: "We care about whether the ad works, not just how it looks. Beautiful creative that actually converts.",
-            badge: "Results",
-          },
-        ],
-      },
-      {
-        id: "cfb-showcase",
-        type: "showcase",
-        typeFilter: "Example",
-        limit: 8,
-        featuredOnly: true,
-        animationPreset: "fan",
-      },
-      {
-        id: "cfb-contact",
-        type: "contact",
-        eyebrow: "Let's talk",
-        heading: "Tell us about your brand",
-        body: "Share a bit about your business, your Meta ad goals, and the kind of creative you're looking for. We'll follow up with a plan — no pitch deck, no pressure.",
-        anchor: "contact",
-        formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
-        portalId: "244262601",
-        region: "na2",
-        formScriptSrc:
-          "https://js-na2.hsforms.net/forms/embed/244262601.js",
-      },
-    ],
-  },
-  {
-    id: "campfire-agencies",
-    slug: "/campfire/agencies",
-    title: "Campfire for Agencies",
-    status: "published",
-    seoTitle: "Campfire for Agencies — Bespoke Ad Creative at Scale",
-    metaDescription:
-      "Your clients get bespoke ads and a great experience. You get production visibility, brand management, and the tools to run creative at scale.",
-    ogTitle: "Campfire for Agencies — Creative Production at Scale",
-    ogDescription:
-      "Manage brands, track production, and give your clients a frictionless review experience. Bespoke Meta ad creative, built for agency workflows.",
-    focusKeyword: "meta ad creative agency",
-    blocks: [
-      {
-        id: "cfa-hero",
-        type: "hero",
-        eyebrow: "Campfire / For Agency Partners",
-        title: "Your clients get great ads. You get real visibility.",
-        subtitle:
-          "Bespoke Meta ad creative, a frictionless client experience, and the production tools to manage it all — across every brand in your portfolio.",
-        primaryCtaLabel: "Partner with us",
-        primaryCtaHref: "#contact",
-        secondaryCtaLabel: "See what you get",
-        secondaryCtaHref: "#agency-tools",
-        alignment: "centered",
-        mode: "dynamic",
-        mediaTypeTag: "Example",
-      },
-      {
-        id: "cfa-headline",
-        type: "animated_headline",
-        headline: "Scale creative without scaling chaos",
-        subtext:
-          "Whether you're managing three brands or thirty, Campfire keeps production organized, tracked, and on schedule.",
-        animationStyle: "fade_by_word",
-        animationMode: "scroll",
-        freezeOnScroll: true,
-        enableDarkModeOnScroll: true,
-      },
-      {
-        id: "cfa-client-experience",
+        id: "home-story",
         type: "story",
-        heading: "What your clients see",
-        body: "Your clients get a simple, frictionless experience — and because you're on the platform, you can see exactly what they see.",
+        anchor: "process",
+        heading: "Process",
+        body: "Edit these steps in /admin \u2192 Pages to update the live site.",
         variant: "two_column",
         sections: [
           {
-            title: "One-link review",
-            body: "Clients review and approve ads from a single shareable link — no account needed. Ads and ad copy show up side by side, with approve/reject/edit controls on every piece.",
+            title: "Discovery & storyboard",
+            body: "We map the emotional beats, target metrics, and hero moments.",
           },
           {
-            title: "Client dashboard",
-            body: "Approved ads, campaign status, and download links in one place. A gallery view makes it easy for clients to share creative with their own stakeholders.",
+            title: "Design system + tokens",
+            body: "Design tokens, content schemas, and motion systems to keep every section coherent.",
           },
           {
-            title: "Slack notifications",
-            body: "Clients get notified right in Slack when ads are ready for review or campaigns hit milestones — in the channels they're already using.",
-          },
-          {
-            title: "Built-in support",
-            body: "Clients can raise questions or revision requests directly inside Campfire, tied to the campaign they're about. No email chains, no lost context.",
+            title: "Build & QA",
+            body: "Static-first builds with selective React islands and Framer Motion choreography.",
           },
         ],
       },
       {
-        id: "cfa-agency-tools",
-        type: "features",
-        anchor: "agency-tools",
-        eyebrow: "Your toolkit",
-        heading: "Built for how agencies actually work",
-        body: "Campfire isn't repurposed project management software. It's designed specifically for teams producing ad creative at volume.",
-        columns: 2,
-        items: [
-          {
-            title: "Production workspace",
-            body: "See every campaign's status, timeline, and assignments across all your brands. Filter by brand, month, review status, or any combination. Share a specific view with a colleague in one click.",
-            badge: "Visibility",
-          },
-          {
-            title: "Brand management",
-            body: "Each brand gets a dedicated profile: logos, products, campaigns, tone of voice, staff assignments, contract terms, and internal notes. When anyone picks up a new brief, everything they need is in one place.",
-            badge: "Organization",
-          },
-          {
-            title: "Integrations",
-            body: "Campfire connects to your existing tools — trafficking systems, DAMs, and other production tools — so it fits into how you already work.",
-            badge: "Your stack",
-          },
-          {
-            title: "Scoped permissions",
-            body: "You only see what's relevant to your portfolio. Each team member gets the right level of access for their role — from read-only visibility to full production management.",
-            badge: "Access control",
-          },
-        ],
-      },
-      {
-        id: "cfa-split-scale",
-        type: "split",
-        eyebrow: "At scale",
-        heading: "Everything lives together",
-        body: "Ads, copy, feedback, status, reporting, and integrations — all in one place. No more stitching together spreadsheets, Drive folders, and Slack threads. Whether you're running five campaigns or fifty, Campfire keeps production organized.",
-        mediaSide: "left",
-        ctaLabel: "See it in action",
-        ctaHref: "#contact",
-      },
-      {
-        id: "cfa-why",
-        type: "scroll_gallery",
-        eyebrow: "Why Campfire for agencies",
-        heading: "The creative production partner your portfolio needs",
-        body: "Bespoke ad creative your clients will love, with the operational depth you need to manage it.",
-        items: [
-          {
-            title: "Your clients get a great experience",
-            body: "One-link review, real-time updates, zero onboarding friction. They see the work, not the process.",
-            badge: "Client experience",
-          },
-          {
-            title: "You get real visibility",
-            body: "Production boards and brand management — purpose-built for high-volume creative work. No more asking for status updates.",
-            badge: "Visibility",
-          },
-          {
-            title: "It scales with your portfolio",
-            body: "Three brands or thirty — Campfire keeps production organized, tracked, and on schedule without adding overhead.",
-            badge: "Scale",
-          },
-          {
-            title: "Bespoke creative, always",
-            body: "Every ad is made for each brand specifically. Human-led, Meta-optimized, performance-focused. No templates, no AI slop.",
-            badge: "Quality",
-          },
-        ],
-      },
-      {
-        id: "cfa-showcase",
-        type: "showcase",
-        typeFilter: "Example",
-        limit: 8,
-        featuredOnly: true,
-        animationPreset: "fan",
-      },
-      {
-        id: "cfa-contact",
+        id: "home-contact",
         type: "contact",
-        eyebrow: "Let's talk",
-        heading: "See how Campfire fits your agency",
-        body: "Tell us about your brands, your creative volume, and how your team works today. We'll show you how Campfire can fit into your workflow.",
+        eyebrow: "Contact",
+        heading: "Plan your launch with Studio Tak",
+        body: "Tell us about your product, timeline, and the outcomes you want. We'll follow up with a focused plan.",
         anchor: "contact",
+        media: {
+          url: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+          type: "image",
+          alt: "Designers collaborating at a table",
+        },
         formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
         portalId: "244262601",
         region: "na2",
-        formScriptSrc:
-          "https://js-na2.hsforms.net/forms/embed/244262601.js",
+        formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
       },
     ],
+    seoTitle: "Studio Tak | Design Systems & Interactive Experiences",
+    metaDescription: "Static-first marketing pages built with React islands where they matter.",
+    status: "draft",
   },
   {
-    id: "campfire-growth",
-    slug: "/campfire/growth",
-    title: "Campfire for Growth Teams",
-    status: "published",
-    seoTitle:
-      "Campfire for Growth Teams — Bespoke Meta Ad Creative That Converts",
-    metaDescription:
-      "High-volume Meta ad creative built for performance. Fresh concepts on demand, fast turnaround, and a production pipeline that keeps up with your testing cadence.",
-    ogTitle: "Campfire for Growth Teams — Creative That Keeps Up With Your Spend",
-    ogDescription:
-      "Bespoke Meta ad creative built for media buyers and growth marketers. Fresh hooks, fast iterations, and a pipeline that matches your testing velocity.",
-    focusKeyword: "meta ad creative for growth marketers",
+    id: "vuh98yDJC4GRHkBBAdEX",
+    title: "Campfire",
+    slug: "/campfire",
+    noindex: false,
+    sitemapExclude: false,
+    twitterTitle: "Campfire from Studio Tak | Your on demand Meta creative team",
+    canonicalUrl: "https://studiotak.co/campfire",
+    twitterDescription: "Campfire is a creative system built for ad volume so your brand can launch and test high performing ads.",
+    ogTitle: "Campfire from Studio Tak | Your on demand Meta creative team",
+    socialImage: {
+      url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/social-media%2F1765477501105-campfire.webp?alt=media&token=e7ce8040-3838-46a9-85aa-eb1132af6bcf",
+      alt: "campfire.png",
+      type: "image",
+    },
+    ogDescription: "Campfire is a creative system built for ad volume so your brand can launch and test high performing ads.",
+    seoTitle: "Campfire from Studio Tak | Your on demand Meta creative team",
+    metaDescription: "Campfire is a creative system built for ad volume so your brand can launch and test high performing ads.",
+    nofollow: false,
+    focusKeyword: "Meta Ads",
     blocks: [
       {
-        id: "cfg-hero",
-        type: "hero",
-        eyebrow: "Campfire / For Growth Teams",
-        title: "Creative that keeps up with your spend",
-        subtitle:
-          "You're scaling Meta ads and burning through creative faster than your team can make it. Campfire gives you a steady pipeline of bespoke ad creative — fresh hooks, new angles, fast iterations — without hiring another designer.",
-        primaryCtaLabel: "Let's talk creative",
-        primaryCtaHref: "#contact",
-        secondaryCtaLabel: "See what you get",
-        secondaryCtaHref: "#pipeline",
-        alignment: "centered",
-        mode: "dynamic",
-        mediaTypeTag: "Example",
-      },
-      {
-        id: "cfg-headline",
-        type: "animated_headline",
-        headline: "Test more. Win more. Burn out less.",
-        subtext:
-          "Your best-performing ad is only your best-performing ad until it fatigues. You need a creative partner who can keep pace.",
-        animationStyle: "fade_by_word",
-        animationMode: "scroll",
-        freezeOnScroll: true,
         enableDarkModeOnScroll: true,
+        primaryCtaHref: "#how-it-works",
+        type: "hero",
+        secondaryCtaHref: "/campfire/demo",
+        mediaTypeTag: "Example",
+        subtitle: "High-performing ads. Built fast. Grounded in your brand.",
+        alignment: "centered",
+        title: "Your on demand Meta creative team.",
+        primaryCtaLabel: "How it works",
+        adminLabel: "Campfire Hero",
+        mode: "dynamic",
+        eyebrow: "Meet Campfire",
+        secondaryCtaLabel: "Get started",
+        id: "64750003-8354-4fde-90ac-43f3533cdca6",
       },
       {
-        id: "cfg-pipeline",
-        type: "story",
-        anchor: "pipeline",
-        heading: "Your creative pipeline",
-        body: "Campfire is built for the way growth teams actually work — fast cycles, constant testing, and a need for creative that doesn't all look the same.",
-        variant: "two_column",
-        sections: [
-          {
-            title: "Brief it, ship it",
-            body: "Submit a brief, get bespoke ad creative back — designed by humans who understand Meta's ad ecosystem. No templates, no AI-generated filler. Every ad is made to perform.",
-          },
-          {
-            title: "Iterate on winners",
-            body: "Found a hook that's working? We'll spin variations — new formats, fresh angles, different aspect ratios — so you can test deeper without starting from scratch every time.",
-          },
-          {
-            title: "Review in one click",
-            body: "Ads and copy show up side by side in a single shareable link. Approve, reject, or request changes — feedback flows back to us in real time. No email threads, no Slack scavenger hunts.",
-          },
-          {
-            title: "Download and deploy",
-            body: "Approved creative is ready to pull into your ad manager immediately. Organized by campaign, sized for every placement. No reformatting, no hunting through Drive folders.",
-          },
-        ],
+        eyebrow: "Built for your brand",
+        adminLabel: "Example Ads - Featured",
+        limit: 6,
+        id: "560c7587-3d2b-48de-bf9c-bb3bf4674b4c",
+        featuredOnly: true,
+        typeFilter: "Example",
+        enableDarkModeOnScroll: false,
+        subhead: "We match your style so every asset feels authentic even at high volume.",
+        heading: "Creative that belongs to you, not a template.",
+        type: "showcase",
+        animationPreset: "lift",
       },
       {
-        id: "cfg-built-for-testing",
-        type: "features",
-        anchor: "testing",
-        eyebrow: "Built for testing velocity",
-        heading: "The creative infrastructure you've been missing",
-        body: "You have the data, the budget, and the strategy. What you don't have is enough fresh creative to test against. That's what Campfire solves.",
+        body: "Brand safe, Meta ready, and fully streamlined so your team can move faster.\n",
         columns: 3,
+        enableDarkModeOnScroll: false,
+        eyebrow: "How we keep the fire burning",
+        heading: "A system that works while you grow.",
+        id: "29fff391-7637-4972-a209-58c81495c817",
         items: [
           {
-            title: "Fresh concepts on demand",
-            body: "New hooks, new angles, new visual approaches — on your schedule. No waiting for a design queue or a creative director's calendar.",
-            badge: "Volume",
+            type: "Feature",
+            title: "Design systems",
+            icon: {
+              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343941137-03.webp?alt=media&token=442804d3-ac26-4a96-9b00-2e6b568e3b91",
+              type: "image",
+              alt: "Design systems icon",
+            },
+            body: "Token-driven systems with responsive, animated components.",
+            componentId: "feature-design-systems",
+            industry: "SaaS",
           },
           {
-            title: "Performance-informed",
-            body: "Our designers understand what works on Meta. Aspect ratio best practices, hook structures, thumb-stopping patterns — baked into every ad.",
-            badge: "Performance",
+            type: "Feature",
+            icon: {
+              type: "image",
+              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343922083-01.webp?alt=media&token=9198ee90-4e0d-4569-b279-04ef402e721d",
+              alt: "Launch icon",
+            },
+            industry: "Growth",
+            title: "Launch ops",
+            body: "CMS schemas, QA scripts, and rollout playbooks for marketing.",
+            componentId: "feature-launch",
           },
           {
-            title: "Fast turnaround",
-            body: "Measured in days, not weeks. Your testing cadence shouldn't slow down because creative can't keep up.",
-            badge: "Speed",
+            body: "Choreographed interactions tested in the browser early.",
+            title: "Motion-led UX",
+            componentId: "feature-motion",
+            type: "Feature",
+            industry: "Product",
+            icon: {
+              url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343932988-02.webp?alt=media&token=eb2cdf34-89c5-49de-aa02-a5a09f1e275d",
+              alt: "Motion icon",
+              type: "image",
+            },
           },
         ],
+        type: "features",
       },
       {
-        id: "cfg-split-fatigue",
-        type: "split",
-        eyebrow: "The real problem",
-        heading: "Creative fatigue is a growth problem",
-        body: "You already know: even your best ads have a shelf life. CPAs creep up, CTRs flatten, and suddenly your winning creative is yesterday's news. The brands that win on Meta are the ones that can keep feeding the machine with fresh, high-quality creative. Campfire makes that sustainable.",
-        mediaSide: "right",
-        ctaLabel: "See how it works",
-        ctaHref: "#pipeline",
+        alignment: "image_right",
+        eyebrow: "Crafted by People",
+        subtitle: "Creative is more than pixels. We pair smart tooling with a team that obsesses over your voice, protects your identity, and makes choices no model can guess.",
+        title: "If it looks like we're having fun, we are.",
+        type: "thirds",
+        id: "6e576fb0-d7ee-47cf-8344-66a53749af1d",
+        enableDarkModeOnScroll: false,
+        media: {
+          url: "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/component-icons%2F1765343950557-04.webp?alt=media&token=6500082a-80a6-4a1e-a01d-adfb4293693a",
+          type: "image",
+        },
       },
       {
-        id: "cfg-why",
+        id: "dcacd309-23ee-4ad9-8f84-d6a30f9f16fd",
+        items: [
+          {
+            type: "Step",
+            componentId: "pNO61TjszP44YMwzkwP3",
+            body: "After your initial call, we align on your brand. Upload your guidelines, tone, assets, and examples so our your Campfire team can get to work!",
+            title: "Align Your Brand",
+          },
+          {
+            type: "Step",
+            body: "Share your needs and priorities. Product, angle, audience, and ad type. Detailed brief or simple notes both work.",
+            title: "Set Goals for This Round",
+            componentId: "L3NooCAAw9IW98SknUkX",
+          },
+          {
+            componentId: "p3OufBybGhJfiLa9q73K",
+            title: "Review and Approve Creative",
+            type: "Step",
+            body: "Review your ads inside Campfire\u2019s streamlined approval system. Leave comments, request edits, and approve creative in one place so nothing slows down your momentum.",
+          },
+          {
+            componentId: "O0RItZf6VrRu2c5sToOp",
+            title: "Launch and Learn",
+            body: "Launch fast with export ready ads. Share performance insights so the Campfire team can refine what works and improve each round.",
+            type: "Step",
+          },
+        ],
+        enableDarkModeOnScroll: false,
+        body: "Campfire keeps things moving. Clear steps, real people, and a system built to help great ideas turn into live ads quickly.",
+        eyebrow: "How it Works",
         type: "scroll_gallery",
-        eyebrow: "Why Campfire for growth",
-        heading: "Built for media buyers who care about creative",
-        body: "You know creative is the biggest lever in your account. You just need a partner who can pull it.",
-        items: [
-          {
-            title: "Pay per ad, scale on your terms",
-            body: "No retainers, no subscriptions, no minimum commitments. Order five ads or fifty — pricing stays the same. Scale up for a launch, scale down when you're optimizing.",
-            badge: "Flexible pricing",
-          },
-          {
-            title: "Human-made, Meta-optimized",
-            body: "Real designers who understand the platform. Creative decisions informed by what actually performs — made by people with taste, not a prompt.",
-            badge: "Quality",
-          },
-          {
-            title: "Your testing partner",
-            body: "Need three variations of a winning hook? A new concept for a cold audience? Static and video versions of the same angle? Just ask. We're built for iteration.",
-            badge: "Iteration",
-          },
-          {
-            title: "Zero production overhead",
-            body: "No hiring, no managing, no creative direction needed. Brief us, review the work, deploy. We handle everything in between.",
-            badge: "Effortless",
-          },
-        ],
+        anchor: "how-it-works",
+        heading: "Where creative comes together.",
       },
       {
-        id: "cfg-showcase",
-        type: "showcase",
-        typeFilter: "Example",
-        limit: 8,
-        featuredOnly: true,
-        animationPreset: "fan",
-      },
-      {
-        id: "cfg-contact",
-        type: "contact",
-        eyebrow: "Let's talk",
-        heading: "Tell us about your growth goals",
-        body: "Share your monthly ad volume, what's working (and what's not), and where creative is the bottleneck. We'll come back with a plan to keep your pipeline full.",
-        anchor: "contact",
-        formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
-        portalId: "244262601",
-        region: "na2",
-        formScriptSrc:
-          "https://js-na2.hsforms.net/forms/embed/244262601.js",
+        alignment: "centered",
+        primaryCtaLabel: "Get a demo",
+        title: "Want to learn more?",
+        layout: "centered",
+        subtitle: "Schedule a demo to walk through Campfire and see how we help brands produce and test more Meta creative every week, without adding chaos to their workflow.",
+        type: "thirds",
+        eyebrow: "Let's Chat",
+        enableDarkModeOnScroll: false,
+        primaryCtaHref: "/campfire/demo",
+        id: "31aa4c1b-824a-4d38-8522-1d793ce79acf",
       },
     ],
+    status: "draft",
   },
+  {
+    id: "work",
+    blocks: [
+      {
+        id: "work-hero",
+        type: "hero",
+        eyebrow: "Work",
+        title: "Selected launches across SaaS, fintech, and climate.",
+        subtitle: "We pair narrative with purposeful motion to drive activation.",
+        primaryCtaLabel: "View case studies",
+        primaryCtaHref: "/work",
+        alignment: "image_left",
+      },
+      {
+        id: "work-story",
+        type: "story",
+        heading: "Collaboration",
+        body: "Work directly with senior designers and engineers.",
+        variant: "single_column",
+        sections: [
+          {
+            title: "Case studies",
+            body: "Narratives anchored by metrics and motion.",
+          },
+          {
+            title: "Collaboration",
+            body: "Work directly with senior designers and engineers.",
+          },
+        ],
+      },
+    ],
+    title: "Work",
+    metaDescription: "Selected launches across SaaS, fintech, and climate.",
+    slug: "/work",
+    status: "draft",
+  }
 ];
+
