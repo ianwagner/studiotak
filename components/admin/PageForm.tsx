@@ -65,7 +65,7 @@ type PageFormProps = {
   isDeleting?: boolean;
 };
 
-type MediaTarget = "media" | "background";
+type MediaTarget = "media" | "background" | "featureIcon";
 
 function AlignmentSelect({
   value,
@@ -416,6 +416,7 @@ export function PageForm({
     blockIdx: number | null;
     target: MediaTarget;
     filterType?: "image" | "video";
+    itemIdx?: number;
   }>({
     open: false,
     blockIdx: null,
@@ -722,6 +723,15 @@ export function PageForm({
       if (!isFeatureItemsBlock(block)) return block;
       const items = [...(block.items ?? [])];
       items[itemIdx] = { ...items[itemIdx], [field]: value };
+      return { ...block, items };
+    });
+  };
+
+  const updateFeatureItemIcon = (blockIdx: number, itemIdx: number, icon: FeatureItem["icon"]) => {
+    updateBlock(blockIdx, (block) => {
+      if (!isFeatureItemsBlock(block)) return block;
+      const items = [...(block.items ?? [])];
+      items[itemIdx] = { ...items[itemIdx], icon };
       return { ...block, items };
     });
   };
@@ -2158,6 +2168,82 @@ export function PageForm({
                         placeholder="What makes this story or capability interesting?"
                       />
                     </div>
+                    <div className="field-group">
+                      <label>Media / Icon</label>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <input
+                          className="input"
+                          style={{ flex: 1, minWidth: 180 }}
+                          value={item.icon?.url ?? ""}
+                          onChange={(e) =>
+                            updateFeatureItemIcon(idx, itemIdx, {
+                              ...(item.icon ?? { url: "" }),
+                              url: e.target.value,
+                            })
+                          }
+                          placeholder="https://... or choose from media"
+                        />
+                        <button
+                          type="button"
+                          className="btn secondary"
+                          onClick={() =>
+                            setMediaModal({
+                              open: true,
+                              blockIdx: idx,
+                              target: "featureIcon",
+                              itemIdx: itemIdx,
+                            })
+                          }
+                        >
+                          Choose from media
+                        </button>
+                        {item.icon?.url ? (
+                          <button
+                            type="button"
+                            className="btn secondary"
+                            onClick={() => updateFeatureItemIcon(idx, itemIdx, undefined)}
+                          >
+                            Remove
+                          </button>
+                        ) : null}
+                      </div>
+                      {item.icon?.url ? (
+                        <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 8 }}>
+                          <img
+                            src={item.icon.url}
+                            alt={item.icon.alt ?? ""}
+                            style={{
+                              width: 48,
+                              height: 48,
+                              objectFit: item.mediaFit ?? "contain",
+                              borderRadius: 6,
+                              border: "1px solid var(--border)",
+                            }}
+                          />
+                          <input
+                            className="input"
+                            style={{ flex: 1, maxWidth: 200 }}
+                            value={item.icon.alt ?? ""}
+                            onChange={(e) =>
+                              updateFeatureItemIcon(idx, itemIdx, {
+                                ...(item.icon ?? { url: "" }),
+                                alt: e.target.value,
+                              })
+                            }
+                            placeholder="Alt text"
+                          />
+                          <select
+                            value={item.mediaFit ?? "contain"}
+                            onChange={(e) =>
+                              updateFeatureItem(idx, itemIdx, "mediaFit", e.target.value)
+                            }
+                          >
+                            <option value="contain">Contain</option>
+                            <option value="cover">Cover</option>
+                          </select>
+                        </div>
+                      ) : null}
+                    </div>
                     <button
                       type="button"
                       className="btn secondary"
@@ -2324,6 +2410,82 @@ export function PageForm({
                         onChange={(e) => updateFeatureItem(idx, itemIdx, "body", e.target.value)}
                         placeholder="What makes this feature useful?"
                       />
+                    </div>
+                    <div className="field-group">
+                      <label>Media / Icon</label>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <input
+                          className="input"
+                          style={{ flex: 1, minWidth: 180 }}
+                          value={item.icon?.url ?? ""}
+                          onChange={(e) =>
+                            updateFeatureItemIcon(idx, itemIdx, {
+                              ...(item.icon ?? { url: "" }),
+                              url: e.target.value,
+                            })
+                          }
+                          placeholder="https://... or choose from media"
+                        />
+                        <button
+                          type="button"
+                          className="btn secondary"
+                          onClick={() =>
+                            setMediaModal({
+                              open: true,
+                              blockIdx: idx,
+                              target: "featureIcon",
+                              itemIdx: itemIdx,
+                            })
+                          }
+                        >
+                          Choose from media
+                        </button>
+                        {item.icon?.url ? (
+                          <button
+                            type="button"
+                            className="btn secondary"
+                            onClick={() => updateFeatureItemIcon(idx, itemIdx, undefined)}
+                          >
+                            Remove
+                          </button>
+                        ) : null}
+                      </div>
+                      {item.icon?.url ? (
+                        <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 8 }}>
+                          <img
+                            src={item.icon.url}
+                            alt={item.icon.alt ?? ""}
+                            style={{
+                              width: 48,
+                              height: 48,
+                              objectFit: item.mediaFit ?? "contain",
+                              borderRadius: 6,
+                              border: "1px solid var(--border)",
+                            }}
+                          />
+                          <input
+                            className="input"
+                            style={{ flex: 1, maxWidth: 200 }}
+                            value={item.icon.alt ?? ""}
+                            onChange={(e) =>
+                              updateFeatureItemIcon(idx, itemIdx, {
+                                ...(item.icon ?? { url: "" }),
+                                alt: e.target.value,
+                              })
+                            }
+                            placeholder="Alt text"
+                          />
+                          <select
+                            value={item.mediaFit ?? "contain"}
+                            onChange={(e) =>
+                              updateFeatureItem(idx, itemIdx, "mediaFit", e.target.value)
+                            }
+                          >
+                            <option value="contain">Contain</option>
+                            <option value="cover">Cover</option>
+                          </select>
+                        </div>
+                      ) : null}
                     </div>
                     <button
                       type="button"
@@ -2498,7 +2660,9 @@ export function PageForm({
   const headingText = heading ?? formState.title ?? "Page";
   const mediaModalBlock = mediaModal.blockIdx !== null ? formState.blocks[mediaModal.blockIdx] : null;
   const mediaModalValue =
-    mediaModal.target === "background" && mediaModalBlock && isHeroLikeBlock(mediaModalBlock)
+    mediaModal.target === "featureIcon" && mediaModalBlock && isFeatureItemsBlock(mediaModalBlock) && mediaModal.itemIdx !== undefined
+      ? mediaModalBlock.items?.[mediaModal.itemIdx]?.icon?.url ?? ""
+      : mediaModal.target === "background" && mediaModalBlock && isHeroLikeBlock(mediaModalBlock)
       ? mediaModalBlock.background?.url ?? ""
       : mediaModalBlock && "media" in mediaModalBlock
       ? mediaModalBlock.media?.url ?? ""
@@ -2928,13 +3092,20 @@ export function PageForm({
           filterType={mediaModal.filterType}
           onSearch={setMediaSearch}
           onSelect={(url, mediaType) => {
-            updateBlock(mediaModal.blockIdx as number, (current) => {
-              const mediaPayload = { url, type: mediaType ?? "image" };
-              if (mediaModal.target === "background" && isHeroLikeBlock(current)) {
-                return { ...current, background: mediaPayload };
-              }
-              return { ...current, media: mediaPayload };
-            });
+            if (mediaModal.target === "featureIcon" && mediaModal.itemIdx !== undefined) {
+              updateFeatureItemIcon(mediaModal.blockIdx as number, mediaModal.itemIdx, {
+                url,
+                type: mediaType ?? "image",
+              });
+            } else {
+              updateBlock(mediaModal.blockIdx as number, (current) => {
+                const mediaPayload = { url, type: mediaType ?? "image" };
+                if (mediaModal.target === "background" && isHeroLikeBlock(current)) {
+                  return { ...current, background: mediaPayload };
+                }
+                return { ...current, media: mediaPayload };
+              });
+            }
             setMediaModal({ open: false, blockIdx: null, target: "media" });
           }}
           onClose={() => setMediaModal({ open: false, blockIdx: null, target: "media" })}
