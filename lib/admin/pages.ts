@@ -341,6 +341,37 @@ export const seedPages: PageRecord[] = [
         ],
       },
       {
+        id: "cfa-ad-review-demo",
+        type: "product_demo",
+        eyebrow: "See it in action",
+        heading: "One link. Every ad. Total control.",
+        body: "This is what reviewing ads in Campfire actually looks like — creative and copy side by side, with one-click approval. No logins, no PDFs, no email threads.",
+        demoId: "ad_review",
+        exampleData: {
+          index: 1,
+          version: "V2",
+          status: "pending",
+          portraitAd: {
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1773997308699-TAST_MARCH-77BA_46_9x16.webp?alt=media&token=a338484a-e11f-4d60-bbc4-862524a43d05",
+            brandName: "TAST",
+            headline: "NEW COLLECTION",
+          },
+          squareAd: {
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1773997311425-TAST_MARCH-77BA_46_1x1.webp?alt=media&token=4329171c-3b0d-4771-b110-d9441644edbe",
+            brandName: "TAST",
+            headline: "NEW COLLECTION",
+          },
+          copy: {
+            primary:
+              "Made for the moments that matter. New styles, crafted with intention.",
+            headline: "SPRING EDIT",
+            description: "Designed to Stand Out",
+          },
+        },
+      },
+      {
         id: "cfa-agency-tools",
         type: "features",
         anchor: "agency-tools",
@@ -495,6 +526,37 @@ export const seedPages: PageRecord[] = [
             body: "A note about an ad, a revision request, a question for our team \u2014 raise it directly inside Campfire. It stays connected to the campaign, so nothing gets lost.",
           },
         ],
+      },
+      {
+        id: "cfb-ad-review-demo",
+        type: "product_demo",
+        eyebrow: "See it in action",
+        heading: "One link. Every ad. Total control.",
+        body: "This is what reviewing ads in Campfire actually looks like — creative and copy side by side, with one-click approval. No logins, no PDFs, no email threads.",
+        demoId: "ad_review",
+        exampleData: {
+          index: 1,
+          version: "V2",
+          status: "pending",
+          portraitAd: {
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1773997308699-TAST_MARCH-77BA_46_9x16.webp?alt=media&token=a338484a-e11f-4d60-bbc4-862524a43d05",
+            brandName: "TAST",
+            headline: "NEW COLLECTION",
+          },
+          squareAd: {
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1773997311425-TAST_MARCH-77BA_46_1x1.webp?alt=media&token=4329171c-3b0d-4771-b110-d9441644edbe",
+            brandName: "TAST",
+            headline: "NEW COLLECTION",
+          },
+          copy: {
+            primary:
+              "Made for the moments that matter. New styles, crafted with intention.",
+            headline: "SPRING EDIT",
+            description: "Designed to Stand Out",
+          },
+        },
       },
       {
         id: "cfb-platform-features",
@@ -655,22 +717,25 @@ export const seedPages: PageRecord[] = [
         demoId: "ad_review",
         exampleData: {
           index: 1,
-          version: "V2",
+          version: "V8",
           status: "pending",
           portraitAd: {
-            imageUrl: "",
-            brandName: "QUAY",
-            headline: "FRAMES WITH ATTITUDE",
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1773997308699-TAST_MARCH-77BA_46_9x16.webp?alt=media&token=a338484a-e11f-4d60-bbc4-862524a43d05",
+            brandName: "TAST",
+            headline: "NEW COLLECTION",
           },
           squareAd: {
-            imageUrl: "",
-            brandName: "QUAY",
-            headline: "FRAMES WITH ATTITUDE",
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1773997311425-TAST_MARCH-77BA_46_1x1.webp?alt=media&token=4329171c-3b0d-4771-b110-d9441644edbe",
+            brandName: "TAST",
+            headline: "NEW COLLECTION",
           },
           copy: {
-            primary: "Designed to stand out. Eyewear for everywhere.",
-            headline: "SIGNATURE FRAMES",
-            description: "Made to be Seen",
+            primary:
+              "Made for the moments that matter. New styles, crafted with intention.",
+            headline: "SPRING EDIT",
+            description: "Designed to Stand Out",
           },
         },
       },
@@ -863,6 +928,37 @@ export const seedPages: PageRecord[] = [
             body: "Review your ads from a single link \u2014 no account needed. Approve, reject, or request edits on each piece. Your feedback flows back to us in real time.",
           },
         ],
+      },
+      {
+        id: "cf-ad-review-demo",
+        type: "product_demo",
+        eyebrow: "See it in action",
+        heading: "One link. Every ad. Total control.",
+        body: "This is what reviewing ads in Campfire actually looks like — creative and copy side by side, with one-click approval. No logins, no PDFs, no email threads.",
+        demoId: "ad_review",
+        exampleData: {
+          index: 1,
+          version: "V2",
+          status: "pending",
+          portraitAd: {
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1773997308699-TAST_MARCH-77BA_46_9x16.webp?alt=media&token=a338484a-e11f-4d60-bbc4-862524a43d05",
+            brandName: "TAST",
+            headline: "NEW COLLECTION",
+          },
+          squareAd: {
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/studio-tak.firebasestorage.app/o/block-media%2F1773997311425-TAST_MARCH-77BA_46_1x1.webp?alt=media&token=4329171c-3b0d-4771-b110-d9441644edbe",
+            brandName: "TAST",
+            headline: "NEW COLLECTION",
+          },
+          copy: {
+            primary:
+              "Made for the moments that matter. New styles, crafted with intention.",
+            headline: "SPRING EDIT",
+            description: "Designed to Stand Out",
+          },
+        },
       },
       {
         id: "cf-platform",
