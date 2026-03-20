@@ -23,7 +23,9 @@ import type {
   ArticleFeaturedBlock,
   ArticleGridBlock,
   BlockMedia,
-  ProductDemoBlock
+  ProductDemoBlock,
+  StatsBlock,
+  ComparisonBlock
 } from "@/lib/admin/pages";
 import { animationPresets, defaultAnimationPreset, type AnimationPresetName } from "@/components/sections/animationPresets";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
@@ -128,6 +130,8 @@ const isArticleGridBlock = (block: EditableBlock): block is ArticleGridBlock => 
 const isFeatureItemsBlock = (block: EditableBlock): block is FeaturesBlock | ScrollGalleryBlock =>
   isFeaturesBlock(block) || isScrollGalleryBlock(block);
 const isAnimatedHeadlineBlock = (block: EditableBlock): block is AnimatedHeadlineBlock => block.type === "animated_headline";
+const isStatsBlock = (block: EditableBlock): block is StatsBlock => block.type === "stats";
+const isComparisonBlock = (block: EditableBlock): block is ComparisonBlock => block.type === "comparison";
 const isPendingBlock = (block: EditableBlock): block is PendingBlock => block.type === "pending";
 
 const ChevronIcon = ({
@@ -1277,6 +1281,10 @@ export function PageForm({
         ? "Article grid"
         : block.type === "product_demo"
         ? "Product demo"
+        : block.type === "stats"
+        ? "Stats block"
+        : block.type === "comparison"
+        ? "Comparison block"
         : "Animated headline";
       const blockLabel = block.adminLabel?.trim() || baseLabel;
       const blockId = block.id ?? `block-${idx}`;
@@ -1352,6 +1360,8 @@ export function PageForm({
                 <option value="article_featured">Featured article</option>
                 <option value="article_grid">Article grid</option>
                 <option value="product_demo">Product demo</option>
+                <option value="stats">Stats</option>
+                <option value="comparison">Comparison</option>
               </select>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -2771,6 +2781,289 @@ export function PageForm({
                   </select>
                 </div>
               </div>
+            </div>
+          ) : isStatsBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => updateBlock(idx, (b) => isStatsBlock(b) ? { ...b, eyebrow: e.target.value } : b)}
+                    placeholder="Eyebrow text"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Heading</label>
+                  <input
+                    className="input"
+                    value={block.heading ?? ""}
+                    onChange={(e) => updateBlock(idx, (b) => isStatsBlock(b) ? { ...b, heading: e.target.value } : b)}
+                    placeholder="Section heading"
+                  />
+                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => updateBlock(idx, (b) => isStatsBlock(b) ? { ...b, anchor: value } : b)}
+                  placeholder={block.anchor || "section"}
+                />
+              </div>
+              <div className="field-group">
+                <label>Body</label>
+                <textarea
+                  rows={2}
+                  value={block.body ?? ""}
+                  onChange={(e) => updateBlock(idx, (b) => isStatsBlock(b) ? { ...b, body: e.target.value } : b)}
+                  placeholder="Optional supporting text"
+                />
+              </div>
+              <div className="field-group">
+                <label>Variant</label>
+                <select
+                  value={block.variant ?? "default"}
+                  onChange={(e) => updateBlock(idx, (b) => isStatsBlock(b) ? { ...b, variant: e.target.value as StatsBlock["variant"] } : b)}
+                >
+                  <option value="default">Default (plain)</option>
+                  <option value="card">Card (bordered)</option>
+                </select>
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!block.enableDarkModeOnScroll}
+                  onChange={(e) => updateBlock(idx, (b) => isStatsBlock(b) ? { ...b, enableDarkModeOnScroll: e.target.checked } : b)}
+                />
+                <span>Trigger dark mode while this section is in view</span>
+              </label>
+              <div className="grid" style={{ gap: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h4 style={{ margin: 0 }}>Stat items</h4>
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() =>
+                      updateBlock(idx, (b) =>
+                        isStatsBlock(b)
+                          ? { ...b, items: [...(b.items ?? []), { value: "", label: "", prefix: "", suffix: "" }] }
+                          : b
+                      )
+                    }
+                  >
+                    + Add stat
+                  </button>
+                </div>
+                {(block.items ?? []).map((item, itemIdx) => (
+                  <div key={itemIdx} className="card" style={{ padding: 12 }}>
+                    <div className="grid" style={{ gap: 8, gridTemplateColumns: "80px 1fr 80px 1fr" }}>
+                      <div className="field-group">
+                        <label>Prefix</label>
+                        <input
+                          className="input"
+                          value={item.prefix ?? ""}
+                          onChange={(e) =>
+                            updateBlock(idx, (b) => {
+                              if (!isStatsBlock(b)) return b;
+                              const items = [...(b.items ?? [])];
+                              items[itemIdx] = { ...items[itemIdx], prefix: e.target.value };
+                              return { ...b, items };
+                            })
+                          }
+                          placeholder="$"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label>Value</label>
+                        <input
+                          className="input"
+                          value={item.value}
+                          onChange={(e) =>
+                            updateBlock(idx, (b) => {
+                              if (!isStatsBlock(b)) return b;
+                              const items = [...(b.items ?? [])];
+                              items[itemIdx] = { ...items[itemIdx], value: e.target.value };
+                              return { ...b, items };
+                            })
+                          }
+                          placeholder="200"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label>Suffix</label>
+                        <input
+                          className="input"
+                          value={item.suffix ?? ""}
+                          onChange={(e) =>
+                            updateBlock(idx, (b) => {
+                              if (!isStatsBlock(b)) return b;
+                              const items = [...(b.items ?? [])];
+                              items[itemIdx] = { ...items[itemIdx], suffix: e.target.value };
+                              return { ...b, items };
+                            })
+                          }
+                          placeholder="+"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label>Label</label>
+                        <input
+                          className="input"
+                          value={item.label}
+                          onChange={(e) =>
+                            updateBlock(idx, (b) => {
+                              if (!isStatsBlock(b)) return b;
+                              const items = [...(b.items ?? [])];
+                              items[itemIdx] = { ...items[itemIdx], label: e.target.value };
+                              return { ...b, items };
+                            })
+                          }
+                          placeholder="Ads delivered"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      style={{ marginTop: 8, fontSize: 12 }}
+                      onClick={() =>
+                        updateBlock(idx, (b) => {
+                          if (!isStatsBlock(b)) return b;
+                          const items = [...(b.items ?? [])];
+                          items.splice(itemIdx, 1);
+                          return { ...b, items };
+                        })
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : isComparisonBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => updateBlock(idx, (b) => isComparisonBlock(b) ? { ...b, eyebrow: e.target.value } : b)}
+                    placeholder="Eyebrow text"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Heading</label>
+                  <input
+                    className="input"
+                    value={block.heading ?? ""}
+                    onChange={(e) => updateBlock(idx, (b) => isComparisonBlock(b) ? { ...b, heading: e.target.value } : b)}
+                    placeholder="Section heading"
+                  />
+                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => updateBlock(idx, (b) => isComparisonBlock(b) ? { ...b, anchor: value } : b)}
+                  placeholder={block.anchor || "section"}
+                />
+              </div>
+              <div className="field-group">
+                <label>Body</label>
+                <textarea
+                  rows={2}
+                  value={block.body ?? ""}
+                  onChange={(e) => updateBlock(idx, (b) => isComparisonBlock(b) ? { ...b, body: e.target.value } : b)}
+                  placeholder="Optional supporting text"
+                />
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!block.enableDarkModeOnScroll}
+                  onChange={(e) => updateBlock(idx, (b) => isComparisonBlock(b) ? { ...b, enableDarkModeOnScroll: e.target.checked } : b)}
+                />
+                <span>Trigger dark mode while this section is in view</span>
+              </label>
+              {([0, 1] as const).map((colIdx) => {
+                const col = block.columns?.[colIdx] ?? { heading: "", items: [], highlighted: false };
+                const updateColumn = (updater: (c: typeof col) => typeof col) => {
+                  updateBlock(idx, (b) => {
+                    if (!isComparisonBlock(b)) return b;
+                    const cols = [...(b.columns ?? [{ heading: "", items: [] }, { heading: "", items: [] }])] as [typeof col, typeof col];
+                    cols[colIdx] = updater(cols[colIdx]);
+                    return { ...b, columns: cols };
+                  });
+                };
+                return (
+                  <div key={colIdx} className="card" style={{ padding: 12 }}>
+                    <div className="grid" style={{ gap: 8 }}>
+                      <h4 style={{ margin: 0 }}>Column {colIdx + 1}</h4>
+                      <div className="grid" style={{ gap: 8, gridTemplateColumns: "1fr auto" }}>
+                        <div className="field-group">
+                          <label>Heading</label>
+                          <input
+                            className="input"
+                            value={col.heading}
+                            onChange={(e) => updateColumn((c) => ({ ...c, heading: e.target.value }))}
+                            placeholder="Column heading"
+                          />
+                        </div>
+                        <label style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 22 }}>
+                          <input
+                            type="checkbox"
+                            checked={!!col.highlighted}
+                            onChange={(e) => updateColumn((c) => ({ ...c, highlighted: e.target.checked }))}
+                          />
+                          <span>Highlighted</span>
+                        </label>
+                      </div>
+                      <div className="grid" style={{ gap: 4 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <label style={{ fontSize: 13, fontWeight: 600 }}>Items</label>
+                          <button
+                            type="button"
+                            className="btn secondary"
+                            style={{ fontSize: 12 }}
+                            onClick={() => updateColumn((c) => ({ ...c, items: [...(c.items ?? []), ""] }))}
+                          >
+                            + Add item
+                          </button>
+                        </div>
+                        {(col.items ?? []).map((item, itemIdx) => (
+                          <div key={itemIdx} style={{ display: "flex", gap: 4 }}>
+                            <input
+                              className="input"
+                              value={item}
+                              onChange={(e) =>
+                                updateColumn((c) => {
+                                  const items = [...(c.items ?? [])];
+                                  items[itemIdx] = e.target.value;
+                                  return { ...c, items };
+                                })
+                              }
+                              placeholder="Comparison point"
+                            />
+                            <button
+                              type="button"
+                              className="btn secondary"
+                              style={{ fontSize: 12, padding: "4px 8px" }}
+                              onClick={() =>
+                                updateColumn((c) => {
+                                  const items = [...(c.items ?? [])];
+                                  items.splice(itemIdx, 1);
+                                  return { ...c, items };
+                                })
+                              }
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="grid" style={{ gap: 12, padding: 12 }}>

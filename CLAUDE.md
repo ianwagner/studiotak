@@ -130,6 +130,8 @@ Each block needs `id` + `type`. Full type definitions in `lib/admin/pages.ts`. R
 | `contact` | Two-column: embedded form (Brevo/Sendinblue) on left, square media on right. Includes email validation and success state. | Lead capture, contact forms, inquiries | `heading`, `body`, `formId`, `portalId`, `region`, `formScriptSrc`, `media` |
 | `article_featured` | Large featured article card (image + title + excerpt + "Read more"). Pulls from Ghost CMS. | Blog highlight at top of learn/news pages | `tagFilter` (optional Ghost tag) |
 | `article_grid` | Two-tier article listing: 3-column recent posts grid on top, auto-fit card grid below. Pulls from Ghost CMS. | Blog listing, knowledge base index | `tagFilter`, `offset`, `limit` |
+| `stats` | Row of large numbers with labels. Two variants: plain or bordered cards. | Key metrics, social proof numbers, at-a-glance KPIs | `heading`, `body`, `items[]` ({value, label, prefix, suffix}), `variant` ("default"\|"card") |
+| `comparison` | Two-column side-by-side with check/X icons per item. One column can be highlighted (accent border). | Us vs. them, before/after, competitive comparisons | `heading`, `body`, `columns` (tuple of {heading, items[], highlighted?}) |
 | `divider` | Simple horizontal rule. | Visual separator between sections | `width` ("full"\|"page") |
 
 **Common patterns:**

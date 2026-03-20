@@ -229,6 +229,44 @@ export type ProductDemoBlock = {
   enableDarkModeOnScroll?: boolean;
 };
 
+export type StatItem = {
+  value: string;
+  label: string;
+  prefix?: string;
+  suffix?: string;
+};
+
+export type StatsBlock = {
+  id: string;
+  type: "stats";
+  adminLabel?: string;
+  anchor?: string;
+  eyebrow?: string;
+  heading?: string;
+  body?: string;
+  items: StatItem[];
+  variant?: "default" | "card";
+  enableDarkModeOnScroll?: boolean;
+};
+
+export type ComparisonColumn = {
+  heading: string;
+  items: string[];
+  highlighted?: boolean;
+};
+
+export type ComparisonBlock = {
+  id: string;
+  type: "comparison";
+  adminLabel?: string;
+  anchor?: string;
+  eyebrow?: string;
+  heading?: string;
+  body?: string;
+  columns: [ComparisonColumn, ComparisonColumn];
+  enableDarkModeOnScroll?: boolean;
+};
+
 export type BlockRecord =
   | DividerBlock
   | HeroBlock
@@ -243,7 +281,9 @@ export type BlockRecord =
   | ContactBlock
   | ArticleFeaturedBlock
   | ArticleGridBlock
-  | ProductDemoBlock;
+  | ProductDemoBlock
+  | StatsBlock
+  | ComparisonBlock;
 
 export type RedirectRule = {
   from: string;

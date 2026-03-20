@@ -21,7 +21,9 @@ import type {
   ShowcaseBlock,
   LogosBlock,
   SplitBlock,
-  ProductDemoBlock
+  ProductDemoBlock,
+  StatsBlock,
+  ComparisonBlock
 } from "@/lib/admin/pages";
 import { AnimatedSection, SectionHeading, Pill } from "./AnimatedSection";
 import { AnimatedHeadline } from "./AnimatedHeadline";
@@ -2395,6 +2397,228 @@ const shuffleLogos = (items: LogoItem[]) => {
   return result;
 };
 
+const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number }) => {
+  const preset = animationPresets[defaultAnimationPreset];
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(gridRef, { amount: 0.3, once: true });
+  const items = block.items ?? [];
+  const isCard = block.variant === "card";
+
+  return (
+    <motion.section
+      key={block.id ?? index}
+      style={{
+        width: "100%",
+        maxWidth: "var(--max-width)",
+        marginLeft: "auto",
+        marginRight: "auto",
+        paddingLeft: sectionPx,
+        paddingRight: sectionPx
+      }}
+      variants={preset.item}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+      custom={index}
+    >
+      <style>{`
+        @media (max-width: 600px) {
+          [data-stats-grid] {
+            grid-template-columns: 1fr 1fr !important;
+          }
+        }
+        @media (max-width: 380px) {
+          [data-stats-grid] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+      <div className="grid" style={{ gap: 24 }}>
+        {block.heading ? (
+          <SectionHeading
+            eyebrow={block.eyebrow}
+            title={block.heading}
+            kicker={block.body}
+            align="center"
+          />
+        ) : null}
+        <motion.div
+          ref={gridRef}
+          data-stats-grid
+          className="grid"
+          style={{
+            gridTemplateColumns: `repeat(${items.length}, 1fr)`,
+            gap: 16,
+            textAlign: "center"
+          }}
+          variants={preset.container}
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+        >
+          {items.map((item, idx) => (
+            <motion.div
+              key={`${item.label}-${idx}`}
+              variants={preset.item}
+              style={{
+                padding: isCard ? 24 : 16,
+                borderRadius: isCard ? 16 : 0,
+                border: isCard ? "1px solid var(--border-strong)" : "none",
+                background: isCard ? "rgba(255,255,255,0.02)" : "transparent"
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 48,
+                  fontWeight: 700,
+                  lineHeight: 1.1,
+                  color: "var(--fg)",
+                  letterSpacing: "-0.02em"
+                }}
+              >
+                {item.prefix ?? ""}{item.value}{item.suffix ?? ""}
+              </div>
+              <div
+                style={{
+                  fontSize: 15,
+                  color: "var(--muted)",
+                  marginTop: 6
+                }}
+              >
+                {item.label}
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </motion.section>
+  );
+};
+
+const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; index: number }) => {
+  const preset = animationPresets[defaultAnimationPreset];
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(gridRef, { amount: 0.3, once: true });
+  const [colA, colB] = block.columns ?? [];
+
+  const CheckIcon = () => (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+  const XIcon = () => (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+
+  const renderColumn = (col: typeof colA, isHighlighted: boolean) => {
+    if (!col) return null;
+    return (
+      <div
+        style={{
+          padding: 28,
+          borderRadius: 16,
+          border: isHighlighted ? "1px solid var(--accent)" : "1px solid var(--border-strong)",
+          background: isHighlighted ? "rgba(var(--accent-rgb, 99,102,241), 0.04)" : "rgba(255,255,255,0.02)",
+          display: "grid",
+          gap: 0,
+          alignContent: "start"
+        }}
+      >
+        <h3
+          style={{
+            margin: 0,
+            fontSize: 20,
+            fontWeight: 600,
+            paddingBottom: 16,
+            borderBottom: "1px solid var(--border-strong)"
+          }}
+        >
+          {col.heading}
+        </h3>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {(col.items ?? []).map((item, idx) => (
+            <li
+              key={idx}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                padding: "12px 0",
+                borderBottom: idx < col.items.length - 1 ? "1px solid var(--border-strong)" : "none",
+                fontSize: 15,
+                color: isHighlighted ? "var(--fg)" : "var(--muted)",
+                lineHeight: 1.45
+              }}
+            >
+              {isHighlighted ? <CheckIcon /> : <XIcon />}
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  return (
+    <motion.section
+      key={block.id ?? index}
+      style={{
+        width: "100%",
+        maxWidth: "var(--max-width)",
+        marginLeft: "auto",
+        marginRight: "auto",
+        paddingLeft: sectionPx,
+        paddingRight: sectionPx
+      }}
+      data-comparison-section
+      variants={preset.item}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+      custom={index}
+    >
+      <style>{`
+        @media (max-width: 680px) {
+          [data-comparison-grid] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+      <div className="grid" style={{ gap: 24 }}>
+        {block.heading ? (
+          <SectionHeading
+            eyebrow={block.eyebrow}
+            title={block.heading}
+            kicker={block.body}
+            align="center"
+          />
+        ) : null}
+        <motion.div
+          ref={gridRef}
+          data-comparison-grid
+          className="grid"
+          style={{
+            gridTemplateColumns: "1fr 1fr",
+            gap: 16,
+            alignItems: "start"
+          }}
+          variants={preset.container}
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+        >
+          <motion.div variants={preset.item}>
+            {renderColumn(colA, !!colA?.highlighted)}
+          </motion.div>
+          <motion.div variants={preset.item}>
+            {renderColumn(colB, !!colB?.highlighted)}
+          </motion.div>
+        </motion.div>
+      </div>
+    </motion.section>
+  );
+};
+
 const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock; index: number; audienceFilter?: string }) => {
   const maxLogosBase = clampNumber(block.limit ?? 12, 1, 20);
   // Enforce an even count so we can split the wall evenly between two rows.
@@ -3392,6 +3616,10 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
             element = <ProductDemoBlockSection key={key} block={block} index={index} />;
           } else if (block.type === "divider") {
             element = renderDividerBlock(block, index);
+          } else if (block.type === "stats") {
+            element = <StatsBlockSection key={key} block={block} index={index} />;
+          } else if (block.type === "comparison") {
+            element = <ComparisonBlockSection key={key} block={block} index={index} />;
           } else {
             element = renderStoryBlock(block, index);
           }
