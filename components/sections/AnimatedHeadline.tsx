@@ -215,11 +215,10 @@ export function AnimatedHeadline({
         minHeight: `calc(140vh - ${headerOffset}px - 30px)`,
         width: "100%",
         maxWidth: "100%",
-        overflow: "hidden",
         marginTop: 15,
         marginBottom: 15
       }
-    : { position: "relative", width: "100%", maxWidth: "100%", overflow: "hidden", marginTop: 15, marginBottom: 15 };
+    : { position: "relative", width: "100%", maxWidth: "100%", marginTop: 15, marginBottom: 15 };
 
   const isMobile = viewportWidth !== null && viewportWidth < 680;
   const gutter = isMobile ? 0 : 30;
