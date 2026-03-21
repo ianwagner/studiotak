@@ -354,6 +354,10 @@ main {
   gap: 24px;
 }
 
+.grid > * {
+  min-width: 0;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
