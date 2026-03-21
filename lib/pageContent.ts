@@ -252,17 +252,25 @@ export const normalizeSlugPath = (slug: string): string => {
   return withoutTrailingSlash || "/";
 };
 
-export async function getPublishedPageBySlug(
+export type PageDataSource = "firestore" | "seed" | "not_found";
+
+export interface PageWithSource {
+  page: PageRecord | null;
+  source: PageDataSource;
+}
+
+export async function getPublishedPageBySlugWithSource(
   slug: string,
   options?: { tagFilter?: string | null }
-): Promise<PageRecord | null> {
+): Promise<PageWithSource> {
   const normalizedSlug = normalizeSlugPath(slug);
   const fallback =
     seedPages.find((page) => normalizeSlugPath(page.slug) === normalizedSlug && page.status === "published") ?? null;
 
   // If Firebase isn't configured we still want the marketing site to render with seed content.
   if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-    return mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
+    const page = await mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
+    return { page, source: page ? "seed" : "not_found" };
   }
 
   try {
@@ -283,13 +291,26 @@ export async function getPublishedPageBySlug(
       snapshot = await getDocs(altQuery);
     }
 
-    if (snapshot.empty) return mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
-    const page = fromSnapshot(snapshot.docs[0]);
-    return mergePageWithComponentsAndArticles(page, options?.tagFilter);
+    if (snapshot.empty) {
+      const page = await mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
+      return { page, source: page ? "seed" : "not_found" };
+    }
+    const firestorePage = fromSnapshot(snapshot.docs[0]);
+    const page = await mergePageWithComponentsAndArticles(firestorePage, options?.tagFilter);
+    return { page, source: "firestore" };
   } catch (error) {
     console.error("Failed to load published page from Firestore", error);
-    return mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
+    const page = await mergePageWithComponentsAndArticles(fallback, options?.tagFilter);
+    return { page, source: page ? "seed" : "not_found" };
   }
+}
+
+export async function getPublishedPageBySlug(
+  slug: string,
+  options?: { tagFilter?: string | null }
+): Promise<PageRecord | null> {
+  const { page } = await getPublishedPageBySlugWithSource(slug, options);
+  return page;
 }
 
 export async function getPublishedPages(): Promise<PageRecord[]> {
