@@ -321,31 +321,14 @@ main {
 }
 
 @supports (-webkit-touch-callout: none) {
-  /* iOS Safari-specific: keep full-bleed math tied to the visual viewport to prevent right-push.
-     --full-bleed-width: 100% is container-relative, so the hero doesn't need extra inset
-     subtraction on mobile — the container's own padding handles the margin. */
+  /* iOS Safari: use svh for viewport height (accounts for address bar).
+     No scrollbar on iOS, so 100svw/dvw are safe for full-bleed width. */
   :root {
-    --full-bleed-width: 100%;
-    --full-bleed-shift: 0;
     --full-bleed-height: 100svh;
-    --full-bleed-mobile-inset: 0px;
   }
 
   main {
     max-width: 100%;
-  }
-
-  .container {
-    width: 100%;
-    max-width: none;
-    margin: 0 !important;
-    padding: 0 var(--section-px) !important;
-  }
-
-  .container[data-keep-centered] {
-    width: min(100%, calc(var(--max-width) + var(--section-px) * 2));
-    max-width: calc(var(--max-width) + var(--section-px) * 2);
-    margin: 0 auto !important;
   }
 }
 
