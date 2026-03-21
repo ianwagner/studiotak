@@ -21,7 +21,8 @@ export default async function HomePage() {
       <div
         className="container"
         style={{
-          padding: `${pagePaddingTop}px 0 ${pagePaddingBottom}px`,
+          paddingTop: pagePaddingTop,
+          paddingBottom: pagePaddingBottom,
           display: "grid",
           gap: 32
         }}
