@@ -215,21 +215,30 @@ export function AnimatedHeadline({
         minHeight: `calc(140vh - ${headerOffset}px - 30px)`,
         width: "100%",
         maxWidth: "100%",
+        minWidth: 0,
         marginTop: 15,
         marginBottom: 15
       }
-    : { position: "relative", width: "100%", maxWidth: "100%", marginTop: 15, marginBottom: 15 };
+    : { position: "relative", width: "100%", maxWidth: "100%", minWidth: 0, marginTop: 15, marginBottom: 15 };
 
   const isMobile = viewportWidth !== null && viewportWidth < 680;
   const gutter = isMobile ? 0 : 30;
-  const mobileInset = "var(--full-bleed-mobile-inset, var(--section-px, 15px))";
-  const leftInset = isMobile ? `max(${mobileInset}, env(safe-area-inset-left, 0px))` : `${gutter / 2}px`;
-  const rightInset = isMobile ? `max(${mobileInset}, env(safe-area-inset-right, 0px))` : `${gutter / 2}px`;
-  const bleedWidth = isMobile
-    ? `calc(${viewportWidthVar} - ${leftInset} - ${rightInset})`
-    : `calc(${viewportWidthVar} - ${gutter}px)`;
-  const bleedShiftLeft = `calc(${viewportShiftVar} + ${leftInset})`;
-  const bleedShiftRight = `calc(${viewportShiftVar} + ${rightInset})`;
+
+  // On mobile, bypass the CSS variable calc chain entirely — Safari can misresolve
+  // nested calc(var(...)) expressions with sticky positioning, causing the wrapper
+  // to exceed the viewport. Plain "100%" with zero margins is reliable everywhere.
+  let bleedWidth: string;
+  let bleedShiftLeft: string;
+  let bleedShiftRight: string;
+  if (isMobile) {
+    bleedWidth = "100%";
+    bleedShiftLeft = "0";
+    bleedShiftRight = "0";
+  } else {
+    bleedWidth = `calc(${viewportWidthVar} - ${gutter}px)`;
+    bleedShiftLeft = `calc(${viewportShiftVar} + ${gutter / 2}px)`;
+    bleedShiftRight = `calc(${viewportShiftVar} + ${gutter / 2}px)`;
+  }
 
   const wrapperStyle: CSSProperties = {
     width: bleedWidth,
