@@ -383,15 +383,15 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "Client dashboard",
-            body: "Approved ads, campaign status, and download links in one place. A gallery view makes it easy for clients to share creative with their own stakeholders.",
+            body: "Approved ads, status at a glance, and download links in one place. A gallery view makes it easy for clients to share creative with their own stakeholders.",
           },
           {
             title: "Slack notifications",
-            body: "Clients get notified right in Slack when ads are ready for review or campaigns hit milestones \u2014 in the channels they're already using.",
+            body: "Clients get notified right in Slack when ads are ready for review or approvals come through \u2014 in the channels they're already using.",
           },
           {
             title: "Built-in support",
-            body: "Clients can raise questions or revision requests directly inside Campfire, tied to the campaign they're about. No email chains, no lost context.",
+            body: "Clients can raise questions or revision requests directly inside Campfire, tied to the ads they're about. No email chains, no lost context.",
           },
         ],
       },
@@ -437,12 +437,12 @@ export const seedPages: PageRecord[] = [
         items: [
           {
             title: "Production workspace",
-            body: "See every campaign's status, timeline, and assignments across all your brands. Filter by brand, month, review status, or any combination. Share a specific view with a colleague in one click.",
+            body: "See every ad's status and timeline across all your brands. Filter by brand, month, review status, or any combination. Share a specific view with a colleague in one click.",
             badge: "Visibility",
           },
           {
             title: "Brand management",
-            body: "Each brand gets a dedicated profile: logos, products, campaigns, tone of voice, staff assignments, contract terms, and internal notes. When anyone picks up a new brief, everything they need is in one place.",
+            body: "Each brand gets a dedicated profile: logos, products, tone of voice, contract terms, and internal notes. When anyone picks up a new brief, everything they need is in one place.",
             badge: "Organization",
           },
           {
@@ -480,7 +480,7 @@ export const seedPages: PageRecord[] = [
             highlighted: true,
             items: [
               "Real-time production dashboard",
-              "One-link review for every campaign",
+              "One-link review for every ad",
               "Feedback tied to the creative it\u2019s about",
               "Automated reporting and exports",
               "Clients are in within minutes",
@@ -494,7 +494,7 @@ export const seedPages: PageRecord[] = [
         type: "split",
         eyebrow: "At scale",
         heading: "Everything lives together",
-        body: "Ads, copy, feedback, status, reporting, and integrations \u2014 all in one place. No more stitching together spreadsheets, Drive folders, and Slack threads. Whether you're running five campaigns or fifty, Campfire keeps production organized.",
+        body: "Ads, copy, feedback, status, and integrations \u2014 all in one place. No more stitching together spreadsheets, Drive folders, and Slack threads. Whether you're producing five ads or fifty, Campfire keeps production organized.",
         mediaSide: "left",
         ctaLabel: "See it in action",
         ctaHref: "#contact",
@@ -507,7 +507,7 @@ export const seedPages: PageRecord[] = [
         variant: "card",
         items: [
           { value: "48", suffix: "hrs", label: "Average turnaround time" },
-          { value: "1", label: "Link to review every campaign" },
+          { value: "1", label: "Link to review every ad" },
           { value: "0", label: "Emails needed to review ads" },
           { value: "100", suffix: "%", label: "Bespoke \u2014 no templates" },
         ],
@@ -582,7 +582,7 @@ export const seedPages: PageRecord[] = [
         type: "hero",
         eyebrow: "Campfire / For Brands",
         title: "Your ads, reviewed and delivered \u2014 without the back-and-forth",
-        subtitle: "Campfire is where you review ads, approve creative, track campaigns, and access your delivered work \u2014 all from one place. No email chains, no lost notes.",
+        subtitle: "Campfire is where you review ads, approve creative, and access your delivered work \u2014 all from one place. No email chains, no lost notes.",
         primaryCtaLabel: "Get started",
         primaryCtaHref: "#contact",
         secondaryCtaLabel: "See how it works",
@@ -619,11 +619,11 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "Your dashboard",
-            body: "Approved ads ready to use, campaign status at a glance, and quick download links. A gallery view makes it easy to share creative with your own team or stakeholders.",
+            body: "Approved ads ready to use, status at a glance, and quick download links. A gallery view makes it easy to share creative with your own team or stakeholders.",
           },
           {
             title: "Raise a question anytime",
-            body: "A note about an ad, a revision request, a question for our team \u2014 raise it directly inside Campfire. It stays connected to the campaign, so nothing gets lost.",
+            body: "A note about an ad, a revision request, a question for our team \u2014 raise it directly inside Campfire. It stays connected to the ad, so nothing gets lost.",
           },
         ],
       },
@@ -668,12 +668,12 @@ export const seedPages: PageRecord[] = [
         items: [
           {
             title: "Slack notifications",
-            body: "When ads are ready for review or campaigns hit milestones, you get notified right in Slack \u2014 in the channels your team already uses.",
+            body: "When ads are ready for review or approvals come through, you get notified right in Slack \u2014 in the channels your team already uses.",
             badge: "Stay in the loop",
           },
           {
             title: "Reporting & exports",
-            body: "Ad counts by campaign, aspect ratio coverage, and status breakdowns. Export everything to CSV for your own reporting.",
+            body: "See your ads at a glance \u2014 aspect ratio coverage and status breakdowns. Export everything to CSV for your own reporting.",
             badge: "Data",
           },
           {
@@ -697,12 +697,12 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "Direct line to your team",
-            body: "Questions, revision requests, and creative direction \u2014 all inside Campfire, tied to the campaign. No middlemen, no lost context.",
+            body: "Questions, revision requests, and creative direction \u2014 all inside Campfire, tied to the ad. No middlemen, no lost context.",
             badge: "Communication",
           },
           {
             title: "Gallery-ready downloads",
-            body: "Every approved ad is organized by campaign and sized for every Meta placement. Download individually or in bulk \u2014 ready to drop straight into Ads Manager.",
+            body: "Every approved ad is sized for every Meta placement. Download individually or in bulk \u2014 ready to drop straight into Ads Manager.",
             badge: "Delivery",
           },
         ],
@@ -836,7 +836,7 @@ export const seedPages: PageRecord[] = [
             body: "Ads and copy show up side by side in a single shareable link. Approve, reject, or request changes \u2014 feedback flows back to us in real time. No email threads, no Slack scavenger hunts.",
           },
           {
-            body: "Approved creative is ready to pull into your ad manager immediately. Organized by campaign, sized for every placement. No reformatting, no hunting through Drive folders.",
+            body: "Approved creative is ready to pull into your ad manager immediately. Sized for every placement. No reformatting, no hunting through Drive folders.",
             title: "Download and deploy",
           },
         ],
@@ -1041,7 +1041,7 @@ export const seedPages: PageRecord[] = [
         type: "hero",
         eyebrow: "Campfire / Bespoke Ad Creative",
         title: "Ad creative, delivered \u2014 without the back-and-forth",
-        subtitle: "Campfire is where you review ads, approve creative, and track campaigns \u2014 all from one place. Human-led, Meta-optimized, priced per ad.",
+        subtitle: "Campfire is where you review ads, approve creative, and track your work \u2014 all from one place. Human-led, Meta-optimized, priced per ad.",
         primaryCtaLabel: "Get started",
         primaryCtaHref: "#contact",
         secondaryCtaLabel: "See how it works",
@@ -1156,12 +1156,12 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "Your dashboard",
-            body: "Approved ads, campaign status, and download links in one place. A gallery view makes it easy to share creative with your stakeholders.",
+            body: "Approved ads, status at a glance, and download links in one place. A gallery view makes it easy to share creative with your stakeholders.",
             badge: "Dashboard",
           },
           {
             title: "Slack notifications",
-            body: "When ads are ready for review or a campaign hits a milestone, you get notified right in Slack \u2014 in the channels your team already uses.",
+            body: "When ads are ready for review or approvals come through, you get notified right in Slack \u2014 in the channels your team already uses.",
             badge: "Stay in the loop",
           },
         ],
@@ -1182,7 +1182,7 @@ export const seedPages: PageRecord[] = [
           },
           {
             title: "Growth leads",
-            body: "You know what to test but can't get creative made fast enough. Campfire keeps your ad account fed with fresh, on-brand assets so you never stall a winning campaign.",
+            body: "You know what to test but can't get creative made fast enough. Campfire keeps your ad account fed with fresh, on-brand assets so you never stall a winning ad set.",
             badge: "Growth",
           },
           {
