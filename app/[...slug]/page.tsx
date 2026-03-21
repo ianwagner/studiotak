@@ -103,8 +103,7 @@ export default async function MarketingPage({ params }: PageParams) {
       <div
         className="container"
         style={{
-          paddingTop: pagePaddingTop,
-          paddingBottom: pagePaddingBottom,
+          padding: `${pagePaddingTop}px 0 ${pagePaddingBottom}px`,
           display: "grid",
           gap: 32
         }}
