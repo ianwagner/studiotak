@@ -1258,7 +1258,9 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
           width: "100%",
           maxWidth: "min(var(--max-width), 960px)",
           marginLeft: "auto",
-          marginRight: "auto"
+          marginRight: "auto",
+          paddingLeft: sectionPx,
+          paddingRight: sectionPx
         }}
         variants={preset.item}
         initial="hidden"
