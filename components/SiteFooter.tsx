@@ -32,59 +32,62 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
 
   return (
     <footer data-site-footer>
-      <div className="container footer-shell" data-keep-centered>
-        <div className="footer-brand">
-          {footerLogoUrl ? (
-            <img
-              src={footerLogoUrl}
-              alt="Studio Tak footer logo"
-              style={{
-                height: 14,
-                width: "auto",
-                display: "block",
-                objectFit: "contain",
-                marginBottom: 8
-              }}
-            />
-          ) : (
-            <span style={{ fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Studio Tak</span>
-          )}
-          <span style={{ color: "var(--muted)", fontSize: 14 }}>Design &amp; Build</span>
-          <span style={{ color: "var(--muted)", fontSize: 13 }}>© {year} Studio Tak. All rights reserved.</span>
-        </div>
-        {sectionEntries.length ? (
-          <div data-footer-sections>
-            {sectionEntries.map(([sectionTitle, links]) => (
-              <div key={sectionTitle} className="footer-section">
-                <p className="footer-section-title">{sectionTitle}</p>
-                <nav data-footer-nav aria-label={`${sectionTitle} links`}>
-                  {links.map((item) => {
-                    const children = childrenByParent[item.id] ?? [];
-                    return (
-                      <div key={item.id} className="footer-parent-block">
-                        <span className="footer-parent-label">{item.label}</span>
-                        {children.length ? (
-                          <div className="footer-children">
-                            {children.map((child) => (
-                              <Link
-                                key={child.id}
-                                href={child.href as Route}
-                                target={child.isExternal ? "_blank" : undefined}
-                                rel={child.isExternal ? "noreferrer noopener" : undefined}
-                              >
-                                {child.label}
-                              </Link>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </nav>
-              </div>
-            ))}
+      <div className="footer-shell" data-keep-centered>
+        <div className="footer-top">
+          <div className="footer-brand">
+            {footerLogoUrl ? (
+              <img
+                src={footerLogoUrl}
+                alt="Studio Tak footer logo"
+                className="footer-logo"
+              />
+            ) : (
+              <span className="footer-wordmark">Studio Tak</span>
+            )}
+            <span className="footer-tagline">Design &amp; Build</span>
           </div>
-        ) : null}
+
+          {footerParents.length ? (
+            <nav data-footer-nav aria-label="Footer links">
+              {footerParents.map((item) => {
+                const children = childrenByParent[item.id] ?? [];
+                return (
+                  <div key={item.id} className="footer-parent-block">
+                    <span className="footer-parent-label">{item.label}</span>
+                    {children.length ? (
+                      <div className="footer-children">
+                        {children.map((child) => (
+                          <Link
+                            key={child.id}
+                            href={child.href as Route}
+                            target={child.isExternal ? "_blank" : undefined}
+                            rel={child.isExternal ? "noreferrer noopener" : undefined}
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </nav>
+          ) : null}
+        </div>
+
+        <div className="footer-bottom">
+          <div className="footer-legal">
+            <span>© {year} Studio Tak. All rights reserved.</span>
+          </div>
+          <div className="footer-cta">
+            <Link href={"/campfire/get-a-demo" as Route} className="footer-cta-link">
+              Get a demo of Campfire
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+          </div>
+        </div>
       </div>
     </footer>
   );

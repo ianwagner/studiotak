@@ -333,7 +333,6 @@ main {
 
   main {
     max-width: 100%;
-    overflow: hidden;
   }
 
   .container {
@@ -1489,74 +1488,54 @@ footer[data-site-footer] .footer-shell {
   max-width: 280px;
 }
 
-[data-footer-sections] {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(140px, auto));
-  gap: 48px;
-  align-items: flex-start;
-}
-
-.footer-section {
-  display: grid;
-  gap: 14px;
-  align-content: start;
-}
-
-.footer-section-title {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 [data-footer-nav] {
-  display: grid;
-  gap: 8px;
-}
-
-[data-footer-nav] a {
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-weight: 500;
-  font-size: 15px;
-}
-
-[data-footer-nav] a:hover {
-  background: transparent;
-  border: none;
-  color: var(--accent);
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
 }
 
 .footer-parent-block {
   display: grid;
-  gap: 8px;
+  gap: 10px;
+}
+
+.footer-parent-label {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+[data-footer-nav] > .footer-parent-block > .footer-parent-label {
+  font-weight: 500;
 }
 
 .footer-children {
   display: grid;
-  gap: 6px;
-  padding-left: 12px;
+  gap: 8px;
 }
 
 .footer-children a {
-  font-weight: 500;
-  color: var(--muted);
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
 .footer-children a:hover {
   color: var(--accent);
+  background: transparent;
+  border: none;
 }
 
-/* ── Divider ── */
-
-.footer-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 48px 0 24px;
-  opacity: 0.5;
+/* Links without children render as direct nav items */
+[data-footer-nav] > .footer-parent-block > .footer-parent-label:only-child {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg);
 }
 
 /* ── Bottom row: legal + CTA ── */
@@ -1566,6 +1545,7 @@ footer[data-site-footer] .footer-shell {
   justify-content: space-between;
   align-items: center;
   gap: 24px;
+  margin-top: 48px;
 }
 
 .footer-legal {
@@ -1638,13 +1618,13 @@ footer[data-site-footer] .footer-shell {
     gap: 36px;
   }
 
-  [data-footer-sections] {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 32px;
+  [data-footer-nav] {
+    flex-wrap: wrap;
+    gap: 24px;
   }
 
-  .footer-divider {
-    margin: 32px 0 20px;
+  .footer-bottom {
+    margin-top: 32px;
   }
 
   .footer-bottom {
