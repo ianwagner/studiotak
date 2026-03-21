@@ -3,8 +3,9 @@ import { notFound, redirect, permanentRedirect } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BlocksRenderer } from "@/components/sections/BlocksRenderer";
+import { DevDataSourceBanner } from "@/components/DevDataSourceBanner";
 import { getNavigationItems } from "@/lib/navigation";
-import { getPublishedPageBySlug, getPublishedPages, normalizeSlugPath } from "@/lib/pageContent";
+import { getPublishedPageBySlug, getPublishedPageBySlugWithSource, getPublishedPages, normalizeSlugPath } from "@/lib/pageContent";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -54,7 +55,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 
 export default async function MarketingPage({ params }: PageParams) {
   const slugPath = normalizeSlugPath(slugToPath(params.slug));
-  const page = await getPublishedPageBySlug(slugPath);
+  const { page, source } = await getPublishedPageBySlugWithSource(slugPath);
 
   if (!page) {
     const pages = await getPublishedPages();
@@ -96,6 +97,8 @@ export default async function MarketingPage({ params }: PageParams) {
   const pagePaddingTop = hasHeroFirst ? 0 : 72;
   const pagePaddingBottom = hasHeroFirst ? 0 : 120;
   const navItems = await getNavigationItems();
+  const blocks = page.blocks ?? [];
+  const blockSequence = blocks.map((b) => b.type).join(" → ");
 
   return (
     <main>
@@ -108,7 +111,7 @@ export default async function MarketingPage({ params }: PageParams) {
           gap: 32
         }}
       >
-        <BlocksRenderer blocks={page.blocks} />
+        <BlocksRenderer blocks={blocks} />
         {jsonLd ? (
           <script
             type="application/ld+json"
@@ -117,6 +120,13 @@ export default async function MarketingPage({ params }: PageParams) {
         ) : null}
       </div>
       <SiteFooter navItems={navItems} />
+      <DevDataSourceBanner
+        source={source}
+        blockSequence={blockSequence}
+        blockCount={blocks.length}
+        pageStatus={page.status}
+        updatedAt={page.updatedAt}
+      />
     </main>
   );
 }
