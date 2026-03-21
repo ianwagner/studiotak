@@ -214,10 +214,12 @@ export function AnimatedHeadline({
         position: "relative",
         minHeight: `calc(140vh - ${headerOffset}px - 30px)`,
         width: "100%",
+        maxWidth: "100%",
+        overflow: "hidden",
         marginTop: 15,
         marginBottom: 15
       }
-    : { position: "relative", width: "100%", marginTop: 15, marginBottom: 15 };
+    : { position: "relative", width: "100%", maxWidth: "100%", overflow: "hidden", marginTop: 15, marginBottom: 15 };
 
   const isMobile = viewportWidth !== null && viewportWidth < 680;
   const gutter = isMobile ? 0 : 30;
@@ -323,7 +325,7 @@ export function AnimatedHeadline({
     <section ref={containerRef} style={containerStyle} aria-label={headline}>
       <motion.div ref={wrapperRef} style={wrapperStyle}>
         <div style={contentStyle}>
-          <h1 style={{ fontSize: 56, lineHeight: 1.05, margin: 0 }}>
+          <h1 style={{ fontSize: "clamp(32px, 8vw, 56px)", lineHeight: 1.05, margin: 0, maxWidth: "100%", overflowWrap: "break-word" }}>
             <AnimatedText text={headline} variant={animationStyle} progress={progressValue} />
           </h1>
           {subtext ? (
