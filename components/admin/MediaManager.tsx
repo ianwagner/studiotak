@@ -48,10 +48,10 @@ const formatFileName = (name: string) => (name.length > 10 ? `${name.slice(0, 10
 const pillBase: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: 4,
+  gap: 3,
   borderRadius: 999,
-  fontSize: 12,
-  padding: "3px 10px",
+  fontSize: 11,
+  padding: "2px 8px",
   border: "1px solid var(--border)",
   cursor: "pointer",
   transition: "all 0.15s ease",
@@ -120,6 +120,7 @@ export function MediaManager() {
   const [filterFeatured, setFilterFeatured] = useState<FeaturedFilter>("all");
   const [filterStatus, setFilterStatus] = useState<StatusFilter>("all");
   const [migrating, setMigrating] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
   const firebaseReady = useMemo(() => Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY), []);
 
   const needsStatusMigration = useMemo(
@@ -374,168 +375,215 @@ export function MediaManager() {
     filterStatus !== "all";
 
   return (
-    <div className="grid" style={{ gap: 16 }}>
-      <div className="card" style={{ padding: 12 }}>
-        <h1 style={{ margin: "0 0 6px" }}>Media</h1>
-        <p style={{ margin: 0, color: "var(--muted)" }}>
-          Upload assets with tags for Industry and Type. Stored in Firebase Storage + Firestore.
-        </p>
+    <div className="grid" style={{ gap: 12 }}>
+      {/* Header row */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 style={{ margin: 0 }}>Media</h1>
+        <button
+          type="button"
+          className="btn secondary"
+          onClick={() => setShowUploadForm((v) => !v)}
+        >
+          {showUploadForm ? "Hide upload" : "+ Upload"}
+        </button>
       </div>
 
-      <div className="card" style={{ padding: 12 }}>
-        <form className="grid" style={{ gap: 12 }} onSubmit={handleSubmit}>
-          <div className="field-group">
-            <label>File</label>
-            <input
-              className="input"
-              type="file"
-              multiple
-              onChange={(e) => setForm((prev) => ({ ...prev, files: Array.from(e.target.files ?? []) }))}
-              required
-            />
-          </div>
-          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
-            <div className="field-group">
-              <label>Industry</label>
-              <input
-                className="input"
-                value={form.industry}
-                onChange={(e) => setForm((prev) => ({ ...prev, industry: e.target.value }))}
-                placeholder="SaaS, Fintech, etc."
-              />
-            </div>
-            <div className="field-group">
-              <label>Type</label>
-              <input
-                className="input"
-                value={form.type}
-                onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value }))}
-                placeholder="Example, Logo, etc."
-              />
-            </div>
-            <div className="field-group">
-              <label>Alt text</label>
-              <input
-                className="input"
-                value={form.alt}
-                onChange={(e) => setForm((prev) => ({ ...prev, alt: e.target.value }))}
-                placeholder="Describe the media"
-              />
-            </div>
-            <div className="field-group">
-              <label>Media type</label>
-              <select
-                value={form.mediaType}
-                onChange={(e) => setForm((prev) => ({ ...prev, mediaType: e.target.value as "image" | "video" }))}
-              >
-                <option value="image">Image</option>
-                <option value="video">Video</option>
-              </select>
-            </div>
-            <div className="field-group">
-              <label>Featured</label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--muted)" }}>
+      {/* Collapsible upload form */}
+      {showUploadForm ? (
+        <div className="card" style={{ padding: 12 }}>
+          <form className="grid" style={{ gap: 10 }} onSubmit={handleSubmit}>
+            <div className="grid" style={{ gridTemplateColumns: "1fr repeat(4, minmax(0, 1fr))", gap: 10, alignItems: "end" }}>
+              <div className="field-group" style={{ gap: 4 }}>
+                <label style={{ fontSize: 12 }}>File</label>
                 <input
-                  type="checkbox"
-                  checked={form.featured}
-                  onChange={(e) => setForm((prev) => ({ ...prev, featured: e.target.checked }))}
+                  className="input"
+                  type="file"
+                  multiple
+                  onChange={(e) => setForm((prev) => ({ ...prev, files: Array.from(e.target.files ?? []) }))}
+                  required
                 />
-                <span>Mark uploads as featured</span>
-              </label>
+              </div>
+              <div className="field-group" style={{ gap: 4 }}>
+                <label style={{ fontSize: 12 }}>Industry</label>
+                <input
+                  className="input"
+                  value={form.industry}
+                  onChange={(e) => setForm((prev) => ({ ...prev, industry: e.target.value }))}
+                  placeholder="SaaS, Fintech"
+                />
+              </div>
+              <div className="field-group" style={{ gap: 4 }}>
+                <label style={{ fontSize: 12 }}>Type</label>
+                <input
+                  className="input"
+                  value={form.type}
+                  onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value }))}
+                  placeholder="Example, Logo"
+                />
+              </div>
+              <div className="field-group" style={{ gap: 4 }}>
+                <label style={{ fontSize: 12 }}>Alt text</label>
+                <input
+                  className="input"
+                  value={form.alt}
+                  onChange={(e) => setForm((prev) => ({ ...prev, alt: e.target.value }))}
+                  placeholder="Describe the media"
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <select
+                  className="input"
+                  style={{ flex: 1 }}
+                  value={form.mediaType}
+                  onChange={(e) => setForm((prev) => ({ ...prev, mediaType: e.target.value as "image" | "video" }))}
+                >
+                  <option value="image">Image</option>
+                  <option value="video">Video</option>
+                </select>
+                <label style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--muted)", fontSize: 12, whiteSpace: "nowrap" }}>
+                  <input
+                    type="checkbox"
+                    checked={form.featured}
+                    onChange={(e) => setForm((prev) => ({ ...prev, featured: e.target.checked }))}
+                  />
+                  Featured
+                </label>
+              </div>
             </div>
-          </div>
-          <button className="btn" type="submit" disabled={loading}>
-            {loading ? "Uploading…" : "Upload media"}
-          </button>
-          {error ? <span style={{ color: "var(--accent)" }}>{error}</span> : null}
-          {currentUser ? null : (
-            <span style={{ color: "var(--muted)", fontSize: 13 }}>
-              Sign in to upload. Viewing library still works.
-            </span>
-          )}
-          {!firebaseReady ? (
-            <span style={{ color: "var(--accent)" }}>
-              Firebase env vars missing. Media uploads will not work until configured.
-            </span>
-          ) : null}
-        </form>
-      </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <button className="btn" type="submit" disabled={loading} style={{ flexShrink: 0 }}>
+                {loading ? "Uploading…" : "Upload"}
+              </button>
+              {error ? <span style={{ color: "var(--accent)", fontSize: 13 }}>{error}</span> : null}
+              {currentUser ? null : (
+                <span style={{ color: "var(--muted)", fontSize: 12 }}>Sign in to upload.</span>
+              )}
+              {!firebaseReady ? (
+                <span style={{ color: "var(--accent)", fontSize: 12 }}>Firebase env vars missing.</span>
+              ) : null}
+            </div>
+          </form>
+        </div>
+      ) : null}
 
+      {/* Migration banner */}
+      {needsStatusMigration ? (
+        <div
+          style={{
+            padding: "8px 12px",
+            background: "rgba(245,213,101,0.15)",
+            border: "1px solid rgba(245,213,101,0.4)",
+            borderRadius: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 13, color: "var(--text)" }}>
+            {items.filter((i) => !i.status).length} assets need a publish status.
+            <strong> Publish all</strong> to keep them visible on the site.
+          </span>
+          <button
+            className="btn"
+            type="button"
+            disabled={migrating}
+            onClick={migrateStatuses}
+            style={{ flexShrink: 0 }}
+          >
+            {migrating ? "Migrating…" : "Publish all"}
+          </button>
+        </div>
+      ) : null}
+
+      {/* Library */}
       <div className="card" style={{ padding: 12 }}>
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <h3 style={{ margin: 0 }}>Library</h3>
-            <span style={{ color: "var(--muted)", fontSize: 14 }}>
-              {filteredItems.length} {filteredItems.length !== items.length ? `of ${items.length} ` : ""}
-              items
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <div className="btn-group" style={{ display: "flex", gap: 4 }}>
-              <button
-                type="button"
-                className={`btn secondary${viewMode === "masonry" ? " active" : ""}`}
-                onClick={() => setViewMode("masonry")}
-              >
-                Masonry
-              </button>
-              <button
-                type="button"
-                className={`btn secondary${viewMode === "list" ? " active" : ""}`}
-                onClick={() => setViewMode("list")}
-              >
-                List
-              </button>
-            </div>
+        {/* Search + view toggle row */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input
+            className="input"
+            style={{ flex: 1 }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search media…"
+          />
+          <span style={{ color: "var(--muted)", fontSize: 13, whiteSpace: "nowrap" }}>
+            {filteredItems.length}{filteredItems.length !== items.length ? ` / ${items.length}` : ""}
+          </span>
+          <div className="btn-group" style={{ display: "flex", gap: 2 }}>
+            <button
+              type="button"
+              className={`btn secondary${viewMode === "masonry" ? " active" : ""}`}
+              onClick={() => setViewMode("masonry")}
+              style={{ padding: "4px 8px", fontSize: 12 }}
+            >
+              Grid
+            </button>
+            <button
+              type="button"
+              className={`btn secondary${viewMode === "list" ? " active" : ""}`}
+              onClick={() => setViewMode("list")}
+              style={{ padding: "4px 8px", fontSize: 12 }}
+            >
+              List
+            </button>
           </div>
         </div>
 
-        {/* Migration banner */}
-        {needsStatusMigration ? (
-          <div
-            style={{
-              marginTop: 10,
-              padding: "10px 12px",
-              background: "rgba(245,213,101,0.15)",
-              border: "1px solid rgba(245,213,101,0.4)",
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <span style={{ fontSize: 13, color: "var(--text)" }}>
-              {items.filter((i) => !i.status).length} assets have no publish status.
-              Set them all to <strong>Published</strong> so they stay visible on the site.
-            </span>
-            <button
-              className="btn"
-              type="button"
-              disabled={migrating}
-              onClick={migrateStatuses}
-              style={{ flexShrink: 0 }}
-            >
-              {migrating ? "Migrating…" : "Publish all"}
-            </button>
-          </div>
-        ) : null}
-
-        {/* Search */}
-        <div style={{ marginTop: 10 }}>
-          <input
+        {/* Dropdown filters row */}
+        <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+          <select
             className="input"
-            style={{ width: "100%" }}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, tag, alt, or url"
-          />
+            style={{ flex: 1, minWidth: 120, fontSize: 13, padding: "6px 8px" }}
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as StatusFilter)}
+            aria-label="Filter by status"
+          >
+            <option value="all">All statuses</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+          </select>
+          <select
+            className="input"
+            style={{ flex: 1, minWidth: 120, fontSize: 13, padding: "6px 8px" }}
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            aria-label="Filter by type"
+          >
+            <option value="all">All types</option>
+            {typeFilters.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          <select
+            className="input"
+            style={{ flex: 1, minWidth: 120, fontSize: 13, padding: "6px 8px" }}
+            value={filterMediaType}
+            onChange={(e) => setFilterMediaType(e.target.value as "all" | "image" | "video")}
+            aria-label="Filter by media type"
+          >
+            <option value="all">All media</option>
+            <option value="image">Images</option>
+            <option value="video">Videos</option>
+          </select>
+          <select
+            className="input"
+            style={{ flex: 1, minWidth: 120, fontSize: 13, padding: "6px 8px" }}
+            value={filterFeatured}
+            onChange={(e) => setFilterFeatured(e.target.value as FeaturedFilter)}
+            aria-label="Filter by featured flag"
+          >
+            <option value="all">All items</option>
+            <option value="featured">Featured only</option>
+            <option value="unfeatured">Not featured</option>
+          </select>
         </div>
 
         {/* Tag pills */}
         {industryTagCounts.length > 0 ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, alignItems: "center" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8, alignItems: "center" }}>
             {industryTagCounts.map(([tag, count]) => (
               <button
                 key={tag}
@@ -543,11 +591,11 @@ export function MediaManager() {
                 style={activeIndustryTags.has(tag) ? pillActive : pillInactive}
                 onClick={() => toggleIndustryTag(tag)}
               >
-                {tag} <span style={{ opacity: 0.7 }}>({count})</span>
+                {tag} <span style={{ opacity: 0.6 }}>({count})</span>
               </button>
             ))}
             {activeIndustryTags.size > 1 ? (
-              <div className="btn-group" style={{ display: "flex", gap: 2, marginLeft: 4 }}>
+              <div className="btn-group" style={{ display: "flex", gap: 2, marginLeft: 2 }}>
                 <button
                   type="button"
                   style={{
@@ -555,8 +603,8 @@ export function MediaManager() {
                     background: tagFilterMode === "or" ? "var(--text)" : "var(--muted-surface)",
                     color: tagFilterMode === "or" ? "#fff" : "var(--muted)",
                     borderColor: tagFilterMode === "or" ? "var(--text)" : "var(--border)",
-                    fontSize: 11,
-                    padding: "2px 8px",
+                    fontSize: 10,
+                    padding: "2px 6px",
                   }}
                   onClick={() => setTagFilterMode("or")}
                 >
@@ -569,8 +617,8 @@ export function MediaManager() {
                     background: tagFilterMode === "and" ? "var(--text)" : "var(--muted-surface)",
                     color: tagFilterMode === "and" ? "#fff" : "var(--muted)",
                     borderColor: tagFilterMode === "and" ? "var(--text)" : "var(--border)",
-                    fontSize: 11,
-                    padding: "2px 8px",
+                    fontSize: 10,
+                    padding: "2px 6px",
                   }}
                   onClick={() => setTagFilterMode("and")}
                 >
@@ -586,72 +634,17 @@ export function MediaManager() {
                   background: "none",
                   border: "none",
                   color: "var(--muted)",
-                  fontSize: 12,
+                  fontSize: 11,
                   cursor: "pointer",
-                  padding: "2px 6px",
+                  padding: "1px 4px",
                   textDecoration: "underline",
                 }}
               >
-                Clear tags
+                Clear
               </button>
             ) : null}
           </div>
         ) : null}
-
-        {/* Dropdown filters */}
-        <div
-          className="grid"
-          style={{
-            gap: 8,
-            marginTop: 10,
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-            alignItems: "center"
-          }}
-        >
-          <select
-            className="input"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as StatusFilter)}
-            aria-label="Filter by status"
-          >
-            <option value="all">All statuses</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-          </select>
-          <select
-            className="input"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            aria-label="Filter by type"
-          >
-            <option value="all">All types</option>
-            {typeFilters.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-          <select
-            className="input"
-            value={filterMediaType}
-            onChange={(e) => setFilterMediaType(e.target.value as "all" | "image" | "video")}
-            aria-label="Filter by media type"
-          >
-            <option value="all">All media</option>
-            <option value="image">Images</option>
-            <option value="video">Videos</option>
-          </select>
-          <select
-            className="input"
-            value={filterFeatured}
-            onChange={(e) => setFilterFeatured(e.target.value as FeaturedFilter)}
-            aria-label="Filter by featured flag"
-          >
-            <option value="all">All items</option>
-            <option value="featured">Featured only</option>
-            <option value="unfeatured">Not featured</option>
-          </select>
-        </div>
 
         <MediaLibrary
           items={filteredItems}
@@ -712,7 +705,7 @@ function InlineTagEditor({
 
   return (
     <div
-      style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}
+      style={{ display: "flex", flexWrap: "wrap", gap: 3, alignItems: "center", overflow: "hidden" }}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
     >
@@ -842,9 +835,10 @@ function MediaLibrary({
     return (
       <div
         style={{
-          marginTop: 12,
-          columnCount: 3,
-          columnGap: 12,
+          marginTop: 8,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          gap: 8,
           width: "100%"
         }}
       >
@@ -862,34 +856,40 @@ function MediaLibrary({
               }
             }}
             style={{
-              breakInside: "avoid",
-              marginBottom: 12,
-              padding: 8,
-              display: "grid",
-              gap: 6,
+              padding: 6,
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
               cursor: "pointer",
-              border: "1px solid var(--border)"
+              border: "1px solid var(--border)",
+              overflow: "hidden",
             }}
           >
-            <MediaThumb item={item} />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-              <strong style={{ fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                {item.name}
-              </strong>
-              <div style={{ display: "flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
-                <span style={{ color: "var(--muted)", fontSize: 11 }}>
-                  {(item.mediaType ?? "image").toUpperCase()}
-                </span>
-                <StatusPill
-                  status={item.status ?? "draft"}
-                  onClick={() => onStatusToggle(item.id, item.status ?? "draft")}
-                />
-              </div>
+            <div style={{
+              width: "100%",
+              aspectRatio: "4 / 5",
+              borderRadius: 8,
+              overflow: "hidden",
+              background: "var(--muted-surface)",
+              flexShrink: 0,
+            }}>
+              <MediaThumb item={item} coverMode />
             </div>
-            <InlineTagEditor
-              tags={item.industry}
-              onUpdate={(tags) => onIndustryTagsUpdate(item.id, tags)}
-            />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, padding: "2px 2px 0" }}>
+              <span style={{ fontSize: 11, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                {item.name}
+              </span>
+              <StatusPill
+                status={item.status ?? "draft"}
+                onClick={() => onStatusToggle(item.id, item.status ?? "draft")}
+              />
+            </div>
+            <div style={{ padding: "0 2px 2px" }}>
+              <InlineTagEditor
+                tags={item.industry}
+                onUpdate={(tags) => onIndustryTagsUpdate(item.id, tags)}
+              />
+            </div>
           </article>
         ))}
       </div>
@@ -1053,7 +1053,7 @@ function MediaLibrary({
 }
 
 /* ─── MediaThumb ─────────────────────────────────────────────── */
-function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number }) {
+function MediaThumb({ item, maxHeight, coverMode }: { item: MediaRecord; maxHeight?: number; coverMode?: boolean }) {
   const isVideo =
     (item.mediaType ?? "image") === "video" || /\.(mp4|mov|webm|ogg)$/i.test(item.url);
   const hasTags = Boolean(item.industry?.length || item.type);
@@ -1064,14 +1064,15 @@ function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number
       style={{
         position: "relative",
         width: "100%",
+        height: coverMode ? "100%" : undefined,
         overflow: "hidden",
-        borderRadius: 10,
-        border: "1px solid var(--border)",
+        borderRadius: coverMode ? 0 : 10,
+        border: coverMode ? "none" : "1px solid var(--border)",
         background: "var(--panel)",
         maxHeight: maxHeight ? `${maxHeight}px` : undefined
       }}
     >
-      {showOverlay ? (
+      {showOverlay && !coverMode ? (
         <div
           style={{
             position: "absolute",
@@ -1124,8 +1125,9 @@ function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number
           loop
           style={{
             width: "100%",
-            height: "auto",
-            display: "block"
+            height: coverMode ? "100%" : "auto",
+            display: "block",
+            objectFit: coverMode ? "cover" : undefined,
           }}
         />
       ) : (
@@ -1134,9 +1136,9 @@ function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number
           alt={item.alt ?? item.name}
           style={{
             width: "100%",
-            height: "auto",
+            height: coverMode ? "100%" : "auto",
             display: "block",
-            objectFit: "contain"
+            objectFit: coverMode ? "cover" : "contain",
           }}
         />
       )}
