@@ -330,7 +330,7 @@ export function MediaManager() {
         activeIndustryTags.size === 0 ||
         (tagFilterMode === "or"
           ? item.industry.some((tag) => activeIndustryTags.has(tag))
-          : [...activeIndustryTags].every((tag) => item.industry.includes(tag)));
+          : Array.from(activeIndustryTags).every((tag) => item.industry.includes(tag)));
       const matchesType = filterType === "all" || item.type === filterType;
       const matchesMediaType = filterMediaType === "all" || (item.mediaType ?? "image") === filterMediaType;
       const matchesFeatured =
