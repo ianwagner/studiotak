@@ -8,4 +8,5 @@ export type MediaRecord = {
   mediaType?: "image" | "video";
   uploadedAt: string;
   featured?: boolean;
+  status?: "published" | "draft";
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import {
@@ -29,8 +29,9 @@ type MediaFormState = {
   featured: boolean;
 };
 
-type MediaField = "industry" | "type" | "alt" | "mediaType" | "featured";
+type MediaField = "industry" | "type" | "alt" | "mediaType" | "featured" | "status";
 type FeaturedFilter = "all" | "featured" | "unfeatured";
+type StatusFilter = "all" | "published" | "draft";
 
 const emptyState: MediaFormState = {
   files: [],
@@ -43,6 +44,66 @@ const emptyState: MediaFormState = {
 
 const formatFileName = (name: string) => (name.length > 10 ? `${name.slice(0, 10)}...` : name);
 
+/* ─── Pill styles ────────────────────────────────────────────── */
+const pillBase: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+  borderRadius: 999,
+  fontSize: 12,
+  padding: "3px 10px",
+  border: "1px solid var(--border)",
+  cursor: "pointer",
+  transition: "all 0.15s ease",
+  whiteSpace: "nowrap",
+  lineHeight: 1.4,
+};
+
+const pillInactive: React.CSSProperties = {
+  ...pillBase,
+  background: "var(--muted-surface)",
+  color: "var(--text)",
+};
+
+const pillActive: React.CSSProperties = {
+  ...pillBase,
+  background: "var(--accent)",
+  color: "#fff",
+  borderColor: "var(--accent)",
+};
+
+const tagPillSmall: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 3,
+  borderRadius: 999,
+  fontSize: 11,
+  padding: "2px 8px",
+  background: "var(--muted-surface)",
+  color: "var(--text)",
+  border: "1px solid var(--border)",
+  whiteSpace: "nowrap",
+};
+
+const statusPublished: React.CSSProperties = {
+  ...pillBase,
+  background: "rgba(34,197,94,0.12)",
+  color: "#16a34a",
+  borderColor: "rgba(34,197,94,0.3)",
+  fontSize: 11,
+  padding: "2px 8px",
+};
+
+const statusDraft: React.CSSProperties = {
+  ...pillBase,
+  background: "rgba(245,213,101,0.2)",
+  color: "#92700c",
+  borderColor: "rgba(245,213,101,0.4)",
+  fontSize: 11,
+  padding: "2px 8px",
+};
+
+/* ─── Main component ─────────────────────────────────────────── */
 export function MediaManager() {
   const [items, setItems] = useState<MediaRecord[]>([]);
   const [form, setForm] = useState<MediaFormState>(emptyState);
@@ -50,13 +111,42 @@ export function MediaManager() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "masonry">("list");
+  const [viewMode, setViewMode] = useState<"list" | "masonry">("masonry");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterIndustry, setFilterIndustry] = useState<string>("all");
+  const [activeIndustryTags, setActiveIndustryTags] = useState<Set<string>>(new Set());
+  const [tagFilterMode, setTagFilterMode] = useState<"or" | "and">("or");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterMediaType, setFilterMediaType] = useState<"all" | "image" | "video">("all");
   const [filterFeatured, setFilterFeatured] = useState<FeaturedFilter>("all");
+  const [filterStatus, setFilterStatus] = useState<StatusFilter>("all");
+  const [migrating, setMigrating] = useState(false);
   const firebaseReady = useMemo(() => Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY), []);
+
+  const needsStatusMigration = useMemo(
+    () => items.length > 0 && items.some((item) => !item.status),
+    [items]
+  );
+
+  const migrateStatuses = async () => {
+    if (!firebaseReady) return;
+    try {
+      setMigrating(true);
+      await ensureFirebaseDevAuth();
+      const db = getFirestore(getFirebaseApp());
+      const toUpdate = items.filter((item) => !item.status);
+      await Promise.all(
+        toUpdate.map((item) => updateDoc(doc(db, "media", item.id), { status: "published" }))
+      );
+      setItems((prev) =>
+        prev.map((item) => (!item.status ? { ...item, status: "published" as const } : item))
+      );
+    } catch (err) {
+      console.error("Status migration failed", err);
+      setError("Failed to migrate statuses");
+    } finally {
+      setMigrating(false);
+    }
+  };
 
   const loadMedia = async () => {
     if (!firebaseReady) return;
@@ -64,10 +154,10 @@ export function MediaManager() {
       const db = getFirestore(getFirebaseApp());
       const mediaRef = collection(db, "media");
       const snapshot = await getDocs(query(mediaRef, orderBy("uploadedAt", "desc")));
-      const data: MediaRecord[] = snapshot.docs.map((doc) => {
-        const raw = doc.data() as any;
+      const data: MediaRecord[] = snapshot.docs.map((d) => {
+        const raw = d.data() as any;
         return {
-          id: doc.id,
+          id: d.id,
           name: raw.name,
           url: raw.url,
           industry: Array.isArray(raw.industry) ? raw.industry : (typeof raw.industry === "string" && raw.industry.trim() ? [raw.industry.trim()] : []),
@@ -75,7 +165,8 @@ export function MediaManager() {
           uploadedAt: raw.uploadedAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
           alt: raw.alt ?? "",
           mediaType: raw.mediaType ?? "image",
-          featured: Boolean(raw.featured)
+          featured: Boolean(raw.featured),
+          status: raw.status || undefined,
         };
       });
       setItems(data);
@@ -141,7 +232,8 @@ export function MediaManager() {
             alt: form.alt || file.name,
             mediaType: form.mediaType ?? (file.type.startsWith("video") ? "video" : "image"),
             uploadedAt: serverTimestamp(),
-            featured: form.featured ?? false
+            featured: form.featured ?? false,
+            status: "draft" as const,
           };
           await addDoc(collection(db, "media"), payload);
         })
@@ -161,9 +253,9 @@ export function MediaManager() {
     try {
       await ensureFirebaseDevAuth();
       const db = getFirestore(getFirebaseApp());
-      const ref = doc(db, "media", id);
+      const docRef = doc(db, "media", id);
       const normalizedValue = field === "featured" ? Boolean(value) : value;
-      await updateDoc(ref, { [field]: normalizedValue });
+      await updateDoc(docRef, { [field]: normalizedValue });
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, [field]: normalizedValue } : item))
       );
@@ -180,6 +272,15 @@ export function MediaManager() {
     } else {
       handleFieldChange(id, field, value);
     }
+  };
+
+  const handleIndustryTagsUpdate = (id: string, tags: string[]) => {
+    handleFieldChange(id, "industry", tags);
+  };
+
+  const handleStatusToggle = (id: string, current: MediaRecord["status"]) => {
+    const next = current === "published" ? "draft" : "published";
+    handleFieldChange(id, "status", next);
   };
 
   const handleMetaChange = (id: string, field: "alt" | "mediaType" | "featured", value: string | boolean) =>
@@ -199,9 +300,17 @@ export function MediaManager() {
     }
   };
 
-  const industryFilters = useMemo(() => {
-    const unique = new Set(items.flatMap((item) => item.industry).filter(Boolean));
-    return Array.from(unique).sort();
+  /* ─── Computed ─────────────────────────────────────────────── */
+
+  const industryTagCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of items) {
+      for (const tag of item.industry) {
+        if (tag) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [items]);
 
   const typeFilters = useMemo(() => {
@@ -210,27 +319,59 @@ export function MediaManager() {
   }, [items]);
 
   const filteredItems = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
     return items.filter((item) => {
       const matchesSearch =
-        !query ||
+        !q ||
         [item.name, item.industry.join(" "), item.type, item.alt, item.url]
           .filter(Boolean)
-          .some((field) => field!.toLowerCase().includes(query));
-      const matchesIndustry = filterIndustry === "all" || item.industry.includes(filterIndustry);
+          .some((field) => field!.toLowerCase().includes(q));
+      const matchesIndustry =
+        activeIndustryTags.size === 0 ||
+        (tagFilterMode === "or"
+          ? item.industry.some((tag) => activeIndustryTags.has(tag))
+          : [...activeIndustryTags].every((tag) => item.industry.includes(tag)));
       const matchesType = filterType === "all" || item.type === filterType;
       const matchesMediaType = filterMediaType === "all" || (item.mediaType ?? "image") === filterMediaType;
       const matchesFeatured =
         filterFeatured === "all" ||
         (filterFeatured === "featured" ? Boolean(item.featured) : !Boolean(item.featured));
-      return matchesSearch && matchesIndustry && matchesType && matchesMediaType && matchesFeatured;
+      const matchesStatus =
+        filterStatus === "all" || (item.status ?? "draft") === filterStatus;
+      return matchesSearch && matchesIndustry && matchesType && matchesMediaType && matchesFeatured && matchesStatus;
     });
-  }, [items, searchTerm, filterIndustry, filterType, filterMediaType, filterFeatured]);
+  }, [items, searchTerm, activeIndustryTags, tagFilterMode, filterType, filterMediaType, filterFeatured, filterStatus]);
 
   const selectedItem = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
     [items, selectedId]
   );
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setActiveIndustryTags(new Set());
+    setFilterType("all");
+    setFilterMediaType("all");
+    setFilterFeatured("all");
+    setFilterStatus("all");
+  };
+
+  const toggleIndustryTag = (tag: string) => {
+    setActiveIndustryTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
+  };
+
+  const hasActiveFilters =
+    searchTerm.trim() !== "" ||
+    activeIndustryTags.size > 0 ||
+    filterType !== "all" ||
+    filterMediaType !== "all" ||
+    filterFeatured !== "all" ||
+    filterStatus !== "all";
 
   return (
     <div className="grid" style={{ gap: 16 }}>
@@ -269,7 +410,7 @@ export function MediaManager() {
                 className="input"
                 value={form.type}
                 onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value }))}
-                placeholder="Hero image, logo, video"
+                placeholder="Example, Logo, etc."
               />
             </div>
             <div className="field-group">
@@ -321,6 +462,7 @@ export function MediaManager() {
       </div>
 
       <div className="card" style={{ padding: 12 }}>
+        {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
             <h3 style={{ margin: 0 }}>Library</h3>
@@ -333,49 +475,148 @@ export function MediaManager() {
             <div className="btn-group" style={{ display: "flex", gap: 4 }}>
               <button
                 type="button"
-                className={`btn secondary${viewMode === "list" ? " active" : ""}`}
-                onClick={() => setViewMode("list")}
-              >
-                List
-              </button>
-              <button
-                type="button"
                 className={`btn secondary${viewMode === "masonry" ? " active" : ""}`}
                 onClick={() => setViewMode("masonry")}
               >
                 Masonry
               </button>
+              <button
+                type="button"
+                className={`btn secondary${viewMode === "list" ? " active" : ""}`}
+                onClick={() => setViewMode("list")}
+              >
+                List
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Migration banner */}
+        {needsStatusMigration ? (
+          <div
+            style={{
+              marginTop: 10,
+              padding: "10px 12px",
+              background: "rgba(245,213,101,0.15)",
+              border: "1px solid rgba(245,213,101,0.4)",
+              borderRadius: 8,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 13, color: "var(--text)" }}>
+              {items.filter((i) => !i.status).length} assets have no publish status.
+              Set them all to <strong>Published</strong> so they stay visible on the site.
+            </span>
+            <button
+              className="btn"
+              type="button"
+              disabled={migrating}
+              onClick={migrateStatuses}
+              style={{ flexShrink: 0 }}
+            >
+              {migrating ? "Migrating…" : "Publish all"}
+            </button>
+          </div>
+        ) : null}
+
+        {/* Search */}
+        <div style={{ marginTop: 10 }}>
+          <input
+            className="input"
+            style={{ width: "100%" }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by name, tag, alt, or url"
+          />
+        </div>
+
+        {/* Tag pills */}
+        {industryTagCounts.length > 0 ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, alignItems: "center" }}>
+            {industryTagCounts.map(([tag, count]) => (
+              <button
+                key={tag}
+                type="button"
+                style={activeIndustryTags.has(tag) ? pillActive : pillInactive}
+                onClick={() => toggleIndustryTag(tag)}
+              >
+                {tag} <span style={{ opacity: 0.7 }}>({count})</span>
+              </button>
+            ))}
+            {activeIndustryTags.size > 1 ? (
+              <div className="btn-group" style={{ display: "flex", gap: 2, marginLeft: 4 }}>
+                <button
+                  type="button"
+                  style={{
+                    ...pillBase,
+                    background: tagFilterMode === "or" ? "var(--text)" : "var(--muted-surface)",
+                    color: tagFilterMode === "or" ? "#fff" : "var(--muted)",
+                    borderColor: tagFilterMode === "or" ? "var(--text)" : "var(--border)",
+                    fontSize: 11,
+                    padding: "2px 8px",
+                  }}
+                  onClick={() => setTagFilterMode("or")}
+                >
+                  OR
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...pillBase,
+                    background: tagFilterMode === "and" ? "var(--text)" : "var(--muted-surface)",
+                    color: tagFilterMode === "and" ? "#fff" : "var(--muted)",
+                    borderColor: tagFilterMode === "and" ? "var(--text)" : "var(--border)",
+                    fontSize: 11,
+                    padding: "2px 8px",
+                  }}
+                  onClick={() => setTagFilterMode("and")}
+                >
+                  AND
+                </button>
+              </div>
+            ) : null}
+            {activeIndustryTags.size > 0 ? (
+              <button
+                type="button"
+                onClick={() => setActiveIndustryTags(new Set())}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted)",
+                  fontSize: 12,
+                  cursor: "pointer",
+                  padding: "2px 6px",
+                  textDecoration: "underline",
+                }}
+              >
+                Clear tags
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Dropdown filters */}
         <div
           className="grid"
           style={{
             gap: 8,
             marginTop: 10,
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
             alignItems: "center"
           }}
         >
-          <input
-            className="input"
-            style={{ gridColumn: "1 / -1" }}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, tag, alt, or url"
-          />
           <select
             className="input"
-            value={filterIndustry}
-            onChange={(e) => setFilterIndustry(e.target.value)}
-            aria-label="Filter by industry"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as StatusFilter)}
+            aria-label="Filter by status"
           >
-            <option value="all">All industries</option>
-            {industryFilters.map((industry) => (
-              <option key={industry} value={industry}>
-                {industry}
-              </option>
-            ))}
+            <option value="all">All statuses</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
           </select>
           <select
             className="input"
@@ -411,13 +652,19 @@ export function MediaManager() {
             <option value="unfeatured">Not featured</option>
           </select>
         </div>
+
         <MediaLibrary
           items={filteredItems}
+          allItemsCount={items.length}
           viewMode={viewMode}
+          hasActiveFilters={hasActiveFilters}
           onTagChange={handleTagChange}
+          onIndustryTagsUpdate={handleIndustryTagsUpdate}
+          onStatusToggle={handleStatusToggle}
           onMetaChange={handleMetaChange}
           onDelete={handleDelete}
           onSelectItem={setSelectedId}
+          onClearFilters={clearAllFilters}
         />
       </div>
       {selectedItem ? (
@@ -425,6 +672,8 @@ export function MediaManager() {
           item={selectedItem}
           onClose={() => setSelectedId(null)}
           onTagChange={handleTagChange}
+          onIndustryTagsUpdate={handleIndustryTagsUpdate}
+          onStatusToggle={handleStatusToggle}
           onMetaChange={handleMetaChange}
           onDelete={(id) => {
             handleDelete(id);
@@ -436,23 +685,157 @@ export function MediaManager() {
   );
 }
 
+/* ─── InlineTagEditor ────────────────────────────────────────── */
+function InlineTagEditor({
+  tags,
+  onUpdate,
+}: {
+  tags: string[];
+  onUpdate: (newTags: string[]) => void;
+}) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [newTag, setNewTag] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isAdding) inputRef.current?.focus();
+  }, [isAdding]);
+
+  const addTag = () => {
+    const val = newTag.trim();
+    if (val && !tags.includes(val)) {
+      onUpdate([...tags, val]);
+    }
+    setNewTag("");
+    setIsAdding(false);
+  };
+
+  return (
+    <div
+      style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      {tags.map((tag) => (
+        <span key={tag} style={tagPillSmall}>
+          {tag}
+          <button
+            type="button"
+            onClick={() => onUpdate(tags.filter((t) => t !== tag))}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              color: "var(--muted)",
+              fontSize: 11,
+              lineHeight: 1,
+            }}
+            aria-label={`Remove ${tag}`}
+          >
+            ×
+          </button>
+        </span>
+      ))}
+      {isAdding ? (
+        <input
+          ref={inputRef}
+          className="input"
+          value={newTag}
+          onChange={(e) => setNewTag(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); addTag(); }
+            if (e.key === "Escape") { setNewTag(""); setIsAdding(false); }
+          }}
+          onBlur={addTag}
+          style={{ width: 80, fontSize: 11, padding: "2px 6px", borderRadius: 8 }}
+          placeholder="Tag…"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsAdding(true)}
+          style={{
+            ...tagPillSmall,
+            cursor: "pointer",
+            color: "var(--muted)",
+            background: "transparent",
+            borderStyle: "dashed",
+          }}
+          aria-label="Add tag"
+        >
+          +
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ─── StatusPill ──────────────────────────────────────────────── */
+function StatusPill({
+  status,
+  onClick,
+}: {
+  status: MediaRecord["status"];
+  onClick: () => void;
+}) {
+  const isPublished = status === "published";
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      style={isPublished ? statusPublished : statusDraft}
+    >
+      {isPublished ? "Published" : "Draft"}
+    </button>
+  );
+}
+
+/* ─── MediaLibrary ───────────────────────────────────────────── */
 function MediaLibrary({
   items,
+  allItemsCount,
   viewMode,
+  hasActiveFilters,
   onTagChange,
+  onIndustryTagsUpdate,
+  onStatusToggle,
   onMetaChange,
   onDelete,
-  onSelectItem
+  onSelectItem,
+  onClearFilters,
 }: {
   items: MediaRecord[];
+  allItemsCount: number;
   viewMode: "list" | "masonry";
+  hasActiveFilters: boolean;
   onTagChange: (id: string, field: "industry" | "type", value: string) => void;
+  onIndustryTagsUpdate: (id: string, tags: string[]) => void;
+  onStatusToggle: (id: string, current: MediaRecord["status"]) => void;
   onMetaChange: (id: string, field: "alt" | "mediaType" | "featured", value: string | boolean) => void;
   onDelete: (id: string) => void;
   onSelectItem: (id: string) => void;
+  onClearFilters: () => void;
 }) {
   if (!items.length) {
-    return <p style={{ color: "var(--muted)", marginTop: 12 }}>No media uploaded yet.</p>;
+    const isEmpty = allItemsCount === 0;
+    return (
+      <div style={{ textAlign: "center", padding: "48px 24px", color: "var(--muted)" }}>
+        <div style={{ fontSize: 20, marginBottom: 8, fontWeight: 600 }}>
+          {isEmpty ? "No media uploaded yet" : "No matches"}
+        </div>
+        <p style={{ margin: "0 0 16px", fontSize: 14 }}>
+          {isEmpty
+            ? "Upload your first asset using the form above."
+            : "No media items match your current filters."}
+        </p>
+        {!isEmpty && hasActiveFilters ? (
+          <button className="btn secondary" type="button" onClick={onClearFilters}>
+            Clear all filters
+          </button>
+        ) : null}
+      </div>
+    );
   }
 
   if (viewMode === "masonry") {
@@ -483,20 +866,30 @@ function MediaLibrary({
               marginBottom: 12,
               padding: 8,
               display: "grid",
-              gap: 8,
+              gap: 6,
               cursor: "pointer",
               border: "1px solid var(--border)"
             }}
           >
             <MediaThumb item={item} />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-              <strong style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+              <strong style={{ fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                 {item.name}
               </strong>
-              <span style={{ color: "var(--muted)", fontSize: 12 }}>
-                {(item.mediaType ?? "image").toUpperCase()}
-              </span>
+              <div style={{ display: "flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
+                <span style={{ color: "var(--muted)", fontSize: 11 }}>
+                  {(item.mediaType ?? "image").toUpperCase()}
+                </span>
+                <StatusPill
+                  status={item.status ?? "draft"}
+                  onClick={() => onStatusToggle(item.id, item.status ?? "draft")}
+                />
+              </div>
             </div>
+            <InlineTagEditor
+              tags={item.industry}
+              onUpdate={(tags) => onIndustryTagsUpdate(item.id, tags)}
+            />
           </article>
         ))}
       </div>
@@ -504,7 +897,7 @@ function MediaLibrary({
   }
 
   const gridTemplateColumns =
-    "120px minmax(140px, 1.1fr) minmax(120px, 0.9fr) minmax(120px, 0.9fr) minmax(180px, 1.2fr) 110px 100px 150px";
+    "120px minmax(140px, 1.1fr) minmax(120px, 0.9fr) minmax(100px, 0.7fr) 80px minmax(160px, 1fr) 110px 100px 150px";
 
   return (
     <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
@@ -524,6 +917,7 @@ function MediaLibrary({
         <span>Name</span>
         <span>Industry</span>
         <span>Type</span>
+        <span>Status</span>
         <span>Alt</span>
         <span>Media</span>
         <span>Featured</span>
@@ -598,28 +992,33 @@ function MediaLibrary({
               </span>
             ) : null}
           </div>
-          <input
-            className="input"
-            value={item.industry.join(", ")}
-            onChange={(e) => onTagChange(item.id, "industry", e.target.value)}
-            placeholder="Industry"
+          <InlineTagEditor
+            tags={item.industry}
+            onUpdate={(tags) => onIndustryTagsUpdate(item.id, tags)}
           />
           <input
             className="input"
             value={item.type}
             onChange={(e) => onTagChange(item.id, "type", e.target.value)}
             placeholder="Type"
+            style={{ fontSize: 13 }}
+          />
+          <StatusPill
+            status={item.status ?? "draft"}
+            onClick={() => onStatusToggle(item.id, item.status ?? "draft")}
           />
           <input
             className="input"
             value={item.alt ?? ""}
             onChange={(e) => onMetaChange(item.id, "alt", e.target.value)}
             placeholder="Alt text"
+            style={{ fontSize: 13 }}
           />
           <select
             className="input"
             value={item.mediaType ?? "image"}
             onChange={(e) => onMetaChange(item.id, "mediaType", e.target.value)}
+            style={{ fontSize: 13 }}
           >
             <option value="image">Image</option>
             <option value="video">Video</option>
@@ -653,132 +1052,11 @@ function MediaLibrary({
   );
 }
 
-function TagEditor({
-  item,
-  onTagChange,
-  compact
-}: {
-  item: MediaRecord;
-  onTagChange: (id: string, field: "industry" | "type", value: string) => void;
-  compact?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: compact ? 6 : 8,
-        flexWrap: "wrap",
-        color: "var(--muted)",
-        fontSize: compact ? 12 : 13
-      }}
-    >
-      <label style={{ display: "flex", alignItems: "center", gap: compact ? 4 : 6 }}>
-        <span>Industry</span>
-        <input
-          className="input"
-          style={{ width: compact ? 110 : 120 }}
-          value={item.industry}
-          onChange={(e) => onTagChange(item.id, "industry", e.target.value)}
-        />
-      </label>
-      <label style={{ display: "flex", alignItems: "center", gap: compact ? 4 : 6 }}>
-        <span>Type</span>
-        <input
-          className="input"
-          style={{ width: compact ? 110 : 120 }}
-          value={item.type}
-          onChange={(e) => onTagChange(item.id, "type", e.target.value)}
-        />
-      </label>
-    </div>
-  );
-}
-
-function MetaEditor({
-  item,
-  onMetaChange,
-  compact
-}: {
-  item: MediaRecord;
-  onMetaChange: (id: string, field: "alt" | "mediaType" | "featured", value: string | boolean) => void;
-  compact?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: compact ? 6 : 8,
-        flexWrap: "wrap",
-        color: "var(--muted)",
-        fontSize: compact ? 12 : 13
-      }}
-    >
-      <label style={{ display: "flex", alignItems: "center", gap: compact ? 4 : 6 }}>
-        <span>Alt</span>
-        <input
-          className="input"
-          style={{ width: compact ? 140 : 160 }}
-          value={item.alt ?? ""}
-          onChange={(e) => onMetaChange(item.id, "alt", e.target.value)}
-        />
-      </label>
-      <label style={{ display: "flex", alignItems: "center", gap: compact ? 4 : 6 }}>
-        <span>Media type</span>
-        <select
-          className="input"
-          style={{ width: compact ? 120 : 140 }}
-          value={item.mediaType ?? "image"}
-          onChange={(e) => onMetaChange(item.id, "mediaType", e.target.value)}
-        >
-          <option value="image">Image</option>
-          <option value="video">Video</option>
-        </select>
-      </label>
-      <label style={{ display: "flex", alignItems: "center", gap: compact ? 6 : 8 }}>
-        <input
-          type="checkbox"
-          checked={Boolean(item.featured)}
-          onChange={(e) => onMetaChange(item.id, "featured", e.target.checked)}
-        />
-        <span>Featured</span>
-      </label>
-    </div>
-  );
-}
-
-function Footer({
-  item,
-  onDelete,
-  compact = false
-}: {
-  item: MediaRecord;
-  onDelete: (id: string) => void;
-  compact?: boolean;
-}) {
-  return (
-    <div style={{ display: "flex", gap: compact ? 6 : 8, alignItems: "center", flexWrap: "wrap" }}>
-      <span style={{ color: "var(--muted)", fontSize: compact ? 12 : 13 }}>
-        Uploaded{" "}
-        {new Date(item.uploadedAt).toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-          year: "numeric"
-        })}
-      </span>
-      <a className="btn secondary" href={item.url} target="_blank" rel="noreferrer">
-        Open
-      </a>
-      <button className="btn secondary" type="button" onClick={() => onDelete(item.id)}>
-        Delete
-      </button>
-    </div>
-  );
-}
-
+/* ─── MediaThumb ─────────────────────────────────────────────── */
 function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number }) {
   const isVideo =
     (item.mediaType ?? "image") === "video" || /\.(mp4|mov|webm|ogg)$/i.test(item.url);
-  const hasTags = Boolean(item.industry || item.type);
+  const hasTags = Boolean(item.industry?.length || item.type);
   const showOverlay = hasTags || item.featured;
 
   return (
@@ -822,21 +1100,6 @@ function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number
               Featured
             </span>
           ) : null}
-          {item.industry.length > 0 ? item.industry.map((tag) => (
-            <span
-              key={tag}
-              style={{
-                background: "rgba(255,255,255,0.9)",
-                color: "var(--text)",
-                borderRadius: 999,
-                padding: "3px 8px",
-                fontSize: 12,
-                border: "1px solid var(--border)"
-              }}
-            >
-              {tag}
-            </span>
-          )) : null}
           {item.type ? (
             <span
               style={{
@@ -881,16 +1144,21 @@ function MediaThumb({ item, maxHeight }: { item: MediaRecord; maxHeight?: number
   );
 }
 
+/* ─── MediaModal ─────────────────────────────────────────────── */
 function MediaModal({
   item,
   onClose,
   onTagChange,
+  onIndustryTagsUpdate,
+  onStatusToggle,
   onMetaChange,
   onDelete
 }: {
   item: MediaRecord;
   onClose: () => void;
   onTagChange: (id: string, field: "industry" | "type", value: string) => void;
+  onIndustryTagsUpdate: (id: string, tags: string[]) => void;
+  onStatusToggle: (id: string, current: MediaRecord["status"]) => void;
   onMetaChange: (id: string, field: "alt" | "mediaType" | "featured", value: string | boolean) => void;
   onDelete: (id: string) => void;
 }) {
@@ -921,25 +1189,25 @@ function MediaModal({
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-          <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h3 style={{ margin: 0 }}>{item.name}</h3>
-            <span style={{ color: "var(--muted)", fontSize: 13 }}>{item.url}</span>
+            <StatusPill
+              status={item.status ?? "draft"}
+              onClick={() => onStatusToggle(item.id, item.status ?? "draft")}
+            />
             {item.featured ? (
-              <div
+              <span
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  marginTop: 6,
                   background: "rgba(255,215,0,0.1)",
                   border: "1px solid var(--border)",
                   borderRadius: 999,
-                  padding: "4px 10px",
-                  fontSize: 12
+                  padding: "3px 8px",
+                  fontSize: 12,
+                  color: "var(--text)"
                 }}
               >
-                <span style={{ color: "var(--text)" }}>Featured</span>
-              </div>
+                Featured
+              </span>
             ) : null}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -960,9 +1228,54 @@ function MediaModal({
           }}
         >
           <MediaThumb item={item} />
-          <div style={{ display: "grid", gap: 10 }}>
-            <TagEditor item={item} onTagChange={onTagChange} />
-            <MetaEditor item={item} onMetaChange={onMetaChange} />
+          <div style={{ display: "grid", gap: 12 }}>
+            <div className="field-group">
+              <label style={{ color: "var(--muted)", fontSize: 13 }}>Industry tags</label>
+              <InlineTagEditor
+                tags={item.industry}
+                onUpdate={(tags) => onIndustryTagsUpdate(item.id, tags)}
+              />
+            </div>
+            <div className="field-group">
+              <label style={{ color: "var(--muted)", fontSize: 13 }}>Type</label>
+              <input
+                className="input"
+                value={item.type}
+                onChange={(e) => onTagChange(item.id, "type", e.target.value)}
+                placeholder="Example, Logo, etc."
+              />
+            </div>
+            <div className="field-group">
+              <label style={{ color: "var(--muted)", fontSize: 13 }}>Alt text</label>
+              <input
+                className="input"
+                value={item.alt ?? ""}
+                onChange={(e) => onMetaChange(item.id, "alt", e.target.value)}
+                placeholder="Describe the media"
+              />
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--muted)", fontSize: 13 }}>
+                <span>Media type</span>
+                <select
+                  className="input"
+                  style={{ width: 120 }}
+                  value={item.mediaType ?? "image"}
+                  onChange={(e) => onMetaChange(item.id, "mediaType", e.target.value)}
+                >
+                  <option value="image">Image</option>
+                  <option value="video">Video</option>
+                </select>
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--muted)", fontSize: 13 }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(item.featured)}
+                  onChange={(e) => onMetaChange(item.id, "featured", e.target.checked)}
+                />
+                <span>Featured</span>
+              </label>
+            </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <span style={{ color: "var(--muted)", fontSize: 13 }}>
                 Uploaded{" "}

@@ -531,7 +531,7 @@ const DynamicHeroColumns = ({
           };
         };
 
-        const baseConstraints: QueryConstraint[] = [];
+        const baseConstraints: QueryConstraint[] = [where("status", "==", "published")];
         if (typeTag) baseConstraints.push(where("type", "==", typeTag));
 
         let results: HeroMediaItem[] = [];
@@ -2940,7 +2940,7 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
         setLoading(true);
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
-        const baseConstraints: QueryConstraint[] = [where("type", "in", ["Logo", "logo"])];
+        const baseConstraints: QueryConstraint[] = [where("status", "==", "published"), where("type", "in", ["Logo", "logo"])];
 
         const toLogoItem = (doc: any): LogoItem => {
           const data = doc.data() as any;
@@ -3339,7 +3339,7 @@ const ShowcaseBlockSection = ({
           };
         };
 
-        const baseConstraints: QueryConstraint[] = [where("type", "==", typeFilter)];
+        const baseConstraints: QueryConstraint[] = [where("status", "==", "published"), where("type", "==", typeFilter)];
         if (featuredOnly) {
           baseConstraints.push(where("featured", "==", true));
         }
