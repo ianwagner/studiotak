@@ -35,30 +35,30 @@ const formatDate = (value?: string | null): string | null => {
  * "page" tags determine the Campfire route; "audience" tags become a query param.
  */
 const CAMPFIRE_PAGE_TAGS: Record<string, string> = {
-  growth: "/campfire/growth",
-  "growth-marketing": "/campfire/growth",
-  brands: "/campfire/brands",
-  brand: "/campfire/brands",
-  agencies: "/campfire/agencies",
-  agency: "/campfire/agencies"
+  "campfire-growth": "/campfire/growth",
+  "campfire-growth-marketing": "/campfire/growth",
+  "campfire-brands": "/campfire/brands",
+  "campfire-brand": "/campfire/brands",
+  "campfire-agencies": "/campfire/agencies",
+  "campfire-agency": "/campfire/agencies"
 };
 
 const CAMPFIRE_AUDIENCE_TAGS = new Set([
-  "fashion",
-  "ecommerce",
-  "saas",
-  "fintech",
-  "healthcare",
-  "beauty",
-  "food",
-  "travel",
-  "fitness",
-  "retail",
-  "tech",
-  "luxury",
-  "cpg",
-  "b2b",
-  "dtc"
+  "campfire-fashion",
+  "campfire-ecommerce",
+  "campfire-saas",
+  "campfire-fintech",
+  "campfire-healthcare",
+  "campfire-beauty",
+  "campfire-food",
+  "campfire-travel",
+  "campfire-fitness",
+  "campfire-retail",
+  "campfire-tech",
+  "campfire-luxury",
+  "campfire-cpg",
+  "campfire-b2b",
+  "campfire-dtc"
 ]);
 
 const getCampfireLink = (tags: Array<{ slug: string }> | undefined): { href: string; label: string } | null => {
@@ -68,7 +68,8 @@ const getCampfireLink = (tags: Array<{ slug: string }> | undefined): { href: str
   const audienceSlug = slugs.find((s) => CAMPFIRE_AUDIENCE_TAGS.has(s));
 
   const basePath = pageSlug ? CAMPFIRE_PAGE_TAGS[pageSlug] : "/campfire";
-  const href = audienceSlug ? `${basePath}?audience=${audienceSlug}` : basePath;
+  const audienceParam = audienceSlug?.replace(/^campfire-/, "");
+  const href = audienceParam ? `${basePath}?audience=${audienceParam}` : basePath;
 
   const pageLabel = pageSlug
     ? CAMPFIRE_PAGE_TAGS[pageSlug].split("/").pop()!
