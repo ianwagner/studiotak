@@ -1,0 +1,223 @@
+.page {
+  padding-top: var(--header-height);
+}
+
+/* ---------- Section: Opening ---------- */
+
+.opening {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(40px, 5vw, 80px);
+  align-items: end;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: clamp(64px, 8vw, 120px) var(--section-px) 0;
+}
+
+.opening[data-has-photo="true"] {
+  grid-template-columns: 1fr 340px;
+}
+
+.openingText {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.name {
+  font-size: var(--font-size-h1);
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.positioning {
+  font-size: clamp(1.05rem, 0.5vw + 0.9rem, 1.25rem);
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 480px;
+}
+
+.photo {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--muted-surface);
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- Section: Philosophy ---------- */
+
+.prose {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: var(--block-gap) var(--section-px);
+}
+
+.pullQuote {
+  font-size: var(--font-size-h3);
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text);
+  margin: 0 0 32px;
+}
+
+.body {
+  font-size: 17px;
+  color: var(--muted);
+  line-height: 1.75;
+  margin: 0 0 20px;
+}
+
+.body:last-child {
+  margin-bottom: 0;
+}
+
+.divider {
+  width: 60px;
+  height: 1px;
+  background: var(--border-strong);
+  margin: var(--block-gap) auto;
+  border: none;
+}
+
+/* ---------- Section: Current Work ---------- */
+
+.workSection {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--section-px) var(--block-gap);
+}
+
+.workHeading {
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 24px;
+}
+
+.workGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.workCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workDescription {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.workLink {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: gap 0.2s ease;
+}
+
+.workLink:hover {
+  gap: 10px;
+}
+
+/* ---------- Section: Writing ---------- */
+
+.writingSection {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 var(--section-px) var(--block-gap);
+}
+
+.writingIntro {
+  font-size: 17px;
+  color: var(--muted);
+  line-height: 1.75;
+  margin: 0 0 20px;
+}
+
+.topicPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.pill {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--muted-surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 14px;
+  white-space: nowrap;
+}
+
+/* ---------- Section: Connect ---------- */
+
+.connect {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 var(--section-px) clamp(80px, 10vw, 140px);
+}
+
+.connectHeading {
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 24px;
+}
+
+.connectLinks {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 768px) {
+  .opening,
+  .opening[data-has-photo="true"] {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: clamp(40px, 6vw, 64px);
+  }
+
+  .photo {
+    max-width: 280px;
+    order: -1;
+  }
+
+  .workGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .connectLinks {
+    flex-direction: column;
+    align-items: center;
+  }
+}
