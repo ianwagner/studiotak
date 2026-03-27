@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { animationPresets } from "@/components/sections/animationPresets";
 import styles from "./founder.module.css";
@@ -11,7 +11,7 @@ const fade = animationPresets.fade;
 const sectionViewport = { once: true, amount: 0.2 } as const;
 
 /* ------------------------------------------------------------------ */
-/*  Photo loader — pulls from Firestore media where type==="ian-photo" */
+/*  Photo loader: pulls from Firestore media where type==="ian-photo"  */
 /* ------------------------------------------------------------------ */
 function useFounderPhoto() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -50,22 +50,14 @@ function useFounderPhoto() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Obfuscated email — constructed client-side to prevent bot scraping */
+/*  Obfuscated email: constructed client-side to prevent bot scraping   */
 /* ------------------------------------------------------------------ */
-const handleEmailClick = () => {
+const handleEmailClick = (e: React.MouseEvent) => {
+  e.preventDefault();
   const parts = [105, 97, 110, 64, 115, 116, 117, 100, 105, 111, 116, 97, 107, 46, 99, 111];
   const addr = parts.map((c) => String.fromCharCode(c)).join("");
   window.location.href = `mailto:${addr}`;
 };
-
-/* ------------------------------------------------------------------ */
-/*  Arrow icon for links                                               */
-/* ------------------------------------------------------------------ */
-const Arrow = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 13L13 1M13 1H4M13 1v9" />
-  </svg>
-);
 
 /* ------------------------------------------------------------------ */
 /*  Main content                                                       */
@@ -84,7 +76,6 @@ export default function FounderContent() {
         variants={lift.container}
       >
         <motion.div className={styles.openingText} variants={lift.item}>
-          <span className="tag">Founder</span>
           <h1 className={styles.name}>Ian Wagner</h1>
           <p className={styles.positioning}>
             I design, build, and operate creative and media systems.
@@ -106,13 +97,13 @@ export default function FounderContent() {
         variants={lift.container}
       >
         <motion.p className={styles.pullQuote} variants={lift.item}>
-          I think of design as infrastructure. Not the surface of things, but the system underneath — the part that decides whether something actually works at scale.
+          I think of design as infrastructure. Not the surface of things, but the system underneath. The part that decides whether something actually works at scale.
         </motion.p>
         <motion.p className={styles.body} variants={lift.item} custom={1}>
-          Most of my work lives at the intersection of creative production and marketing technology. I build systems that help teams produce better advertising, faster — combining AI tooling with human creative judgment so neither side is doing the job alone.
+          Most of my work lives at the intersection of creative production and marketing technology. I build systems that help teams produce better advertising, faster, combining AI tooling with human creative judgment so neither side is doing the job alone.
         </motion.p>
         <motion.p className={styles.body} variants={lift.item} custom={2}>
-          I care about the feedback loop: what was made, how it performed, and what that means for the next round. The tools I build try to close that gap — connecting creative decisions to performance outcomes in ways that actually change how the next brief gets written.
+          I care about the feedback loop: what was made, how it performed, and what that means for the next round. The tools I build try to close that gap. Creative decisions connected to performance outcomes in ways that actually change how the next brief gets written.
         </motion.p>
       </motion.section>
 
@@ -126,27 +117,22 @@ export default function FounderContent() {
         viewport={sectionViewport}
         variants={lift.container}
       >
-        <motion.h2 className={styles.workHeading} variants={lift.item}>
-          Current Work
-        </motion.h2>
         <div className={styles.workGrid}>
-          <motion.div className={`card ${styles.workCard}`} variants={lift.item} custom={0}>
-            <span className="tag">Campfire</span>
+          <motion.div className={styles.workItem} variants={lift.item} custom={0}>
+            <h3 className={styles.workTitle}>
+              <a href="/campfire">Campfire</a>
+            </h3>
             <p className={styles.workDescription}>
               An ad production platform that combines asset libraries, structured creative workflows, and performance feedback loops. Currently managing creative for 25+ brands.
             </p>
-            <a href="/campfire" className={styles.workLink}>
-              Learn more <Arrow />
-            </a>
           </motion.div>
-          <motion.div className={`card ${styles.workCard}`} variants={lift.item} custom={1}>
-            <span className="tag">Future Poetic</span>
+          <motion.div className={styles.workItem} variants={lift.item} custom={1}>
+            <h3 className={styles.workTitle}>
+              <a href="https://futurepoetic.com" target="_blank" rel="noopener noreferrer">Future Poetic</a>
+            </h3>
             <p className={styles.workDescription}>
               An experimental creative studio and publishing space.
             </p>
-            <a href="https://futurepoetic.com" target="_blank" rel="noopener noreferrer" className={styles.workLink}>
-              futurepoetic.com <Arrow />
-            </a>
           </motion.div>
         </div>
       </motion.section>
@@ -159,26 +145,19 @@ export default function FounderContent() {
         viewport={sectionViewport}
         variants={fade.container}
       >
-        <motion.span className="tag" variants={fade.item}>Writing</motion.span>
-        <motion.p className={styles.writingIntro} variants={fade.item} custom={1}>
-          I write about the things I&apos;m building and the ideas behind them — creative operations, product thinking, and the places where technology meets taste.
+        <motion.p className={styles.body} variants={fade.item}>
+          I write about the things I&apos;m building and the ideas behind them. Creative operations, product thinking, and the places where technology meets taste.
         </motion.p>
-        <motion.div className={styles.topicPills} variants={fade.item} custom={2}>
-          <span className={styles.pill}>Creative Operations</span>
-          <span className={styles.pill}>Product Thinking</span>
-          <span className={styles.pill}>Media Friction</span>
-          <span className={styles.pill}>AI + Creative</span>
-        </motion.div>
-        <motion.div variants={fade.item} custom={3}>
+        <motion.p variants={fade.item} custom={1}>
           <a
             href="https://ianwagner.co"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn secondary"
+            className={styles.textLink}
           >
-            Read on ianwagner.co
+            ianwagner.co
           </a>
-        </motion.div>
+        </motion.p>
       </motion.section>
 
       {/* ---- Connect ---- */}
@@ -187,23 +166,25 @@ export default function FounderContent() {
         initial="hidden"
         whileInView="visible"
         viewport={sectionViewport}
-        variants={lift.container}
+        variants={fade.container}
       >
-        <motion.h2 className={styles.connectHeading} variants={lift.item}>
-          Get in touch
-        </motion.h2>
-        <motion.div className={styles.connectLinks} variants={lift.item} custom={1}>
+        <motion.div className={styles.connectLinks} variants={fade.item}>
           <a
             href="https://linkedin.com/in/ianwa"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn secondary"
+            className={styles.textLink}
           >
             LinkedIn
           </a>
-          <button type="button" className="btn" onClick={handleEmailClick}>
+          <span className={styles.connectDot} />
+          <a
+            href="#"
+            onClick={handleEmailClick}
+            className={styles.textLink}
+          >
             Email
-          </button>
+          </a>
         </motion.div>
       </motion.section>
     </div>

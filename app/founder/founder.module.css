@@ -1,50 +1,54 @@
 .page {
   padding-top: var(--header-height);
+  max-width: 540px;
+  margin: 0 auto;
+  padding-left: var(--section-px);
+  padding-right: var(--section-px);
 }
 
-/* ---------- Section: Opening ---------- */
+/* ---------- Opening ---------- */
 
 .opening {
   display: grid;
   grid-template-columns: 1fr;
-  gap: clamp(40px, 5vw, 80px);
+  gap: clamp(32px, 4vw, 48px);
   align-items: end;
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: clamp(64px, 8vw, 120px) var(--section-px) 0;
+  padding-top: clamp(48px, 6vw, 80px);
+  padding-bottom: clamp(32px, 4vw, 48px);
 }
 
 .opening[data-has-photo="true"] {
-  grid-template-columns: 1fr 340px;
+  max-width: 960px;
+  margin: 0 auto;
+  grid-template-columns: 1fr 280px;
 }
 
 .openingText {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
 .name {
-  font-size: var(--font-size-h1);
-  font-weight: 700;
-  line-height: 1.08;
+  font-size: clamp(1.6rem, 2vw + 0.8rem, 2.2rem);
+  font-weight: 600;
+  line-height: 1.15;
   color: var(--text);
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .positioning {
-  font-size: clamp(1.05rem, 0.5vw + 0.9rem, 1.25rem);
+  font-size: 15px;
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.6;
   margin: 0;
-  max-width: 480px;
 }
 
 .photo {
   width: 100%;
   aspect-ratio: 4 / 5;
-  border-radius: var(--radius);
+  border-radius: 12px;
   overflow: hidden;
   background: var(--muted-surface);
 }
@@ -56,27 +60,25 @@
   display: block;
 }
 
-/* ---------- Section: Philosophy ---------- */
+/* ---------- Prose ---------- */
 
 .prose {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: var(--block-gap) var(--section-px);
+  padding-bottom: clamp(32px, 4vw, 48px);
 }
 
 .pullQuote {
-  font-size: var(--font-size-h3);
+  font-size: clamp(1.1rem, 0.8vw + 0.8rem, 1.35rem);
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.55;
   color: var(--text);
-  margin: 0 0 32px;
+  margin: 0 0 20px;
 }
 
 .body {
-  font-size: 17px;
+  font-size: 15px;
   color: var(--muted);
-  line-height: 1.75;
-  margin: 0 0 20px;
+  line-height: 1.7;
+  margin: 0 0 16px;
 }
 
 .body:last-child {
@@ -84,117 +86,93 @@
 }
 
 .divider {
-  width: 60px;
+  width: 40px;
   height: 1px;
   background: var(--border-strong);
-  margin: var(--block-gap) auto;
+  margin: clamp(24px, 3vw, 40px) 0;
   border: none;
 }
 
-/* ---------- Section: Current Work ---------- */
+/* ---------- Current Work ---------- */
 
 .workSection {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0 var(--section-px) var(--block-gap);
-}
-
-.workHeading {
-  font-size: var(--font-size-h4);
-  font-weight: 600;
-  color: var(--text);
-  margin: 0 0 24px;
+  padding-bottom: clamp(32px, 4vw, 48px);
 }
 
 .workGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-}
-
-.workCard {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
-.workDescription {
+.workItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workTitle {
   font-size: 15px;
-  color: var(--muted);
-  line-height: 1.65;
+  font-weight: 600;
   margin: 0;
 }
 
-.workLink {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--accent);
+.workTitle a {
+  color: var(--text);
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: gap 0.2s ease;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s ease;
 }
 
-.workLink:hover {
-  gap: 10px;
+.workTitle a:hover {
+  border-color: var(--text);
 }
 
-/* ---------- Section: Writing ---------- */
+.workDescription {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ---------- Writing ---------- */
 
 .writingSection {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 0 var(--section-px) var(--block-gap);
+  padding-bottom: clamp(32px, 4vw, 48px);
 }
 
-.writingIntro {
-  font-size: 17px;
-  color: var(--muted);
-  line-height: 1.75;
-  margin: 0 0 20px;
-}
+/* ---------- Shared link style ---------- */
 
-.topicPills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-
-.pill {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: var(--muted-surface);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 6px 14px;
-  white-space: nowrap;
-}
-
-/* ---------- Section: Connect ---------- */
-
-.connect {
-  text-align: center;
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 0 var(--section-px) clamp(80px, 10vw, 140px);
-}
-
-.connectHeading {
-  font-size: var(--font-size-h4);
+.textLink {
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
-  margin: 0 0 24px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s ease;
+}
+
+.textLink:hover {
+  border-color: var(--text);
+}
+
+/* ---------- Connect ---------- */
+
+.connect {
+  padding-bottom: clamp(64px, 8vw, 100px);
 }
 
 .connectLinks {
   display: flex;
-  justify-content: center;
-  gap: 16px;
+  align-items: center;
+  gap: 14px;
+}
+
+.connectDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--border-strong);
 }
 
 /* ---------- Responsive ---------- */
@@ -203,21 +181,11 @@
   .opening,
   .opening[data-has-photo="true"] {
     grid-template-columns: 1fr;
-    gap: 32px;
-    padding-top: clamp(40px, 6vw, 64px);
+    gap: 24px;
   }
 
   .photo {
-    max-width: 280px;
+    max-width: 220px;
     order: -1;
-  }
-
-  .workGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .connectLinks {
-    flex-direction: column;
-    align-items: center;
   }
 }
