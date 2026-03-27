@@ -1482,7 +1482,7 @@ export const seedPages: PageRecord[] = [
       },
     ],
     seoTitle: "Studio Tak | Design Systems & Interactive Experiences",
-    metaDescription: "Static-first marketing pages built with React islands where they matter.",
+    metaDescription: "Marketing technology consultancy helping agencies and brands produce ads faster through creative production systems, custom tooling, and AI-assisted workflows.",
   },
   {
     id: "work",

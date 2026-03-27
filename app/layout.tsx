@@ -16,11 +16,11 @@ const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 const baseMetadata: Metadata = {
   title: "Studio Tak | Design Systems & Interactive Experiences",
-  description: "Marketing site and admin control for Studio Tak.",
+  description: "Studio Tak is a marketing technology consultancy building creative production systems, AI-assisted ad tools, and design infrastructure for agencies and brands.",
   metadataBase: new URL(siteUrl),
   openGraph: {
     title: "Studio Tak",
-    description: "Design systems and expressive web experiences",
+    description: "Studio Tak is a marketing technology consultancy building creative production systems, AI-assisted ad tools, and design infrastructure for agencies and brands.",
     url: siteUrl,
     siteName: "Studio Tak",
     locale: "en_US",

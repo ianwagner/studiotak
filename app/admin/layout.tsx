@@ -4,7 +4,8 @@ import "./admin.css";
 
 export const metadata: Metadata = {
   title: "Studio Tak Admin",
-  description: "Control panel for marketing pages built with Refine."
+  description: "Studio Tak admin panel.",
+  robots: { index: false, follow: false }
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
