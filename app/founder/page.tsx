@@ -12,12 +12,12 @@ const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
 export const metadata: Metadata = {
   title: "Ian Wagner — Founder, Studio Tak",
   description:
-    "Ian Wagner designs, builds, and operates creative and media systems. Founder of Studio Tak, a marketing technology consultancy focused on AI-assisted creative production.",
+    "A note from Ian Wagner, founder of Studio Tak. Systems designer, team builder, and the person behind Campfire.",
   alternates: { canonical: new URL("/founder", siteBase).toString() },
   openGraph: {
     title: "Ian Wagner — Founder, Studio Tak",
     description:
-      "Creative technologist building systems at the intersection of marketing technology, AI-assisted production, and brand storytelling.",
+      "A note from Ian Wagner, founder of Studio Tak. Systems designer, team builder, and the person behind Campfire.",
     url: new URL("/founder", siteBase).toString(),
     siteName: "Studio Tak",
     type: "profile",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Ian Wagner — Founder, Studio Tak",
     description:
-      "Creative technologist building systems at the intersection of marketing technology, AI-assisted production, and brand storytelling."
+      "Designer turned systems builder. Founder of Studio Tak, focused on AI-assisted creative production and marketing technology."
   }
 };
 

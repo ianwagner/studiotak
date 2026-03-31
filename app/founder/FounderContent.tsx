@@ -1,53 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { animationPresets } from "@/components/sections/animationPresets";
 import styles from "./founder.module.css";
 
 const lift = animationPresets.lift;
-const fade = animationPresets.fade;
-
-const sectionViewport = { once: true, amount: 0.2 } as const;
-
-/* ------------------------------------------------------------------ */
-/*  Photo loader: pulls from Firestore media where type==="ian-photo"  */
-/* ------------------------------------------------------------------ */
-function useFounderPhoto() {
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return;
-
-    let canceled = false;
-    (async () => {
-      try {
-        const { getFirestore } = await import("firebase/firestore");
-        const { collection, query, where, limit, getDocs } = await import("firebase/firestore");
-        const { getFirebaseApp } = await import("@/lib/firebaseClient");
-
-        const db = getFirestore(getFirebaseApp());
-        const q = query(
-          collection(db, "media"),
-          where("type", "==", "ian-photo"),
-          where("status", "==", "published"),
-          limit(1)
-        );
-        const snap = await getDocs(q);
-        if (!canceled && !snap.empty) {
-          const data = snap.docs[0].data();
-          setPhotoUrl(data.url ?? null);
-        }
-      } catch {
-        // Silently fall back to placeholder
-      }
-    })();
-
-    return () => { canceled = true; };
-  }, []);
-
-  return photoUrl;
-}
 
 /* ------------------------------------------------------------------ */
 /*  Obfuscated email: constructed client-side to prevent bot scraping   */
@@ -63,112 +20,49 @@ const handleEmailClick = (e: React.MouseEvent) => {
 /*  Main content                                                       */
 /* ------------------------------------------------------------------ */
 export default function FounderContent() {
-  const photoUrl = useFounderPhoto();
-
   return (
     <div className={styles.page}>
-      {/* ---- Opening ---- */}
-      <motion.section
-        className={styles.opening}
-        data-has-photo={photoUrl ? "true" : "false"}
+      <motion.div
+        className={styles.card}
         initial="hidden"
         animate="visible"
         variants={lift.container}
       >
-        <motion.div className={styles.openingText} variants={lift.item}>
-          <h1 className={styles.name}>Ian Wagner</h1>
-          <p className={styles.positioning}>
-            I design, build, and operate creative and media systems.
-          </p>
-        </motion.div>
-        {photoUrl && (
-          <motion.div className={styles.photo} variants={lift.item} custom={1}>
-            <img src={photoUrl} alt="Ian Wagner" loading="eager" />
-          </motion.div>
-        )}
-      </motion.section>
-
-      {/* ---- Philosophy ---- */}
-      <motion.section
-        className={styles.prose}
-        initial="hidden"
-        whileInView="visible"
-        viewport={sectionViewport}
-        variants={lift.container}
-      >
-        <motion.p className={styles.pullQuote} variants={lift.item}>
-          I think of design as infrastructure. Not the surface of things, but the system underneath. The part that decides whether something actually works at scale.
+        <motion.p className={styles.greeting} variants={lift.item}>
+          Hey, thank you for finding this.
         </motion.p>
+
         <motion.p className={styles.body} variants={lift.item} custom={1}>
-          Most of my work lives at the intersection of creative production and marketing technology. I build systems that help teams produce better advertising, faster, combining AI tooling with human creative judgment so neither side is doing the job alone.
+          <em>Tak</em> is Danish for <em>thank you</em>. I named the studio after it because gratitude is a good place to start.
         </motion.p>
+
         <motion.p className={styles.body} variants={lift.item} custom={2}>
-          I care about the feedback loop: what was made, how it performed, and what that means for the next round. The tools I build try to close that gap. Creative decisions connected to performance outcomes in ways that actually change how the next brief gets written.
+          I&apos;m building <a href="/campfire" className={styles.inlineLink}>Campfire</a> because
+          I love systems design and I think making great work should be more fun.
+          Creative <em>should</em> be fun. I love putting together strong teams
+          and making them successful with smart tools.
         </motion.p>
-      </motion.section>
 
-      <hr className={styles.divider} />
-
-      {/* ---- Current Work ---- */}
-      <motion.section
-        className={styles.workSection}
-        initial="hidden"
-        whileInView="visible"
-        viewport={sectionViewport}
-        variants={lift.container}
-      >
-        <div className={styles.workGrid}>
-          <motion.div className={styles.workItem} variants={lift.item} custom={0}>
-            <h3 className={styles.workTitle}>
-              <a href="/campfire">Campfire</a>
-            </h3>
-            <p className={styles.workDescription}>
-              An ad production platform that combines asset libraries, structured creative workflows, and performance feedback loops. Currently managing creative for 25+ brands.
-            </p>
-          </motion.div>
-          <motion.div className={styles.workItem} variants={lift.item} custom={1}>
-            <h3 className={styles.workTitle}>
-              <a href="https://futurepoetic.com" target="_blank" rel="noopener noreferrer">Future Poetic</a>
-            </h3>
-            <p className={styles.workDescription}>
-              An experimental creative studio and publishing space.
-            </p>
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* ---- Writing ---- */}
-      <motion.section
-        className={styles.writingSection}
-        initial="hidden"
-        whileInView="visible"
-        viewport={sectionViewport}
-        variants={fade.container}
-      >
-        <motion.p className={styles.body} variants={fade.item}>
-          I write about the things I&apos;m building and the ideas behind them. Creative operations, product thinking, and the places where technology meets taste.
+        <motion.p className={styles.body} variants={lift.item} custom={3}>
+          If you&apos;re interested in what we&apos;re building, want to
+          collaborate, or just want to chat about the future of creative
+          technology, I&apos;d love to hear from you.
         </motion.p>
-        <motion.p variants={fade.item} custom={1}>
+
+        <motion.div className={styles.signoff} variants={lift.item} custom={4}>
+          <p className={styles.tak}>Tak,</p>
+          <p className={styles.signName}>Ian</p>
+        </motion.div>
+
+        <motion.div className={styles.links} variants={lift.item} custom={5}>
           <a
-            href="https://ianwagner.co"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#"
+            onClick={handleEmailClick}
             className={styles.textLink}
           >
-            ianwagner.co
+            Email
           </a>
-        </motion.p>
-      </motion.section>
-
-      {/* ---- Connect ---- */}
-      <motion.section
-        className={styles.connect}
-        initial="hidden"
-        whileInView="visible"
-        viewport={sectionViewport}
-        variants={fade.container}
-      >
-        <motion.div className={styles.connectLinks} variants={fade.item}>
+          <span className={styles.dot} />
           <a
             href="https://linkedin.com/in/ianwa"
             target="_blank"
@@ -177,16 +71,17 @@ export default function FounderContent() {
           >
             LinkedIn
           </a>
-          <span className={styles.connectDot} />
+          <span className={styles.dot} />
           <a
-            href="#"
-            onClick={handleEmailClick}
+            href="https://ianwagner.co"
+            target="_blank"
+            rel="noopener noreferrer"
             className={styles.textLink}
           >
-            Email
+            ianwagner.co
           </a>
         </motion.div>
-      </motion.section>
+      </motion.div>
     </div>
   );
 }
