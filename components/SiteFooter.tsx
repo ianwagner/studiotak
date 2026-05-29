@@ -8,13 +8,16 @@ type SiteFooterProps = {
   navItems?: NavigationItemRecord[];
 };
 
+const isDuplicateCampfireDemoFooterLink = (item: NavigationItemRecord) =>
+  !item.parentId && item.href === "/campfire/demo" && item.label.trim().toLowerCase() === "get a demo";
+
 export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
   const [navItems, settings] = await Promise.all([
     providedNav ? Promise.resolve(providedNav) : getNavigationItems(),
     getSiteSettings()
   ]);
   const footerLogoUrl = settings.footerLogoUrl || settings.logoUrl;
-  const footerLinks = navItems.filter((item) => item.showInFooter);
+  const footerLinks = navItems.filter((item) => item.showInFooter && !isDuplicateCampfireDemoFooterLink(item));
   const footerChildren = footerLinks.filter((item) => item.parentId);
   const childrenByParent = footerChildren.reduce<Record<string, NavigationItemRecord[]>>((acc, item) => {
     if (!item.parentId) return acc;
