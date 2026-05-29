@@ -50,6 +50,58 @@ export const seedNavigation: NavigationItemRecord[] = [
     parentId: "",
     icon: "",
     updatedAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "nav-campfire",
+    label: "Campfire",
+    href: "/campfire",
+    order: 4,
+    isExternal: false,
+    showInHeader: false,
+    showInFooter: true,
+    footerSection: "Campfire",
+    parentId: "",
+    icon: "",
+    updatedAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "nav-campfire-brands",
+    label: "Brands",
+    href: "/campfire/brands",
+    order: 5,
+    isExternal: false,
+    showInHeader: false,
+    showInFooter: true,
+    footerSection: "Campfire",
+    parentId: "nav-campfire",
+    icon: "",
+    updatedAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "nav-campfire-growth",
+    label: "Growth Teams",
+    href: "/campfire/growth",
+    order: 6,
+    isExternal: false,
+    showInHeader: false,
+    showInFooter: true,
+    footerSection: "Campfire",
+    parentId: "nav-campfire",
+    icon: "",
+    updatedAt: "2024-01-01T00:00:00.000Z"
+  },
+  {
+    id: "nav-campfire-agencies",
+    label: "Agencies",
+    href: "/campfire/agencies",
+    order: 7,
+    isExternal: false,
+    showInHeader: false,
+    showInFooter: true,
+    footerSection: "Campfire",
+    parentId: "nav-campfire",
+    icon: "",
+    updatedAt: "2024-01-01T00:00:00.000Z"
   }
 ];
 

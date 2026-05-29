@@ -1504,6 +1504,12 @@ footer[data-site-footer] .footer-shell {
   padding: 0 var(--section-px);
 }
 
+@media (min-width: 901px) {
+  footer[data-site-footer] .footer-shell {
+    width: min(100%, calc(1080px + var(--section-px) * 2));
+  }
+}
+
 /* ── Top row: brand + nav sections ── */
 
 .footer-top {

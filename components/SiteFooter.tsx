@@ -8,8 +8,59 @@ type SiteFooterProps = {
   navItems?: NavigationItemRecord[];
 };
 
+const campfireAudienceFooterLinks: NavigationItemRecord[] = [
+  {
+    id: "footer-campfire-brands",
+    label: "Brands",
+    href: "/campfire/brands",
+    order: 101,
+    showInFooter: true,
+    parentId: "nav-campfire"
+  },
+  {
+    id: "footer-campfire-growth",
+    label: "Growth Teams",
+    href: "/campfire/growth",
+    order: 102,
+    showInFooter: true,
+    parentId: "nav-campfire"
+  },
+  {
+    id: "footer-campfire-agencies",
+    label: "Agencies",
+    href: "/campfire/agencies",
+    order: 103,
+    showInFooter: true,
+    parentId: "nav-campfire"
+  }
+];
+
 const isDuplicateCampfireDemoFooterLink = (item: NavigationItemRecord) =>
   !item.parentId && item.href === "/campfire/demo" && item.label.trim().toLowerCase() === "get a demo";
+
+const isCampfireFooterParent = (item: NavigationItemRecord) =>
+  !item.parentId && (item.href === "/campfire" || item.label.trim().toLowerCase() === "campfire");
+
+const isCampfireLoginFooterLink = (item: NavigationItemRecord) =>
+  item.label.trim().toLowerCase() === "log in" || item.href.includes("campfire.studiotak.co/login");
+
+const getFooterChildren = (
+  parent: NavigationItemRecord,
+  childrenByParent: Record<string, NavigationItemRecord[]>
+) => {
+  const children = childrenByParent[parent.id] ?? [];
+  if (!isCampfireFooterParent(parent)) return children;
+
+  const visibleChildren = children.filter((child) => !isCampfireLoginFooterLink(child));
+  const existingHrefs = new Set(visibleChildren.map((child) => child.href));
+  const campfireChildren = campfireAudienceFooterLinks
+    .filter((child) => !existingHrefs.has(child.href))
+    .map((child) => ({ ...child, parentId: parent.id }));
+
+  return [...visibleChildren, ...campfireChildren].sort(
+    (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.label.localeCompare(b.label)
+  );
+};
 
 export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
   const [navItems, settings] = await Promise.all([
@@ -53,7 +104,7 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
           {footerParents.length ? (
             <nav data-footer-nav aria-label="Footer links">
               {footerParents.map((item) => {
-                const children = childrenByParent[item.id] ?? [];
+                const children = getFooterChildren(item, childrenByParent);
                 return (
                   <div key={item.id} className="footer-parent-block">
                     <span className="footer-parent-label">{item.label}</span>
