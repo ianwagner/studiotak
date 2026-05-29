@@ -185,6 +185,7 @@ export function AnimatedHeadline({
   const manualProgress = useMotionValue(0);
   const inView = useInView(containerRef, { margin: "-20% 0px", amount: 0.35, once: true });
   const [themeShouldActivate, setThemeShouldActivate] = useState(false);
+  const themeShouldActivateRef = useRef(false);
   const [progressValue, setProgressValue] = useState(0);
 
   useEffect(() => {
@@ -299,24 +300,37 @@ export function AnimatedHeadline({
   // IntersectionObserver re-fires when theme changes cause layout shifts, creating a feedback loop.
   useEffect(() => {
     if (!enableThemeShift) {
+      themeShouldActivateRef.current = false;
       setThemeShouldActivate(false);
       return;
     }
+    let rafId: number | null = null;
     const check = () => {
+      rafId = null;
       const el = containerRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
       const margin = vh * 0.15;
       const visible = rect.bottom > margin && rect.top < vh - margin;
-      setThemeShouldActivate(visible);
+      if (themeShouldActivateRef.current !== visible) {
+        themeShouldActivateRef.current = visible;
+        setThemeShouldActivate(visible);
+      }
+    };
+    const scheduleCheck = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(check);
     };
     check();
-    window.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
+    window.addEventListener("scroll", scheduleCheck, { passive: true });
+    window.addEventListener("resize", scheduleCheck);
     return () => {
-      window.removeEventListener("scroll", check);
-      window.removeEventListener("resize", check);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      window.removeEventListener("scroll", scheduleCheck);
+      window.removeEventListener("resize", scheduleCheck);
     };
   }, [enableThemeShift]);
   useDarkModeShift(enableThemeShift, themeShouldActivate);

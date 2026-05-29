@@ -5,7 +5,19 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 let activeShifts = 0;
 let storedTheme: "light" | "dark" | null = null;
 let transitionTimer: number | null = null;
+let storedThemeResetTimer: number | null = null;
 let currentTheme: "light" | "dark" | null = null;
+let activeViewTransition: { finished: Promise<void>; skipTransition?: () => void } | null = null;
+
+const THEME_TRANSITION_MS = 220;
+const THEME_TRANSITION_BUFFER_MS = 60;
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => {
+    finished: Promise<void>;
+    skipTransition?: () => void;
+  };
+};
 
 const readBaseTheme = (): "light" | "dark" => {
   const root = document.documentElement;
@@ -26,27 +38,85 @@ const getStoredTheme = (): "light" | "dark" => {
   return storedTheme;
 };
 
-const ensureTransitionClass = () => {
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+const clearStoredThemeReset = () => {
+  if (storedThemeResetTimer) {
+    clearTimeout(storedThemeResetTimer);
+    storedThemeResetTimer = null;
+  }
+};
+
+const scheduleTransitionClassRemoval = () => {
   const root = document.documentElement;
   if (!root) return;
   if (transitionTimer) {
     clearTimeout(transitionTimer);
     transitionTimer = null;
   }
+  transitionTimer = window.setTimeout(() => {
+    root.classList.remove("theme-transition");
+    currentTheme = root.getAttribute("data-theme") as "light" | "dark" | null;
+    transitionTimer = null;
+  }, THEME_TRANSITION_MS + THEME_TRANSITION_BUFFER_MS);
+};
+
+const applyThemeWithCssTransition = (updateTheme: () => void) => {
+  const root = document.documentElement;
+  if (!root) return;
   root.classList.add("theme-transition");
+  updateTheme();
+  scheduleTransitionClassRemoval();
+};
+
+const applyThemeWithViewTransition = (updateTheme: () => void) => {
+  const root = document.documentElement;
+  const viewDocument = document as ViewTransitionDocument;
+  if (!root || !viewDocument.startViewTransition || document.visibilityState === "hidden") return false;
+
+  try {
+    activeViewTransition?.skipTransition?.();
+    const transition = viewDocument.startViewTransition(updateTheme);
+    activeViewTransition = transition;
+    transition.finished.finally(() => {
+      if (activeViewTransition === transition) {
+        activeViewTransition = null;
+      }
+      currentTheme = root.getAttribute("data-theme") as "light" | "dark" | null;
+    });
+    return true;
+  } catch {
+    activeViewTransition = null;
+    return false;
+  }
 };
 
 const applyTheme = (theme: "light" | "dark") => {
   const root = document.documentElement;
   if (!root) return;
-  if (root.getAttribute("data-theme") === theme && currentTheme === theme) return;
+  if (root.getAttribute("data-theme") === theme) {
+    currentTheme = theme;
+    return;
+  }
 
-  ensureTransitionClass();
-  root.setAttribute("data-theme", theme);
-  currentTheme = theme;
+  const updateTheme = () => {
+    root.setAttribute("data-theme", theme);
+    currentTheme = theme;
+  };
+
+  if (prefersReducedMotion()) {
+    updateTheme();
+    return;
+  }
+
+  if (!applyThemeWithViewTransition(updateTheme)) {
+    applyThemeWithCssTransition(updateTheme);
+  }
 };
 
 const applyDarkMode = () => {
+  clearStoredThemeReset();
   getStoredTheme();
   activeShifts += 1;
   applyTheme("dark");
@@ -59,12 +129,14 @@ const releaseDarkMode = () => {
   if (activeShifts === 0) {
     const nextTheme = getStoredTheme();
     applyTheme(nextTheme);
-    transitionTimer = window.setTimeout(() => {
-      root.classList.remove("theme-transition");
-      storedTheme = null;
+    clearStoredThemeReset();
+    storedThemeResetTimer = window.setTimeout(() => {
+      if (activeShifts === 0) {
+        storedTheme = null;
+      }
       currentTheme = root.getAttribute("data-theme") as "light" | "dark" | null;
-      transitionTimer = null;
-    }, 550);
+      storedThemeResetTimer = null;
+    }, THEME_TRANSITION_MS + THEME_TRANSITION_BUFFER_MS);
   }
 };
 
