@@ -21,16 +21,6 @@
   border-bottom: 1px solid var(--border);
 }
 
-.header::before {
-  content: "";
-  display: block;
-  width: 56px;
-  height: 3px;
-  margin-bottom: 24px;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
 .title {
   max-width: 720px;
   font-size: clamp(2.25rem, 4vw + 1rem, 4.5rem);
