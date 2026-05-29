@@ -1506,7 +1506,8 @@ footer[data-site-footer] .footer-shell {
 
 @media (min-width: 901px) {
   footer[data-site-footer] .footer-shell {
-    width: min(100%, calc(1080px + var(--section-px) * 2));
+    width: min(100%, 1240px);
+    padding: 0 clamp(48px, 6vw, 96px);
   }
 }
 
