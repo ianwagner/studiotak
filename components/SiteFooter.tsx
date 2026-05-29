@@ -82,7 +82,7 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
             <Link href={"/privacy-policy" as Route} className="footer-legal-link">Privacy Policy</Link>
           </div>
           <div className="footer-cta">
-            <Link href={"/campfire/get-a-demo" as Route} className="footer-cta-link">
+            <Link href={"/campfire/demo" as Route} className="footer-cta-link">
               Get a demo of Campfire
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
