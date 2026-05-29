@@ -1,0 +1,125 @@
+.page {
+  padding-top: var(--header-height);
+  max-width: 760px;
+  margin: 0 auto;
+  padding-left: var(--section-px);
+  padding-right: var(--section-px);
+  padding-bottom: clamp(80px, 10vw, 140px);
+}
+
+.header {
+  padding-top: clamp(48px, 6vw, 80px);
+  padding-bottom: clamp(32px, 4vw, 48px);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: clamp(32px, 4vw, 48px);
+}
+
+.title {
+  font-size: clamp(1.8rem, 2vw + 1rem, 2.6rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--text);
+  margin: 0 0 12px;
+  letter-spacing: 0;
+}
+
+.updated {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.content {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.content h2 {
+  font-size: clamp(1.15rem, 0.6vw + 0.9rem, 1.35rem);
+  font-weight: 600;
+  color: var(--text);
+  margin: clamp(32px, 4vw, 48px) 0 16px;
+  letter-spacing: 0;
+  scroll-margin-top: calc(var(--header-height) + 16px);
+}
+
+.content h2:first-child {
+  margin-top: 0;
+}
+
+.content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 24px 0 8px;
+}
+
+.content p {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.content p strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.content ul {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.content ul li {
+  margin-bottom: 8px;
+  line-height: 1.7;
+}
+
+.content a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s ease;
+}
+
+.content a:hover {
+  border-color: var(--text);
+}
+
+.content em {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.intro {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0 0 24px;
+}
+
+.contactBlock {
+  margin-top: 8px;
+  padding: 20px;
+  background: var(--muted-surface);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.contactBlock p {
+  margin: 0 0 4px;
+  color: var(--muted);
+}
+
+.contactBlock p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .page {
+    max-width: 100%;
+  }
+}

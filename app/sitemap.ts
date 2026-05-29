@@ -26,5 +26,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const learnEntry = hasLearnPage ? [] : [{ url: learnUrl, lastModified: new Date().toISOString() }];
   const founderEntry = { url: new URL("/founder", siteBase).toString(), lastModified: new Date().toISOString() };
-  return [founderEntry, ...learnEntry, ...pageEntries, ...postEntries];
+  const legalEntries = [
+    { url: new URL("/terms-of-service", siteBase).toString(), lastModified: new Date().toISOString() },
+    { url: new URL("/privacy-policy", siteBase).toString(), lastModified: new Date().toISOString() }
+  ];
+  return [founderEntry, ...legalEntries, ...learnEntry, ...pageEntries, ...postEntries];
 }

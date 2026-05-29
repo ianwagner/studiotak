@@ -78,6 +78,8 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
         <div className="footer-bottom">
           <div className="footer-legal">
             <span>© {year} Studio Tak. All rights reserved.</span>
+            <Link href={"/terms-of-service" as Route} className="footer-legal-link">Terms of Service</Link>
+            <Link href={"/privacy-policy" as Route} className="footer-legal-link">Privacy Policy</Link>
           </div>
           <div className="footer-cta">
             <Link href={"/campfire/get-a-demo" as Route} className="footer-cta-link">

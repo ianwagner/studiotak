@@ -1538,6 +1538,20 @@ footer[data-site-footer] .footer-shell {
 .footer-legal {
   color: var(--muted);
   font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-legal-link {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-legal-link:hover {
+  color: var(--fg);
 }
 
 .footer-cta-link {
