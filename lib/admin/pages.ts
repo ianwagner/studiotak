@@ -269,6 +269,19 @@ export type ComparisonColumn = {
   icon?: string;
 };
 
+export type ComparisonTableRow = {
+  feature: string;
+  label?: string;
+  highlighted: string;
+  other: string;
+};
+
+export type ComparisonTableFooter = {
+  feature: string;
+  highlighted: string;
+  other: string;
+};
+
 export type ComparisonBlock = {
   id: string;
   type: "comparison";
@@ -277,7 +290,15 @@ export type ComparisonBlock = {
   eyebrow?: string;
   heading?: string;
   body?: string;
+  variant?: "columns" | "feature_table";
+  tableHeaders?: {
+    feature?: string;
+    highlighted?: string;
+    other?: string;
+  };
   columns: [ComparisonColumn, ComparisonColumn];
+  rows?: ComparisonTableRow[];
+  footer?: ComparisonTableFooter;
   enableDarkModeOnScroll?: boolean;
 };
 

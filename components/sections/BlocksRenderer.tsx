@@ -2789,6 +2789,247 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
     </span>
   );
 
+  if (block.variant === "feature_table" && (block.rows ?? []).length > 0) {
+    const highlightedColumn = block.columns?.find((col) => col.highlighted) ?? colB ?? colA;
+    const otherColumn = block.columns?.find((col) => !col.highlighted) ?? colA ?? colB;
+    const tableHeaders = {
+      feature: block.tableHeaders?.feature ?? "Feature",
+      highlighted: block.tableHeaders?.highlighted ?? highlightedColumn?.heading ?? "Campfire",
+      other: block.tableHeaders?.other ?? otherColumn?.heading ?? "The other guys"
+    };
+
+    return (
+      <motion.section
+        key={block.id ?? index}
+        style={{
+          width: "100%",
+          maxWidth: "var(--max-width)",
+          marginLeft: "auto",
+          marginRight: "auto",
+          paddingLeft: sectionPx,
+          paddingRight: sectionPx
+        }}
+        data-comparison-table-section
+        variants={preset.item}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        custom={index}
+      >
+        <style>{`
+          [data-comparison-table] {
+            overflow: hidden;
+            position: relative;
+          }
+          [data-comparison-table-header],
+          [data-comparison-table-row],
+          [data-comparison-table-footer] {
+            display: grid;
+            grid-template-columns: minmax(170px, 1.05fr) minmax(0, 1.15fr) minmax(0, 1.05fr);
+          }
+          [data-comparison-table-header] > div,
+          [data-comparison-table-cell] {
+            padding: 22px 26px;
+          }
+          [data-comparison-table-row] {
+            border-top: 1px solid var(--border);
+          }
+          [data-table-highlight-cell] {
+            background: var(--accent-soft);
+            border-left: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+            border-right: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+          }
+          [data-comparison-table-body] [data-comparison-table-row]:nth-child(even) [data-table-side-cell] {
+            background: var(--muted-surface);
+          }
+          [data-comparison-table-body] [data-comparison-table-row]:nth-child(even) [data-table-highlight-cell] {
+            background: color-mix(in srgb, var(--accent-soft) 84%, var(--surface));
+          }
+          [data-comparison-table-footer] {
+            border-top: 1px solid var(--border-strong);
+          }
+          @media (max-width: 760px) {
+            [data-comparison-table-header] {
+              display: none;
+            }
+            [data-comparison-table-row],
+            [data-comparison-table-footer] {
+              grid-template-columns: 1fr;
+            }
+            [data-comparison-table-row] {
+              border-top: 1px solid var(--border-strong);
+            }
+            [data-comparison-table-header] > div,
+            [data-comparison-table-cell] {
+              padding: 16px 18px;
+            }
+            [data-table-feature-cell] {
+              padding-bottom: 8px;
+            }
+            [data-table-highlight-cell] {
+              border-left: 3px solid var(--accent);
+            }
+            [data-comparison-table-body] [data-comparison-table-row]:nth-child(even) [data-table-side-cell],
+            [data-comparison-table-body] [data-comparison-table-row]:nth-child(even) [data-table-highlight-cell] {
+              background: transparent;
+            }
+          }
+        `}</style>
+        <div className="grid" style={{ gap: 24 }}>
+          {block.heading ? (
+            <SectionHeading
+              eyebrow={block.eyebrow}
+              title={block.heading}
+              kicker={block.body}
+              align="center"
+            />
+          ) : null}
+          <motion.div
+            ref={gridRef}
+            data-comparison-table
+            style={{
+              border: "1px solid var(--border-strong)",
+              borderRadius: 22,
+              background: "var(--surface)",
+              boxShadow: "0 30px 60px -42px rgba(10, 15, 26, 0.42)"
+            }}
+            variants={preset.container}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+          >
+            <div
+              data-comparison-table-header
+              style={{
+                background: "var(--text)",
+                color: "var(--surface)",
+                fontWeight: 700,
+                fontSize: 14,
+                letterSpacing: 0
+              }}
+            >
+              <div style={{ color: "color-mix(in srgb, var(--surface) 72%, var(--muted))" }}>{tableHeaders.feature}</div>
+              <div
+                style={{
+                  background: "var(--accent)",
+                  color: "#fff",
+                  fontSize: 18,
+                  boxShadow: "inset 0 4px 0 var(--accent-strong)"
+                }}
+              >
+                {tableHeaders.highlighted}
+              </div>
+              <div style={{ color: "color-mix(in srgb, var(--surface) 58%, var(--muted))" }}>{tableHeaders.other}</div>
+            </div>
+            <div data-comparison-table-body>
+              {(block.rows ?? []).map((row, rowIdx) => (
+                <motion.div
+                  key={`${row.feature}-${rowIdx}`}
+                  data-comparison-table-row
+                  variants={fadeUp}
+                >
+                  <div
+                    data-comparison-table-cell
+                    data-table-feature-cell
+                    data-table-side-cell
+                    style={{
+                      color: "var(--text)",
+                      fontWeight: 700,
+                      alignSelf: "stretch"
+                    }}
+                  >
+                    <div style={{ fontSize: 18, lineHeight: 1.2 }}>{row.feature}</div>
+                    {row.label ? (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          color: "var(--muted)",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em"
+                        }}
+                      >
+                        {row.label}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div
+                    data-comparison-table-cell
+                    data-table-highlight-cell
+                    style={{
+                      background: "var(--accent-soft)",
+                      color: "var(--text)",
+                      fontSize: 15,
+                      lineHeight: 1.5,
+                      alignSelf: "stretch"
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <CheckIcon />
+                      <span style={{ fontWeight: 500 }}>{row.highlighted}</span>
+                    </div>
+                  </div>
+                  <div
+                    data-comparison-table-cell
+                    data-table-side-cell
+                    style={{
+                      color: "var(--muted)",
+                      fontSize: 15,
+                      lineHeight: 1.5,
+                      alignSelf: "stretch"
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <XIcon />
+                      <span>{row.other}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {block.footer ? (
+              <div data-comparison-table-footer>
+                <div
+                  data-comparison-table-cell
+                  data-table-side-cell
+                  style={{
+                    color: "var(--text)",
+                    fontSize: 18,
+                    fontWeight: 700
+                  }}
+                >
+                  {block.footer.feature}
+                </div>
+                <div
+                  data-comparison-table-cell
+                  data-table-highlight-cell
+                  style={{
+                    background: "var(--accent-soft)",
+                    color: "var(--accent-strong)",
+                    fontWeight: 700,
+                    lineHeight: 1.5
+                  }}
+                >
+                  {block.footer.highlighted}
+                </div>
+                <div
+                  data-comparison-table-cell
+                  data-table-side-cell
+                  style={{
+                    color: "var(--muted)",
+                    lineHeight: 1.5
+                  }}
+                >
+                  {block.footer.other}
+                </div>
+              </div>
+            ) : null}
+          </motion.div>
+        </div>
+      </motion.section>
+    );
+  }
+
   const renderColumn = (col: typeof colA, isHighlighted: boolean) => {
     if (!col) return null;
     return (

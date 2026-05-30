@@ -379,6 +379,21 @@ const newProductDemoBlock = (): ProductDemoBlock => ({
   enableDarkModeOnScroll: false,
 });
 
+const newComparisonBlock = (): ComparisonBlock => ({
+  id: crypto.randomUUID(),
+  type: "comparison",
+  adminLabel: "Comparison block",
+  anchor: "",
+  eyebrow: "Comparison",
+  heading: "How we compare",
+  body: "A short note about the tradeoffs.",
+  columns: [
+    { heading: "Alternative", items: ["Comparison point"] },
+    { heading: "Studio Tak", highlighted: true, items: ["Comparison point"] }
+  ],
+  enableDarkModeOnScroll: false
+});
+
 const normalizeSlugLocal = (slug: string) => {
   const trimmed = slug.trim();
   if (!trimmed) return "/";
@@ -593,6 +608,8 @@ export function PageForm({
           return newArticleGridBlock();
         case "product_demo":
           return newProductDemoBlock();
+        case "comparison":
+          return newComparisonBlock();
         default:
           return newStoryBlock();
       }
