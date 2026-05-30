@@ -2759,14 +2759,14 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
       display: "inline-flex",
       alignItems: "center",
       justifyContent: "center",
-      width: 22,
-      height: 22,
+      width: 18,
+      height: 18,
       borderRadius: "50%",
       background: "var(--accent)",
       flexShrink: 0,
-      marginTop: 1
+      marginTop: 2
     }}>
-      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 6 9 17l-5-5" />
       </svg>
     </span>
@@ -2776,14 +2776,14 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
       display: "inline-flex",
       alignItems: "center",
       justifyContent: "center",
-      width: 22,
-      height: 22,
+      width: 18,
+      height: 18,
       borderRadius: "50%",
       background: "var(--border-strong)",
       flexShrink: 0,
-      marginTop: 1
+      marginTop: 2
     }}>
-      <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+      <svg width={8} height={8} viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
         <path d="M18 6 6 18M6 6l12 12" />
       </svg>
     </span>
@@ -2817,6 +2817,13 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
         custom={index}
       >
         <style>{`
+          [data-comparison-table-section] {
+            --comparison-panel: color-mix(in srgb, var(--surface) 96%, var(--bg));
+            --comparison-header: color-mix(in srgb, var(--muted-surface) 52%, transparent);
+            --comparison-highlight: color-mix(in srgb, var(--accent-soft) 32%, var(--surface));
+            --comparison-highlight-border: color-mix(in srgb, var(--accent) 24%, var(--border-strong));
+            --comparison-highlight-text: color-mix(in srgb, var(--text) 88%, var(--accent));
+          }
           [data-comparison-table] {
             overflow: hidden;
             position: relative;
@@ -2825,28 +2832,26 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
           [data-comparison-table-row],
           [data-comparison-table-footer] {
             display: grid;
-            grid-template-columns: minmax(170px, 1.05fr) minmax(0, 1.15fr) minmax(0, 1.05fr);
+            grid-template-columns: minmax(140px, 0.7fr) minmax(0, 1.08fr) minmax(0, 1fr);
+            position: relative;
+            z-index: 1;
           }
           [data-comparison-table-header] > div,
           [data-comparison-table-cell] {
-            padding: 22px 26px;
+            padding: 13px 16px;
           }
           [data-comparison-table-row] {
             border-top: 1px solid var(--border);
           }
           [data-table-highlight-cell] {
-            background: var(--accent-soft);
-            border-left: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
-            border-right: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
-          }
-          [data-comparison-table-body] [data-comparison-table-row]:nth-child(even) [data-table-side-cell] {
-            background: var(--muted-surface);
-          }
-          [data-comparison-table-body] [data-comparison-table-row]:nth-child(even) [data-table-highlight-cell] {
-            background: color-mix(in srgb, var(--accent-soft) 84%, var(--surface));
+            position: relative;
+            background: var(--comparison-highlight);
+            border-left: 1px solid var(--comparison-highlight-border);
+            border-right: 1px solid var(--comparison-highlight-border);
           }
           [data-comparison-table-footer] {
             border-top: 1px solid var(--border-strong);
+            background: color-mix(in srgb, var(--muted-surface) 22%, transparent);
           }
           @media (max-width: 760px) {
             [data-comparison-table-header] {
@@ -2854,28 +2859,52 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
             }
             [data-comparison-table-row],
             [data-comparison-table-footer] {
-              grid-template-columns: 1fr;
+              display: block;
             }
             [data-comparison-table-row] {
-              border-top: 1px solid var(--border-strong);
+              border-top: 1px solid var(--border);
+              padding: 10px 0;
             }
             [data-comparison-table-header] > div,
             [data-comparison-table-cell] {
-              padding: 16px 18px;
+              padding: 5px 14px;
             }
             [data-table-feature-cell] {
               padding-bottom: 8px;
             }
             [data-table-highlight-cell] {
-              border-left: 3px solid var(--accent);
-            }
-            [data-comparison-table-body] [data-comparison-table-row]:nth-child(even) [data-table-side-cell],
-            [data-comparison-table-body] [data-comparison-table-row]:nth-child(even) [data-table-highlight-cell] {
               background: transparent;
+              border: 0;
+            }
+            [data-table-highlight-cell],
+            [data-table-other-cell] {
+              display: grid;
+              grid-template-columns: 72px minmax(0, 1fr);
+              column-gap: 10px;
+              align-items: flex-start;
+            }
+            [data-table-highlight-cell]::before,
+            [data-table-other-cell]::before {
+              content: attr(data-column-label);
+              display: block;
+              padding-top: 3px;
+              color: var(--muted);
+              font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
+              font-size: 10px;
+              font-style: normal;
+              font-weight: 700;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+            }
+            [data-table-highlight-cell]::before {
+              color: var(--accent-strong);
+            }
+            [data-comparison-table-footer] {
+              padding: 12px 0;
             }
           }
         `}</style>
-        <div className="grid" style={{ gap: 24 }}>
+        <div className="grid" style={{ gap: 18 }}>
           {block.heading ? (
             <SectionHeading
               eyebrow={block.eyebrow}
@@ -2889,9 +2918,9 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
             data-comparison-table
             style={{
               border: "1px solid var(--border-strong)",
-              borderRadius: 22,
-              background: "var(--surface)",
-              boxShadow: "0 30px 60px -42px rgba(10, 15, 26, 0.42)"
+              borderRadius: 12,
+              background: "var(--comparison-panel)",
+              boxShadow: "none"
             }}
             variants={preset.container}
             initial="hidden"
@@ -2900,25 +2929,45 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
             <div
               data-comparison-table-header
               style={{
-                background: "var(--text)",
-                color: "var(--surface)",
-                fontWeight: 700,
-                fontSize: 14,
-                letterSpacing: 0
+                background: "var(--comparison-header)",
+                borderBottom: "1px solid var(--border)",
+                color: "var(--muted)",
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: "0.02em",
+                textTransform: "uppercase"
               }}
             >
-              <div style={{ color: "color-mix(in srgb, var(--surface) 72%, var(--muted))" }}>{tableHeaders.feature}</div>
+              <div
+                data-table-feature-cell
+                style={{
+                  color: "var(--muted)",
+                  lineHeight: 1.2
+                }}
+              >
+                {tableHeaders.feature}
+              </div>
               <div
                 style={{
-                  background: "var(--accent)",
-                  color: "#fff",
-                  fontSize: 18,
-                  boxShadow: "inset 0 4px 0 var(--accent-strong)"
+                  background: "var(--comparison-highlight)",
+                  borderLeft: "1px solid var(--comparison-highlight-border)",
+                  borderRight: "1px solid var(--comparison-highlight-border)",
+                  color: "var(--accent)",
+                  fontWeight: 700,
+                  lineHeight: 1.2
                 }}
               >
                 {tableHeaders.highlighted}
               </div>
-              <div style={{ color: "color-mix(in srgb, var(--surface) 58%, var(--muted))" }}>{tableHeaders.other}</div>
+              <div
+                data-table-feature-cell
+                style={{
+                  color: "var(--muted)",
+                  lineHeight: 1.2
+                }}
+              >
+                {tableHeaders.other}
+              </div>
             </div>
             <div data-comparison-table-body>
               {(block.rows ?? []).map((row, rowIdx) => (
@@ -2937,16 +2986,16 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                       alignSelf: "stretch"
                     }}
                   >
-                    <div style={{ fontSize: 18, lineHeight: 1.2 }}>{row.feature}</div>
+                    <div style={{ fontSize: 15, lineHeight: 1.2 }}>{row.feature}</div>
                     {row.label ? (
                       <div
                         style={{
-                          marginTop: 6,
+                          marginTop: 4,
                           color: "var(--muted)",
-                          fontSize: 12,
+                          fontSize: 10.5,
                           fontWeight: 600,
                           textTransform: "uppercase",
-                          letterSpacing: "0.04em"
+                          letterSpacing: "0.03em"
                         }}
                       >
                         {row.label}
@@ -2956,15 +3005,15 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                   <div
                     data-comparison-table-cell
                     data-table-highlight-cell
+                    data-column-label={tableHeaders.highlighted}
                     style={{
-                      background: "var(--accent-soft)",
-                      color: "var(--text)",
-                      fontSize: 15,
-                      lineHeight: 1.5,
+                      color: "var(--comparison-highlight-text)",
+                      fontSize: 14,
+                      lineHeight: 1.4,
                       alignSelf: "stretch"
                     }}
                   >
-                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
                       <CheckIcon />
                       <span style={{ fontWeight: 500 }}>{row.highlighted}</span>
                     </div>
@@ -2972,14 +3021,16 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                   <div
                     data-comparison-table-cell
                     data-table-side-cell
+                    data-table-other-cell
+                    data-column-label={tableHeaders.other}
                     style={{
                       color: "var(--muted)",
-                      fontSize: 15,
-                      lineHeight: 1.5,
+                      fontSize: 14,
+                      lineHeight: 1.4,
                       alignSelf: "stretch"
                     }}
                   >
-                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
                       <XIcon />
                       <span>{row.other}</span>
                     </div>
@@ -2994,7 +3045,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                   data-table-side-cell
                   style={{
                     color: "var(--text)",
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: 700
                   }}
                 >
@@ -3003,8 +3054,8 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                 <div
                   data-comparison-table-cell
                   data-table-highlight-cell
+                  data-column-label={tableHeaders.highlighted}
                   style={{
-                    background: "var(--accent-soft)",
                     color: "var(--accent-strong)",
                     fontWeight: 700,
                     lineHeight: 1.5
@@ -3015,6 +3066,8 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                 <div
                   data-comparison-table-cell
                   data-table-side-cell
+                  data-table-other-cell
+                  data-column-label={tableHeaders.other}
                   style={{
                     color: "var(--muted)",
                     lineHeight: 1.5
