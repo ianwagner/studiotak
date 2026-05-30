@@ -205,33 +205,77 @@ const renderMedia = (media?: HeroBlock["media"]) => {
   );
 };
 
-const renderBlockSections = (sections?: BlockSection[]) => {
-  if (!sections?.length) return null;
-  const preset = animationPresets[defaultAnimationPreset];
+const getTimelinePhaseWindow = (phase: number, phaseCount: number) => {
+  const start = 0.08;
+  const end = 0.92;
+  const phaseSpan = (end - start) / Math.max(phaseCount, 1);
+  return {
+    start: start + phase * phaseSpan,
+    end: start + (phase + 0.86) * phaseSpan
+  };
+};
+
+const StoryTimelineStep = ({
+  section,
+  idx,
+  total,
+  scrollProgress
+}: {
+  section: BlockSection;
+  idx: number;
+  total: number;
+  scrollProgress: MotionValue<number>;
+}) => {
+  const phaseCount = Math.max(total * 2 - 1, 1);
+  const stepWindow = getTimelinePhaseWindow(idx * 2, phaseCount);
+  const lineWindow = getTimelinePhaseWindow(idx * 2 + 1, phaseCount);
+  const stepOpacity = useTransform(scrollProgress, [stepWindow.start, stepWindow.end], [0, 1]);
+  const stepY = useTransform(scrollProgress, [stepWindow.start, stepWindow.end], [12, 0]);
+  const lineScaleY = useTransform(scrollProgress, [lineWindow.start, lineWindow.end], [0, 1]);
+
   return (
-    <div className="story-timeline">
+    <div className="story-step">
+      <div className="story-step-marker">
+        <motion.span className="story-step-badge" style={{ opacity: stepOpacity, y: stepY }}>
+          {`0${idx + 1}`}
+        </motion.span>
+        {idx < total - 1 ? (
+          <motion.div className="story-step-line" style={{ scaleY: lineScaleY }} />
+        ) : null}
+      </div>
+      <motion.div className="story-step-content" style={{ opacity: stepOpacity, y: stepY }}>
+        <strong style={{ fontSize: "var(--font-size-title-sm)" }}>{section.title}</strong>
+        <p style={{ margin: 0, color: "var(--muted)" }}>{section.body}</p>
+      </motion.div>
+    </div>
+  );
+};
+
+const StoryTimeline = ({ sections }: { sections: BlockSection[] }) => {
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: timelineRef,
+    offset: ["start 78%", "end 42%"]
+  });
+
+  return (
+    <div className="story-timeline" ref={timelineRef}>
       {sections.map((section, idx) => (
-        <motion.div
+        <StoryTimelineStep
           key={`${section.title}-${idx}`}
-          className="story-step"
-          variants={preset.item}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          custom={idx}
-        >
-          <div className="story-step-marker">
-            <span className="story-step-badge">{`0${idx + 1}`}</span>
-            <div className="story-step-line" />
-          </div>
-          <div className="story-step-content">
-            <strong style={{ fontSize: "var(--font-size-title-sm)" }}>{section.title}</strong>
-            <p style={{ margin: 0, color: "var(--muted)" }}>{section.body}</p>
-          </div>
-        </motion.div>
+          section={section}
+          idx={idx}
+          total={sections.length}
+          scrollProgress={scrollYProgress}
+        />
       ))}
     </div>
   );
+};
+
+const renderBlockSections = (sections?: BlockSection[]) => {
+  if (!sections?.length) return null;
+  return <StoryTimeline sections={sections} />;
 };
 
 const FeatureCard = ({
@@ -1347,9 +1391,96 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
   );
 };
 
-const ProductDemoBlockSection = ({ block, index }: { block: ProductDemoBlock; index: number }) => {
+const ProductDemoBlockSection = ({
+  block,
+  index,
+  audienceFilter
+}: {
+  block: ProductDemoBlock;
+  index: number;
+  audienceFilter?: string;
+}) => {
   const hasCopy = !!(block.eyebrow || block.heading || block.body);
   const sectionId = `product-demo-${block.id ?? index}`;
+  const [dynamicImages, setDynamicImages] = useState<string[]>([]);
+  const typeFilter = block.typeFilter?.trim() || "Example";
+  const industryFilter = audienceFilter || block.industryFilter?.trim();
+  const featuredOnly = Boolean(block.featuredOnly);
+  const resultsLimit = 8;
+
+  useEffect(() => {
+    let canceled = false;
+    const load = async () => {
+      if (!typeFilter || !process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+        setDynamicImages([]);
+        return;
+      }
+
+      try {
+        const db = getFirestore(getFirebaseApp());
+        const mediaRef = collection(db, "media");
+        const baseConstraints: QueryConstraint[] = [where("status", "==", "published"), where("type", "==", typeFilter)];
+        if (featuredOnly) {
+          baseConstraints.push(where("featured", "==", true));
+        }
+        let urls: string[] = [];
+
+        if (industryFilter) {
+          const audienceQ = query(mediaRef, ...baseConstraints, where("industry", "array-contains", industryFilter), limit(resultsLimit));
+          const audienceSnap = await getDocs(audienceQ);
+          if (canceled) return;
+          urls = audienceSnap.docs
+            .map((doc) => doc.data() as any)
+            .filter((item) => item.url && (item.mediaType ?? item.type ?? "image") !== "video")
+            .map((item) => item.url as string);
+        }
+
+        if (urls.length < 2) {
+          const fallbackQ = query(mediaRef, ...baseConstraints, limit(resultsLimit));
+          const fallbackSnap = await getDocs(fallbackQ);
+          if (canceled) return;
+          const seen = new Set(urls);
+          const fallbackUrls = fallbackSnap.docs
+            .map((doc) => doc.data() as any)
+            .filter((item) => item.url && (item.mediaType ?? item.type ?? "image") !== "video" && !seen.has(item.url))
+            .map((item) => item.url as string);
+          urls = [...urls, ...fallbackUrls];
+        }
+
+        setDynamicImages(urls.slice(0, 2));
+      } catch (error) {
+        console.error("Failed to load product demo media", error);
+        if (!canceled) setDynamicImages([]);
+      }
+    };
+
+    load();
+    return () => {
+      canceled = true;
+    };
+  }, [featuredOnly, industryFilter, resultsLimit, typeFilter]);
+
+  const demoBlock = useMemo(() => {
+    if (!dynamicImages.length) return block;
+    const existing = block.exampleData ?? {};
+    const portraitAd = existing.portraitAd ?? { imageUrl: "", brandName: "", headline: "" };
+    const squareAd = existing.squareAd ?? portraitAd;
+    return {
+      ...block,
+      exampleData: {
+        ...existing,
+        portraitAd: {
+          ...portraitAd,
+          imageUrl: dynamicImages[0] ?? portraitAd.imageUrl
+        },
+        squareAd: {
+          ...squareAd,
+          imageUrl: dynamicImages[1] ?? dynamicImages[0] ?? squareAd.imageUrl
+        }
+      }
+    };
+  }, [block, dynamicImages]);
+
   return (
     <>
       <style>{`
@@ -1392,7 +1523,7 @@ const ProductDemoBlockSection = ({ block, index }: { block: ProductDemoBlock; in
             </div>
           )}
           <AnimatedSection variant="plain" index={0} className="product-demo-card" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-            {block.demoId === "ad_review" ? <AdReviewDemo block={block} /> : null}
+            {block.demoId === "ad_review" ? <AdReviewDemo block={demoBlock} /> : null}
           </AnimatedSection>
         </div>
       </section>
@@ -4329,7 +4460,7 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
           } else if (block.type === "contact") {
             element = <ContactBlockSection key={key} block={block} index={index} />;
           } else if (block.type === "product_demo") {
-            element = <ProductDemoBlockSection key={key} block={block} index={index} />;
+            element = <ProductDemoBlockSection key={key} block={block} index={index} audienceFilter={audienceFilter} />;
           } else if (block.type === "divider") {
             element = renderDividerBlock(block, index);
           } else if (block.type === "stats") {

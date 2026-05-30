@@ -72,7 +72,7 @@ type PageFormProps = {
   isDeleting?: boolean;
 };
 
-type MediaTarget = "media" | "background" | "featureIcon" | "portraitAd" | "squareAd";
+type MediaTarget = "media" | "background" | "featureIcon";
 
 function AlignmentSelect({
   value,
@@ -371,6 +371,9 @@ const newProductDemoBlock = (): ProductDemoBlock => ({
   heading: "",
   body: "",
   demoId: "ad_review",
+  typeFilter: "Example",
+  industryFilter: "",
+  featuredOnly: false,
   exampleData: {
     index: 1,
     version: "V2",
@@ -694,10 +697,10 @@ export function PageForm({
     updateBlock(idx, (block) => {
       if (!isProductDemoBlock(block)) return block;
       // Top-level fields
-      if (field === "eyebrow" || field === "heading" || field === "body") {
+      if (field === "eyebrow" || field === "heading" || field === "body" || field === "typeFilter" || field === "industryFilter") {
         return { ...block, [field]: value };
       }
-      // Nested exampleData fields use dot notation: "copy.primary", "portraitAd.imageUrl", etc.
+      // Nested exampleData fields use dot notation: "copy.primary", "portraitAd.headline", etc.
       const parts = field.split(".");
       if (parts.length === 2) {
         const [group, key] = parts;
@@ -715,21 +718,6 @@ export function PageForm({
       return {
         ...block,
         exampleData: { ...(block.exampleData ?? {}), [field]: value },
-      };
-    });
-  };
-
-  const handleProductDemoMediaChange = (idx: number, target: "portraitAd" | "squareAd", url: string, mediaType?: string) => {
-    updateBlock(idx, (block) => {
-      if (!isProductDemoBlock(block)) return block;
-      const existing = block.exampleData ?? {};
-      const ad = (existing[target] ?? { brandName: "", headline: "", imageUrl: "" }) as Record<string, string>;
-      return {
-        ...block,
-        exampleData: {
-          ...existing,
-          [target]: { ...ad, imageUrl: url },
-        },
       };
     });
   };
@@ -914,11 +902,6 @@ export function PageForm({
       updateBlock(idx, (current) => {
         if (target === "background" && isHeroLikeBlock(current)) {
           return { ...current, background: updatedMedia };
-        }
-        if ((target === "portraitAd" || target === "squareAd") && isProductDemoBlock(current)) {
-          const existing = current.exampleData ?? {};
-          const ad = (existing[target] ?? { brandName: "", headline: "", imageUrl: "" }) as Record<string, string>;
-          return { ...current, exampleData: { ...existing, [target]: { ...ad, imageUrl: url } } };
         }
         return { ...current, media: updatedMedia };
       });
@@ -2833,6 +2816,48 @@ export function PageForm({
                 />
               </div>
 
+              <h4 style={{ margin: "8px 0 0" }}>Media Filters</h4>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Type filter</label>
+                  <input
+                    className="input"
+                    value={block.typeFilter ?? "Example"}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "typeFilter", e.target.value)}
+                    placeholder="Match the media 'type' field"
+                  />
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>
+                    Only pulls media whose <code>type</code> equals this value.
+                  </span>
+                </div>
+                <div className="field-group">
+                  <label>Industry filter (optional)</label>
+                  <input
+                    className="input"
+                    value={block.industryFilter ?? ""}
+                    onChange={(e) => handleProductDemoFieldChange(idx, "industryFilter", e.target.value)}
+                    placeholder="Fintech, SaaS…"
+                  />
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>
+                    Leave blank to ignore industry. The URL <code>?audience=</code> value overrides this.
+                  </span>
+                </div>
+                <div className="field-group">
+                  <label>Featured filter</label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--muted)" }}>
+                    <input
+                      type="checkbox"
+                      checked={!!block.featuredOnly}
+                      onChange={(e) =>
+                        updateBlock(idx, (b) => (isProductDemoBlock(b) ? { ...b, featuredOnly: e.target.checked } : b))
+                      }
+                    />
+                    <span>Only pull featured media</span>
+                  </label>
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>Toggle to restrict the demo creative to featured items.</span>
+                </div>
+              </div>
+
               <h4 style={{ margin: "8px 0 0" }}>Ad Copy</h4>
               <div className="grid" style={{ gap: 12, gridTemplateColumns: "1fr 1fr" }}>
                 <div className="field-group">
@@ -2882,36 +2907,6 @@ export function PageForm({
                     placeholder="Made to be Seen"
                   />
                 </div>
-              </div>
-
-              <h4 style={{ margin: "8px 0 0" }}>Ad Creative</h4>
-              <div className="grid" style={{ gap: 12, gridTemplateColumns: "1fr 1fr" }}>
-                <MediaField
-                  blockId={blockId}
-                  blockIdx={idx}
-                  target="portraitAd"
-                  media={block.exampleData?.portraitAd?.imageUrl ? { url: block.exampleData.portraitAd.imageUrl, type: "image" } : undefined}
-                  uploading={uploadingBlock === `${blockId}-portraitAd`}
-                  uploadError={uploadError}
-                  onUpload={(bi, file) => handleMediaUpload(bi, file, "portraitAd")}
-                  onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target: "portraitAd", filterType })}
-                  label="Portrait (9:16)"
-                  accept="image/*"
-                  onClear={() => handleProductDemoMediaChange(idx, "portraitAd", "")}
-                />
-                <MediaField
-                  blockId={blockId}
-                  blockIdx={idx}
-                  target="squareAd"
-                  media={block.exampleData?.squareAd?.imageUrl ? { url: block.exampleData.squareAd.imageUrl, type: "image" } : undefined}
-                  uploading={uploadingBlock === `${blockId}-squareAd`}
-                  uploadError={uploadError}
-                  onUpload={(bi, file) => handleMediaUpload(bi, file, "squareAd")}
-                  onOpenPicker={(target, filterType) => setMediaModal({ open: true, blockIdx: idx, target: "squareAd", filterType })}
-                  label="Square (1:1)"
-                  accept="image/*"
-                  onClear={() => handleProductDemoMediaChange(idx, "squareAd", "")}
-                />
               </div>
 
               <div className="grid" style={{ gap: 12, gridTemplateColumns: "1fr 1fr 1fr" }}>
@@ -3556,8 +3551,6 @@ export function PageForm({
       ? mediaModalBlock.items?.[mediaModal.itemIdx]?.icon?.url ?? ""
       : mediaModal.target === "background" && mediaModalBlock && isHeroLikeBlock(mediaModalBlock)
       ? mediaModalBlock.background?.url ?? ""
-      : (mediaModal.target === "portraitAd" || mediaModal.target === "squareAd") && mediaModalBlock && isProductDemoBlock(mediaModalBlock)
-      ? (mediaModalBlock.exampleData?.[mediaModal.target] as { imageUrl?: string } | undefined)?.imageUrl ?? ""
       : mediaModalBlock && "media" in mediaModalBlock
       ? mediaModalBlock.media?.url ?? ""
       : "";
@@ -3991,8 +3984,6 @@ export function PageForm({
                 url,
                 type: mediaType ?? "image",
               });
-            } else if (mediaModal.target === "portraitAd" || mediaModal.target === "squareAd") {
-              handleProductDemoMediaChange(mediaModal.blockIdx as number, mediaModal.target, url, mediaType);
             } else {
               updateBlock(mediaModal.blockIdx as number, (current) => {
                 const mediaPayload = { url, type: mediaType ?? "image" };

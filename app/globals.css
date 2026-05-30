@@ -1438,10 +1438,8 @@ main {
 }
 
 .story-step-marker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
+  width: 36px;
+  min-height: 100%;
   position: relative;
 }
 
@@ -1453,7 +1451,7 @@ main {
   height: 36px;
   border-radius: 50%;
   border: 1px solid var(--border-strong);
-  background: var(--bg);
+  background: var(--surface);
   color: var(--eyebrow-color);
   font-weight: var(--eyebrow-weight);
   font-size: var(--font-size-caption);
@@ -1464,14 +1462,14 @@ main {
 }
 
 .story-step-line {
+  position: absolute;
+  top: 18px;
+  bottom: -50px;
+  left: 50%;
   width: 1px;
-  flex: 1;
-  background: var(--border);
-  margin-top: 8px;
-}
-
-.story-step:last-child .story-step-line {
-  display: none;
+  background: var(--border-strong);
+  transform-origin: top;
+  z-index: 0;
 }
 
 .story-step-content {

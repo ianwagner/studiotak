@@ -232,6 +232,9 @@ export type ProductDemoBlock = {
   heading?: string;
   body?: string;
   demoId: "ad_review";
+  typeFilter?: string;
+  industryFilter?: string;
+  featuredOnly?: boolean;
   exampleData?: {
     index?: number;
     version?: string;
