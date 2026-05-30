@@ -23,7 +23,7 @@
 
 .title {
   max-width: 720px;
-  font-size: clamp(2.25rem, 4vw + 1rem, 4.5rem);
+  font-size: var(--font-size-title-4xl);
   font-weight: 600;
   line-height: 0.95;
   color: var(--text);
@@ -39,7 +39,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--bg);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--muted);
   margin: 0;
@@ -47,7 +47,7 @@
 
 .content {
   max-width: 760px;
-  font-size: 16px;
+  font-size: var(--font-size-body);
   color: var(--text);
   line-height: 1.75;
 }
@@ -56,7 +56,7 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: clamp(1.2rem, 0.75vw + 1rem, 1.5rem);
+  font-size: var(--font-size-title-md);
   font-weight: 600;
   color: var(--text);
   margin: clamp(40px, 5vw, 64px) 0 16px;
@@ -80,7 +80,7 @@
 }
 
 .content h3 {
-  font-size: 1.05rem;
+  font-size: var(--font-size-body-lg);
   font-weight: 600;
   color: var(--text);
   margin: 28px 0 10px;
@@ -120,12 +120,13 @@
 }
 
 .content em {
-  font-style: italic;
+  font-style: normal;
+  font-weight: 600;
   color: var(--muted);
 }
 
 .intro {
-  font-size: clamp(1.05rem, 0.45vw + 0.95rem, 1.25rem);
+  font-size: var(--font-size-lede);
   color: var(--muted);
   line-height: 1.65;
   margin: 0 0 28px;
@@ -138,7 +139,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: var(--shadow-soft);
-  font-size: 15px;
+  font-size: var(--font-size-base);
   color: var(--muted);
   line-height: 1.6;
 }

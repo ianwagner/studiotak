@@ -161,6 +161,8 @@ Components require `id` + `kind` ("feature"). Fields: `title`, `body`, `icon` (B
 
 **IMPORTANT: Firestore is the source of truth.** When Firebase is configured, the dev server and production site read from Firestore. Seed data in `lib/admin/pages.ts` is only a build-time fallback.
 
+**Do not ship live copy changes by editing `lib/admin/pages.ts` alone.** The admin UI writes page documents in the Firestore `pages` collection through the client SDK, and those documents are what local preview and production normally render. Seed edits are useful only as fallback/source-control sync and can appear in `/api/admin/inspect` if the server Admin SDK cannot read Firestore.
+
 ### Quick Decision Tree
 
 1. **Editing an existing page?** → Use `PATCH /api/admin/pages/:id` with only the changed fields. Done.
@@ -168,6 +170,10 @@ Components require `id` + `kind` ("feature"). Fields: `title`, `body`, `icon` (B
 3. **Creating a new page?** → Use `POST /api/admin/pages` with full page data. Done.
 4. **Need seed data in sync for deploys?** → First `GET /api/admin/seed?collection=pages` to pull live state, then update the seed file.
 5. **NEVER edit seed data as the primary update method** — edit Firestore via the API, then optionally sync seed data afterward.
+
+If the server admin API endpoints (`/api/admin/pages`, `/api/admin/inspect`) return errors or report `source: "seed"` while admin edits are visibly affecting the live site, do **not** assume production is seed-backed. That usually means the server Admin SDK path cannot read Firestore, while the public/admin client SDK path still can. In that case, update Firestore through the admin UI or a one-off script using the Firebase client SDK with the repo's `.env.local` config and authenticated write access.
+
+For one-off scripts, preserve the existing page document and patch only the intended block(s): query `collection(db, "pages")` by `slug`, clone `data.blocks`, replace/insert the target block by stable `id`, then `updateDoc(ref, { blocks, updatedAt })`. Do not overwrite a whole page from stale seed content.
 
 ### Inspecting Page Structure
 
@@ -192,7 +198,7 @@ Returns a compact summary:
 }
 ```
 
-The `source` field tells you whether data came from `"firestore"` or `"seed"` fallback.
+The `source` field tells you whether this server endpoint read `"firestore"` or fell back to `"seed"`. Treat it as diagnostic, not absolute truth. If it disagrees with the admin UI or rendered live page, verify by reading/updating the Firestore document through the same client SDK path the admin uses.
 
 ### Dev-Mode Data Source Banner
 
@@ -210,9 +216,11 @@ After making an API update:
 2. Reload the page — ISR revalidation happens automatically on writes
 3. Use `preview_snapshot` to verify the rendered output if needed
 
+After making a direct Firestore client-SDK update, verify the rendered route itself because direct writes do not call `revalidatePath()`. Production marketing routes are `force-static` with `revalidate = 120`, so live HTML can lag by up to about two minutes. Check with targeted HTML searches such as `curl -LsS https://studiotak.co/campfire | rg 'expected copy'`, and refresh/restart local preview if it is serving a cached static page.
+
 ### Common Pitfalls
 - **Seeing old data?** The dev server may have a cached ISR page. API writes call `revalidatePath()` automatically, but you may need to reload.
-- **Seed data showing instead of Firestore?** Check that Firebase env vars are set. The inspect endpoint's `source` field confirms this.
+- **Seed data showing instead of Firestore?** Check that Firebase env vars are set, but remember the inspect endpoint uses the server Admin SDK. If admin edits are live, update/verify via the client SDK instead of editing seed.
 - **Don't read seed files to understand page content** — use the inspect endpoint instead. Seed files may be stale.
 - **Only seeing 2 blocks in production?** BlocksRenderer lazy-loads blocks after the first 2 via IntersectionObserver. This is disabled in dev mode so preview tools see all blocks. In production, users must scroll to trigger loading.
-- **To verify page content, use the inspect endpoint** — it returns the full block list regardless of lazy loading.
+- **To verify rendered page content, check the route HTML/browser too** — the inspect endpoint returns a full block list regardless of lazy loading, but it can fall back to seed if the server Admin SDK cannot read Firestore.

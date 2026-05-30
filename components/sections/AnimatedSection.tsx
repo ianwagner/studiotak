@@ -66,9 +66,23 @@ export function SectionHeading({
       }}
     >
       {eyebrow ? <span className="tag">{eyebrow}</span> : null}
-      <h2 style={{ margin: 0, fontSize: 32 }}>{title}</h2>
+      <h2
+        style={{
+          margin: 0,
+          maxWidth: "22ch",
+          fontFamily: "var(--font-secondary)",
+          fontSize: "var(--font-size-title-3xl)",
+          fontStyle: "normal",
+          fontWeight: 300,
+          letterSpacing: 0,
+          lineHeight: 0.95,
+          textTransform: "none"
+        }}
+      >
+        {title}
+      </h2>
       {kicker ? (
-        <p style={{ margin: 0, color: "var(--muted)", fontSize: 16 }}>{kicker}</p>
+        <p style={{ margin: 0, maxWidth: "58ch", color: "var(--muted)", fontSize: "var(--font-size-body)" }}>{kicker}</p>
       ) : null}
     </header>
   );
@@ -97,8 +111,8 @@ export function Stat({ label, value }: { label: string; value: string }) {
         gap: 8
       }}
     >
-      <span style={{ color: "var(--muted)", fontSize: 14 }}>{label}</span>
-      <span style={{ fontSize: 24, fontWeight: 700 }}>{value}</span>
+      <span style={{ color: "var(--muted)", fontSize: "var(--font-size-label)" }}>{label}</span>
+      <span style={{ fontSize: "var(--font-size-title-md)", fontWeight: 700 }}>{value}</span>
     </motion.div>
   );
 }

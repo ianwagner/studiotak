@@ -1,62 +1,177 @@
 .admin-shell {
-  background: var(--bg);
+  background: var(--surface-page);
+  color: var(--text-body);
+  font-size: var(--font-size-base);
 }
 
 .admin-layout {
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  gap: var(--spacing-2xl);
 }
 
 .admin-sidebar {
-  padding: 16px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  box-shadow: none;
+  padding: var(--spacing-xl);
+  background: var(--surface-card);
+  border-right: 1px solid var(--border-color-default);
+  box-shadow: var(--shadow-sm);
   border-radius: 0;
+  gap: var(--spacing-xl);
 }
 
 .admin-sidebar .nav-link {
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-color-default);
   box-shadow: none;
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  padding: var(--spacing-md) var(--spacing-base);
+}
+
+.admin-sidebar .nav-link:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
 .admin-content {
-  padding: 16px 16px 28px;
+  padding: var(--spacing-2xl) var(--spacing-xl) 4rem 0;
   max-width: 1100px;
 }
 
 .admin-shell .card {
-  background: var(--surface);
-  border: 1.5px solid var(--border-strong);
+  background: var(--surface-card);
+  border: 1px solid var(--border-color-default);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+}
+
+.admin-shell .card .card {
   box-shadow: none;
-  border-radius: 8px;
 }
 
 .admin-shell fieldset {
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color-default);
+  padding: var(--spacing-xl);
   box-shadow: none;
 }
 
 .admin-shell legend {
-  padding: 0;
+  padding: 0 var(--spacing-base);
   color: var(--muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .admin-shell .btn {
-  box-shadow: none;
-  min-height: 34px;
-  padding: 6px 10px;
+  box-shadow: var(--shadow-sm);
+  min-height: 2rem;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-button);
+}
+
+.admin-shell .btn.secondary {
+  background: var(--surface-card);
+  color: var(--text-body);
+  border-color: var(--border-strong);
+}
+
+.admin-shell .btn.secondary.active {
+  background: var(--accent-color-05);
+  color: var(--accent);
+  border-color: var(--accent-color-10);
+}
+
+.admin-shell .btn:disabled,
+.admin-shell .input:disabled,
+.admin-shell select:disabled,
+.admin-shell textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .admin-shell form {
-  gap: 12px;
+  gap: var(--card-stack);
 }
 
 .admin-shell .field-group {
-  gap: 6px;
+  gap: var(--spacing-md);
+}
+
+.admin-shell h1 {
+  color: var(--text-primary);
+  font-size: var(--font-size-title-md);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-transform: none;
+}
+
+.admin-shell h2 {
+  color: var(--text-primary);
+  font-size: var(--font-size-title-md);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+}
+
+.admin-shell h3 {
+  color: var(--text-primary);
+  font-size: var(--font-size-title-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+}
+
+.admin-shell p {
+  color: var(--text-secondary);
+}
+
+.admin-shell code {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-code-inline, 0.85em);
+  padding: 0.08rem 0.28rem;
+}
+
+.admin-shell .tag {
+  color: var(--accent);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.admin-shell .badge {
+  font-size: var(--font-size-badge);
+}
+
+.admin-shell .table {
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+.admin-shell .table th,
+.admin-shell .table td {
+  padding: var(--table-cell-py) var(--table-cell-px);
+}
+
+.admin-shell .chip {
+  box-shadow: none;
+}
+
+.admin-shell .footer-section-card {
+  box-shadow: none;
 }
 
 .admin-auth {
@@ -64,4 +179,14 @@
   display: grid;
   place-items: center;
   padding: 24px;
+}
+
+@media (max-width: 900px) {
+  .admin-layout {
+    gap: 0;
+  }
+
+  .admin-content {
+    padding: var(--spacing-xl);
+  }
 }

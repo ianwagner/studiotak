@@ -52,8 +52,28 @@ function AnimatedText({
   progress: number;
   align?: "left" | "center" | "right";
 }) {
-  const words = useMemo(() => text.split(" "), [text]);
   const letters = useMemo(() => text.split(""), [text]);
+  const fadeCharacterTokens = useMemo(() => {
+    let animationIndex = 0;
+    const tokens = text
+      .split(/(\s+)/)
+      .filter(Boolean)
+      .map((token) => {
+        if (/^\s+$/.test(token)) {
+          return { kind: "space" as const, text: token };
+        }
+
+        return {
+          kind: "word" as const,
+          chars: Array.from(token).map((char) => ({
+            char,
+            animationIndex: animationIndex++
+          }))
+        };
+      });
+
+    return { tokens, characterCount: animationIndex };
+  }, [text]);
   const justifyContent = align === "center" ? "center" : align === "right" ? "flex-end" : "flex-start";
 
   if (variant === "typewriter") {
@@ -138,23 +158,36 @@ function AnimatedText({
   }
 
   return (
-    <span style={{ display: "inline-flex", flexWrap: "wrap", gap: 10, justifyContent }}>
-      {words.map((word, index) => {
-        const localProgress = getStaggerProgress(index, words.length, progress);
-        const y = (1 - localProgress) * 16;
-        const opacity = localProgress;
+    <span style={{ display: "inline-flex", flexWrap: "wrap", justifyContent }}>
+      {fadeCharacterTokens.tokens.map((token, tokenIndex) => {
+        if (token.kind === "space") {
+          return (
+            <span key={`space-${tokenIndex}`} aria-hidden style={{ display: "inline-block", width: "0.28em" }}>
+              {token.text.length > 1 ? "\u00A0" : null}
+            </span>
+          );
+        }
+
         return (
-          <span
-            key={`${word}-${index}`}
-            style={{
-              display: "inline-block",
-              transform: `translateY(${y}px)`,
-              opacity,
-              transition: "transform 0.16s ease, opacity 0.16s ease"
-            }}
-          >
-            {word}
-            {index < words.length - 1 ? <span style={{ width: 8, display: "inline-block" }} /> : null}
+          <span key={`word-${tokenIndex}`} style={{ display: "inline-flex", whiteSpace: "nowrap" }}>
+            {token.chars.map(({ char, animationIndex }) => {
+              const localProgress = getStaggerProgress(animationIndex, fadeCharacterTokens.characterCount, progress);
+              const y = (1 - localProgress) * 16;
+              const opacity = localProgress;
+              return (
+                <span
+                  key={`${char}-${animationIndex}`}
+                  style={{
+                    display: "inline-block",
+                    transform: `translateY(${y}px)`,
+                    opacity,
+                    transition: "transform 0.16s ease, opacity 0.16s ease"
+                  }}
+                >
+                  {char}
+                </span>
+              );
+            })}
           </span>
         );
       })}
@@ -287,6 +320,7 @@ export function AnimatedHeadline({
   const contentStyle: CSSProperties = {
     display: "grid",
     gap: 16,
+    fontFamily: "var(--font-secondary)",
     maxWidth: 960,
     textAlign: "center",
     alignItems: "center",
@@ -339,7 +373,19 @@ export function AnimatedHeadline({
     <section ref={containerRef} style={containerStyle} aria-label={headline}>
       <motion.div ref={wrapperRef} style={wrapperStyle}>
         <div style={contentStyle}>
-          <h1 style={{ fontSize: "clamp(32px, 8vw, 56px)", lineHeight: 1.05, margin: 0, maxWidth: "100%", overflowWrap: "break-word" }}>
+          <h1
+            style={{
+              fontFamily: "var(--font-secondary)",
+              fontSize: "var(--font-size-display-md)",
+              fontWeight: 300,
+              letterSpacing: 0,
+              lineHeight: 0.94,
+              margin: 0,
+              maxWidth: "100%",
+              overflowWrap: "break-word",
+              textTransform: "none"
+            }}
+          >
             <AnimatedText text={headline} variant={animationStyle} progress={progressValue} />
           </h1>
           {subtext ? (
@@ -348,7 +394,9 @@ export function AnimatedHeadline({
                 margin: 0,
                 maxWidth: 740,
                 color: "var(--muted)",
-                fontSize: 18,
+                fontFamily: "var(--font-secondary)",
+                fontSize: "var(--font-size-body-lg)",
+                fontWeight: 300,
                 transform: `translateY(${subtextY}px)`,
                 opacity: subtextOpacity,
                 transition: "transform 0.2s ease, opacity 0.2s ease"

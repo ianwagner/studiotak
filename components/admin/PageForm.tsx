@@ -1935,7 +1935,7 @@ export function PageForm({
                     value={block.animationStyle}
                     onChange={(e) => handleAnimatedHeadlineFieldChange(idx, "animationStyle", e.target.value)}
                   >
-                    <option value="fade_by_word">Fade in by word</option>
+                    <option value="fade_by_word">Fade in by character</option>
                     <option value="slide_by_letter">Slide up by letter</option>
                     <option value="typewriter">Typewriter</option>
                     <option value="scramble">Scramble reveal</option>

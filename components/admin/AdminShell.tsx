@@ -111,7 +111,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   padding: "10px 12px",
                   border: "1px solid var(--border)",
                   borderRadius: 8,
-                  background: "rgba(255,255,255,0.02)",
+                  background: "var(--surface-muted)",
                   marginTop: "auto"
                 }}
               >
@@ -125,8 +125,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       gap: 8,
                       padding: "8px 10px",
                       borderRadius: 6,
-                      background: "rgba(255,205,41,0.08)",
-                      border: "1px solid rgba(255,205,41,0.3)"
+                      background: "var(--edit-color-10)",
+                      border: "1px solid var(--edit-color)"
                     }}
                   >
                     <span style={{ color: "var(--muted)", fontSize: 13 }}>

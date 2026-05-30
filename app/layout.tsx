@@ -1,14 +1,26 @@
 import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import { getSiteSettings } from "@/lib/siteSettings";
 import "./globals.css";
 
 const rubik = Rubik({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "900"],
   display: "swap",
   variable: "--font-sans"
+});
+
+const sentient = localFont({
+  src: [
+    { path: "../Fonts/WEB/fonts/Sentient-Light.woff2", weight: "300", style: "normal" },
+    { path: "../Fonts/WEB/fonts/Sentient-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../Fonts/WEB/fonts/Sentient-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../Fonts/WEB/fonts/Sentient-Bold.woff2", weight: "700", style: "normal" }
+  ],
+  display: "swap",
+  variable: "--font-sentient"
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
@@ -45,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={rubik.variable}>
+    <html lang="en" className={`${rubik.variable} ${sentient.variable}`}>
       <body className={rubik.className}>
         {googleAnalyticsId ? (
           <>

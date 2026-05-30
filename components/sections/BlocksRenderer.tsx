@@ -224,7 +224,7 @@ const renderBlockSections = (sections?: BlockSection[]) => {
             <div className="story-step-line" />
           </div>
           <div className="story-step-content">
-            <strong style={{ fontSize: 18 }}>{section.title}</strong>
+            <strong style={{ fontSize: "var(--font-size-title-sm)" }}>{section.title}</strong>
             <p style={{ margin: 0, color: "var(--muted)" }}>{section.body}</p>
           </div>
         </motion.div>
@@ -300,9 +300,9 @@ const FeatureCard = ({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <strong style={{ fontSize: 20 }}>{item.title}</strong>
+              <strong style={{ fontSize: "var(--font-size-title-md)" }}>{item.title}</strong>
             </div>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: 15 }}>{item.body}</p>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "var(--font-size-body)" }}>{item.body}</p>
             {item.href ? (
               <AnchorAwareLink
                 href={item.href}
@@ -342,7 +342,7 @@ const FeatureCard = ({
                 }}
               />
             )}
-            <strong style={{ fontSize: 18 }}>{item.title}</strong>
+            <strong style={{ fontSize: "var(--font-size-title-sm)" }}>{item.title}</strong>
           </div>
           <p style={{ margin: 0, color: "var(--muted)" }}>{item.body}</p>
           {item.href ? (
@@ -771,9 +771,9 @@ const DynamicHeroColumns = ({
               })}
             </div>
             {loading ? (
-              <span style={{ color: "var(--muted)", fontSize: 13 }}>Loading tagged media…</span>
+              <span style={{ color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>Loading tagged media…</span>
             ) : null}
-            {statusText ? <span style={{ color: "var(--muted)", fontSize: 13 }}>{statusText}</span> : null}
+            {statusText ? <span style={{ color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>{statusText}</span> : null}
           </div>
         ) : null}
       </div>
@@ -888,8 +888,8 @@ const renderHeroBlock = (
         marginLeft: isDynamicHero && !isSingleColumnDynamic ? "auto" : undefined,
         textAlign: isCenteredThirds ? "center" : undefined
       };
-  const headingSize = isCompact ? "clamp(36px, 8vw, 56px)" : "clamp(44px, 9vw, 76px)";
-  const subtitleSize = isCompact ? 16 : 18;
+  const headingSize = isCompact ? "var(--font-size-display-sm)" : "var(--font-size-display-md)";
+  const subtitleSize = isCompact ? "var(--font-size-body-lg)" : "var(--font-size-lede)";
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;
   const dynamicLayoutGap = isDynamicHero ? 12 : layoutGap;
@@ -909,9 +909,34 @@ const renderHeroBlock = (
       }}
     >
       {block.eyebrow ? <Pill>{block.eyebrow}</Pill> : null}
-      <h1 style={{ fontSize: headingSize, lineHeight: 1.05, margin: 0 }}>{block.title}</h1>
+      <h1
+        style={{
+          fontFamily: "var(--font-secondary)",
+          fontSize: headingSize,
+          fontWeight: 300,
+          lineHeight: isCompact ? 0.98 : 0.94,
+          letterSpacing: 0,
+          textTransform: "none",
+          margin: 0
+        }}
+      >
+        {block.title}
+      </h1>
       {block.subtitle ? (
-        <p style={{ maxWidth: 720, color: "var(--muted)", margin: 0, fontSize: subtitleSize }}>{block.subtitle}</p>
+        <p
+          style={{
+            maxWidth: isCompact ? "52ch" : "48ch",
+            color: "var(--muted)",
+            fontFamily: "var(--font-sans, var(--font-primary))",
+            fontSize: subtitleSize,
+            fontStyle: "normal",
+            fontWeight: 400,
+            lineHeight: isCompact ? 1.4 : 1.45,
+            margin: 0
+          }}
+        >
+          {block.subtitle}
+        </p>
       ) : null}
       <div
         style={{
@@ -1135,7 +1160,7 @@ const renderStoryBlock = (block: StoryBlock, index: number) => {
     <div className="grid" style={{ gap: 10 }}>
       <SectionHeading title={block.heading} />
       {block.variant !== "split_with_quote" ? (
-        <p style={{ margin: 0, color: "var(--muted)", fontSize: 16 }}>{block.body}</p>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "var(--font-size-body)" }}>{block.body}</p>
       ) : null}
     </div>
   );
@@ -1170,7 +1195,7 @@ const renderStoryBlock = (block: StoryBlock, index: number) => {
                 borderRadius: 12
               }}
             >
-              <p style={{ margin: 0, fontSize: 18, lineHeight: 1.4 }}>{block.body}</p>
+              <p style={{ margin: 0, fontSize: "var(--font-size-body-lg)", lineHeight: 1.4 }}>{block.body}</p>
             </div>
           ) : null}
           <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
@@ -1235,7 +1260,7 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
   const content = (
     <div className="grid" style={{ gap: 12 }}>
       <SectionHeading eyebrow={block.eyebrow} title={block.heading} />
-      {block.body ? <p style={{ margin: 0, color: "var(--muted)", fontSize: 16 }}>{block.body}</p> : null}
+      {block.body ? <p style={{ margin: 0, color: "var(--muted)", fontSize: "var(--font-size-body)" }}>{block.body}</p> : null}
       {block.ctaLabel && block.ctaHref ? (
         <AnchorAwareLink
           className="btn"
@@ -1633,7 +1658,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             border-radius: 12px;
             padding: 10px 12px;
             border: 1px solid transparent;
-            font-size: 14px;
+            font-size: var(--font-size-label);
           }
           [data-brevo-form] .sib-form-message-panel svg {
             width: 18px;
@@ -1683,7 +1708,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
           }
           [data-brevo-form] .entry__label {
             font-weight: 700;
-            font-size: 14px;
+            font-size: var(--font-size-label);
             color: var(--muted);
           }
           [data-brevo-form] .entry__field,
@@ -1697,7 +1722,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             border: 1px solid rgba(214, 54, 54, 0.28);
             border-radius: 10px;
             padding: 6px 10px;
-            font-size: 13px;
+            font-size: var(--font-size-sm);
             min-height: 1.25rem;
             display: block !important;
             opacity: 1 !important;
@@ -1707,7 +1732,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
           }
           [data-brevo-form] .entry__specification {
             color: var(--muted);
-            font-size: 12px;
+            font-size: var(--font-size-xs);
             margin: 0;
           }
           [data-brevo-form] .input,
@@ -1735,7 +1760,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 14px;
+            font-size: var(--font-size-label);
             color: var(--text);
           }
           [data-brevo-form] .sib-optin input[type="checkbox"] {
@@ -1769,7 +1794,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 15px;
+            font-size: var(--font-size-body);
             text-align: left;
             font-weight: 700;
             font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
@@ -1800,7 +1825,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             border: 1px solid var(--border-strong);
             background: var(--accent-soft);
             color: var(--text);
-            font-size: 18px;
+            font-size: var(--font-size-body-lg);
             line-height: 1.6;
             font-weight: 600;
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
@@ -2003,7 +2028,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
                 </div>
                 )}
               </div>
-              <p style={{ margin: 0, color: "var(--muted)", fontSize: 13 }}>
+              <p style={{ margin: 0, color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>
                 We typically reply within one business day.
               </p>
             </div>
@@ -2081,7 +2106,7 @@ const FeaturesBlockSection = ({
               >
                 {item.badge ? (
                   <span style={{
-                    fontSize: 12,
+                    fontSize: "var(--font-size-xs)",
                     fontWeight: 600,
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
@@ -2102,11 +2127,11 @@ const FeaturesBlockSection = ({
                     }}
                   />
                 ) : null}
-                <strong style={{ fontSize: featIsMobile ? 20 : 20, lineHeight: 1.3 }}>{item.title}</strong>
+                <strong style={{ fontSize: "var(--font-size-title-md)", lineHeight: 1.3 }}>{item.title}</strong>
                 <p style={{
                   margin: 0,
                   color: "var(--muted)",
-                  fontSize: 15,
+                  fontSize: "var(--font-size-body)",
                   lineHeight: 1.7
                 }}>
                   {item.body}
@@ -2250,7 +2275,7 @@ const FeatureSpotlightBlockSection = ({
                   transition: "background 0.2s ease, border-color 0.2s ease, color 0.2s ease",
                   color: idx === activeIndex ? "var(--text)" : "var(--muted)",
                   fontFamily: "inherit",
-                  fontSize: isMobile ? 14 : 15,
+                  fontSize: "var(--font-size-body)",
                   fontWeight: idx === activeIndex ? 600 : 400
                 }}
               >
@@ -2285,11 +2310,11 @@ const FeatureSpotlightBlockSection = ({
               padding: isMobile ? 0 : "24px 0",
               justifyContent: "center"
             }}>
-              <h3 style={{ margin: 0, fontSize: isMobile ? 22 : 26, fontWeight: 700, lineHeight: 1.25 }}>{activeItem.title}</h3>
+              <h3 style={{ margin: 0, fontSize: isMobile ? "var(--font-size-title-md)" : "var(--font-size-title-lg)", fontWeight: 700, lineHeight: 1.25 }}>{activeItem.title}</h3>
               <p style={{
                 margin: 0,
                 color: "var(--muted)",
-                fontSize: 16,
+                fontSize: "var(--font-size-body-lg)",
                 lineHeight: 1.7
               }}>
                 {activeItem.body}
@@ -2642,6 +2667,120 @@ const shuffleLogos = (items: LogoItem[]) => {
   return result;
 };
 
+type StatItemRecord = StatsBlock["items"][number];
+
+const parseStatValue = (rawValue: string) => {
+  const match = rawValue.trim().match(/^(\d[\d,]*)([A-Za-z]*)$/);
+  if (!match) return null;
+
+  const target = Number(match[1].replace(/,/g, ""));
+  if (!Number.isFinite(target)) return null;
+
+  return {
+    target,
+    compactSuffix: match[2] ?? "",
+    useGrouping: match[1].includes(",")
+  };
+};
+
+const formatStatValue = (value: number, useGrouping: boolean) =>
+  useGrouping ? new Intl.NumberFormat("en-US").format(value) : String(value);
+
+const AnimatedStatValue = ({
+  item,
+  active,
+  delayMs,
+  hideQualifierPrefix
+}: {
+  item: StatItemRecord;
+  active: boolean;
+  delayMs: number;
+  hideQualifierPrefix: boolean;
+}) => {
+  const parsed = useMemo(() => parseStatValue(item.value), [item.value]);
+  const [displayValue, setDisplayValue] = useState(() => {
+    if (!parsed) return item.value;
+    return `${formatStatValue(0, parsed.useGrouping)}${parsed.compactSuffix}`;
+  });
+
+  useEffect(() => {
+    if (!parsed) {
+      setDisplayValue(item.value);
+      return;
+    }
+
+    if (!active) {
+      setDisplayValue(`${formatStatValue(0, parsed.useGrouping)}${parsed.compactSuffix}`);
+      return;
+    }
+
+    let frame = 0;
+    let startTime = 0;
+    let timeout = 0;
+    const duration = 950;
+
+    timeout = window.setTimeout(() => {
+      const tick = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const value = Math.round(parsed.target * eased);
+        setDisplayValue(`${formatStatValue(value, parsed.useGrouping)}${parsed.compactSuffix}`);
+
+        if (progress < 1) {
+          frame = window.requestAnimationFrame(tick);
+        }
+      };
+
+      frame = window.requestAnimationFrame(tick);
+    }, delayMs);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.cancelAnimationFrame(frame);
+    };
+  }, [active, delayMs, item.value, parsed]);
+
+  return (
+    <>
+      {hideQualifierPrefix ? "" : item.prefix ?? ""}
+      {displayValue}
+      {item.suffix ?? ""}
+    </>
+  );
+};
+
+const statsContainerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      delayChildren: 0.08,
+      staggerChildren: 0.12
+    }
+  }
+};
+
+const statCardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 34,
+    scale: 0.96,
+    rotateX: -6,
+    filter: "blur(10px)"
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotateX: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.62,
+      ease: [0.22, 1, 0.36, 1]
+    }
+  }
+};
+
 const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number }) => {
   const preset = animationPresets[defaultAnimationPreset];
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -2655,10 +2794,16 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
       style={{
         width: "100%",
         maxWidth: "var(--max-width)",
+        minHeight: "100svh",
         marginLeft: "auto",
         marginRight: "auto",
         paddingLeft: sectionPx,
-        paddingRight: sectionPx
+        paddingRight: sectionPx,
+        paddingTop: "clamp(72px, 10vh, 128px)",
+        paddingBottom: "clamp(72px, 10vh, 128px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
       }}
       variants={preset.item}
       initial="hidden"
@@ -2678,7 +2823,7 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
           }
         }
       `}</style>
-      <div className="grid" style={{ gap: 24 }}>
+      <div className="grid" style={{ gap: 24, width: "100%" }}>
         {block.heading ? (
           <SectionHeading
             eyebrow={block.eyebrow}
@@ -2693,46 +2838,64 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
           className="grid"
           style={{
             gridTemplateColumns: `repeat(${items.length}, 1fr)`,
-            gap: 16,
-            textAlign: "center"
+            gap: isCard ? 2 : 16,
+            textAlign: "left",
+            borderRadius: isCard ? "var(--radius-md)" : undefined,
+            overflow: isCard ? "hidden" : undefined,
+            perspective: 1000
           }}
-          variants={preset.container}
+          variants={statsContainerVariants}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
         >
-          {items.map((item, idx) => (
-            <motion.div
-              key={`${item.label}-${idx}`}
-              variants={preset.item}
-              style={{
-                padding: isCard ? 24 : 16,
-                borderRadius: isCard ? 16 : 0,
-                border: isCard ? "1px solid var(--border-strong)" : "none",
-                background: isCard ? "rgba(255,255,255,0.02)" : "transparent"
-              }}
-            >
-              <div
+          {items.map((item, idx) => {
+            const hasQualifierPrefix = Boolean(item.prefix?.trim() && /[A-Za-z]/.test(item.prefix));
+
+            return (
+              <motion.div
+                key={`${item.label}-${idx}`}
+                variants={statCardVariants}
+                whileHover={{ y: -4, scale: 1.015, transition: { duration: 0.18, ease: "easeOut" } }}
                 style={{
-                  fontSize: 48,
-                  fontWeight: 700,
-                  lineHeight: 1.1,
-                  color: "var(--fg)",
-                  letterSpacing: "-0.02em"
+                  minHeight: isCard ? 140 : undefined,
+                  padding: isCard ? "28px 24px 22px" : 16,
+                  borderRadius: 0,
+                  border: "none",
+                  background: isCard ? "rgba(255,255,255,0.02)" : "transparent",
+                  transformStyle: "preserve-3d",
+                  willChange: "transform, opacity, filter"
                 }}
               >
-                {item.prefix ?? ""}{item.value}{item.suffix ?? ""}
-              </div>
-              <div
-                style={{
-                  fontSize: 15,
-                  color: "var(--muted)",
-                  marginTop: 6
-                }}
-              >
-                {item.label}
-              </div>
-            </motion.div>
-          ))}
+                <div
+                  style={{
+                    fontFamily: "var(--font-stat)",
+                    fontSize: "var(--font-size-stat)",
+                    fontWeight: 300,
+                    lineHeight: 0.86,
+                    color: "var(--fg)",
+                    letterSpacing: 0
+                  }}
+                >
+                  <AnimatedStatValue
+                    item={item}
+                    active={inView}
+                    delayMs={idx * 120}
+                    hideQualifierPrefix={hasQualifierPrefix}
+                  />
+                </div>
+                <div
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    lineHeight: 1.5,
+                    color: "var(--muted)",
+                    marginTop: 12
+                  }}
+                >
+                  {item.label}
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
     </motion.section>
@@ -2986,7 +3149,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                       alignSelf: "stretch"
                     }}
                   >
-                    <div style={{ fontSize: 15, lineHeight: 1.2 }}>{row.feature}</div>
+                    <div style={{ fontSize: "var(--font-size-body)", lineHeight: 1.2 }}>{row.feature}</div>
                     {row.label ? (
                       <div
                         style={{
@@ -3008,7 +3171,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                     data-column-label={tableHeaders.highlighted}
                     style={{
                       color: "var(--comparison-highlight-text)",
-                      fontSize: 14,
+                      fontSize: "var(--font-size-label)",
                       lineHeight: 1.4,
                       alignSelf: "stretch"
                     }}
@@ -3025,7 +3188,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                     data-column-label={tableHeaders.other}
                     style={{
                       color: "var(--muted)",
-                      fontSize: 14,
+                      fontSize: "var(--font-size-label)",
                       lineHeight: 1.4,
                       alignSelf: "stretch"
                     }}
@@ -3045,7 +3208,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                   data-table-side-cell
                   style={{
                     color: "var(--text)",
-                    fontSize: 15,
+                    fontSize: "var(--font-size-body)",
                     fontWeight: 700
                   }}
                 >
@@ -3101,7 +3264,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
         <h3
           style={{
             margin: 0,
-            fontSize: 22,
+            fontSize: "var(--font-size-title-md)",
             fontWeight: 700,
             paddingBottom: 16,
             borderBottom: isHighlighted ? "1px solid var(--accent)" : "1px solid var(--border-strong)",
@@ -3132,7 +3295,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
                 borderBottom: idx < col.items.length - 1
                   ? `1px solid ${isHighlighted ? "rgba(255,112,11,0.15)" : "var(--border-strong)"}`
                   : "none",
-                fontSize: 15,
+                fontSize: "var(--font-size-body)",
                 color: isHighlighted ? "var(--fg)" : "var(--muted)",
                 lineHeight: 1.5,
                 textDecoration: isHighlighted ? "none" : "none",
@@ -3393,7 +3556,7 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
     ? "invert(1) grayscale(1) brightness(3.2) contrast(1.35)"
     : "grayscale(1)";
   const logoBlendMode = isDarkTheme ? "screen" : "normal";
-  const fadeColor = isDarkTheme ? "rgba(6,6,10,0.92)" : "rgba(255,255,255,0.94)";
+  const fadeColor = "var(--bg)";
   const wallBackground = "transparent";
 
   return (
@@ -3523,12 +3686,12 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
           </div>
         </div>
         {!logos.length && !loading ? (
-          <p style={{ margin: 0, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+          <p style={{ margin: 0, textAlign: "center", color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>
             Add media items with type <code>Logo</code> to replace the placeholders.
           </p>
         ) : null}
         {loading ? (
-            <p style={{ margin: 0, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Loading logos…</p>
+            <p style={{ margin: 0, textAlign: "center", color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>Loading logos…</p>
           ) : null}
         </div>
     </section>
@@ -3547,6 +3710,15 @@ type ShowcaseMediaItem = {
 
 // Showcase assets are always portrait 9x16, so start with that ratio to avoid a resize jump on load.
 const showcaseDefaultRatio = 9 / 16;
+
+const stableUnitInterval = (value: string) => {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+};
 
 const ShowcaseBlockSection = ({
   block,
@@ -3693,13 +3865,15 @@ const ShowcaseBlockSection = ({
   const computedFitWidth = (availableWidth + overlap * (cardCount - 1)) / cardCount;
   const fittedCardWidth = clampNumber(computedFitWidth, minCardWidth, maxCardWidth);
   const forceScroll = (viewportWidth ?? Number.POSITIVE_INFINITY) < 768;
-  const shouldScroll = forceScroll || (fittedCardWidth === minCardWidth && cardCount > 1) || isNarrow;
+  const shouldScroll = forceScroll || isNarrow;
   const cardWidth = shouldScroll ? Math.min(320, Math.max(minCardWidth, fittedCardWidth)) : fittedCardWidth;
   const maxCardHeight = shouldScroll
     ? clampNumber(viewportHeight !== null ? viewportHeight - headerHeight - 96 : 560, 260, 660)
     : null;
   const totalWidth = cardCount * cardWidth - overlap * (cardCount - 1);
-  const scrollPaddingX = shouldScroll ? 0 : paddingX;
+  const scrollBleedX = shouldScroll ? clampNumber(Math.round(cardWidth * 0.14), 28, 56) : 0;
+  const scrollPaddingX = shouldScroll ? scrollBleedX : paddingX;
+  const stackBleedY = clampNumber(Math.round(cardWidth * 0.22), 48, 92);
 
   useEffect(() => {
     if (!shouldScroll) return;
@@ -3715,7 +3889,7 @@ const ShowcaseBlockSection = ({
     displayItems.forEach((item, idx) => {
       const key = `${item.id ?? `card-${idx}`}-${item.url}`;
       if (!(key in zSeedsRef.current)) {
-        zSeedsRef.current[key] = Math.random();
+        zSeedsRef.current[key] = stableUnitInterval(key);
       }
     });
   }, [displayItems]);
@@ -3904,7 +4078,7 @@ const ShowcaseMedia = ({
             width: "100%",
             overflowX: shouldScroll ? "auto" : "visible",
             overflowY: "visible",
-            padding: shouldScroll ? `0 ${scrollPaddingX}px 12px` : "0",
+            padding: shouldScroll ? `${stackBleedY}px ${scrollPaddingX}px ${stackBleedY + 12}px` : "0",
             scrollbarWidth: "none",
             msOverflowStyle: "none"
           }}
@@ -3921,11 +4095,12 @@ const ShowcaseMedia = ({
             ref={stackRef}
             style={{
               position: "relative",
-              width: shouldScroll ? totalWidth : "100%",
+              width: shouldScroll ? totalWidth : `${totalWidth}px`,
+              marginLeft: shouldScroll ? undefined : `calc(50% - ${totalWidth / 2}px)`,
               display: "flex",
               justifyContent: shouldScroll ? "flex-start" : "center",
               alignItems: "center",
-              padding: "12px 0",
+              padding: shouldScroll ? "0" : `${stackBleedY}px 0`,
               opacity: loading && !items.length ? 0.65 : 1,
               paddingLeft: shouldScroll ? 4 : 0,
               paddingRight: shouldScroll ? 4 : 0
@@ -3938,7 +4113,7 @@ const ShowcaseMedia = ({
               displayItems.map((item, cardIdx) => {
                 const fallbackRatio = showcaseDefaultRatio;
                 const cardKey = `${item.id ?? `card-${cardIdx}`}-${item.url}`;
-                const seed = zSeedsRef.current[cardKey] ?? 0;
+                const seed = zSeedsRef.current[cardKey] ?? stableUnitInterval(cardKey);
                 const baseZ = Math.round(seed * 100);
                 const isHovered = hoveredId === cardKey;
                 const ratio =
@@ -3949,8 +4124,10 @@ const ShowcaseMedia = ({
                 const cardH = cardW / ratio;
                 const isVideo = item.mediaType === "video" || /\.(mp4|mov|webm|ogg)$/i.test(item.url);
                 const hue = (cardIdx * 37) % 360;
-                const baseRotate = rotations[cardIdx % rotations.length];
+                const seededRotate = (seed - 0.5) * 13;
+                const baseRotate = Math.abs(seededRotate) > 1.2 ? seededRotate : rotations[cardIdx % rotations.length];
                 const hoverRotate = baseRotate * 0.4;
+                const liftY = isHovered ? (cardIdx % 2 === 0 ? -2 : 4) : cardIdx % 2 === 0 ? -4 : 6;
 
                 return (
                   <motion.div
@@ -3960,32 +4137,36 @@ const ShowcaseMedia = ({
                     style={{
                       marginLeft: cardIdx === 0 ? 0 : -overlap,
                       zIndex: isHovered ? baseZ + 200 : baseZ + 50,
-                      rotate: `${isHovered ? hoverRotate : baseRotate}deg`,
-                      transformOrigin: "center",
-                      translateY: isHovered ? (cardIdx % 2 === 0 ? -2 : 4) : cardIdx % 2 === 0 ? -4 : 6,
-                      transition: "margin 0.24s ease, transform 0.3s ease"
+                      transition: "margin 0.24s ease"
                     }}
                     onMouseEnter={() => setHoveredId(cardKey)}
                     onMouseLeave={() => setHoveredId(null)}
                   >
                     <div
                       style={{
-                        width: cardW,
-                        height: cardH,
-                        maxHeight: shouldScroll ? maxCardHeight ?? undefined : undefined,
-                        borderRadius: 16,
-                        overflow: "hidden",
-                        border: "1px solid var(--border-strong)",
-                        boxShadow: "none",
-                        background: item.isPlaceholder
-                          ? `linear-gradient(135deg, hsla(${hue}, 70%, 62%, 0.16), rgba(255,255,255,0.04))`
-                          : "rgba(255,255,255,0.02)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "width 0.24s ease, height 0.24s ease"
+                        transform: `translateY(${liftY}px) rotate(${isHovered ? hoverRotate : baseRotate}deg)`,
+                        transformOrigin: "center",
+                        transition: "transform 0.3s ease"
                       }}
                     >
+                      <div
+                        style={{
+                          width: cardW,
+                          height: cardH,
+                          maxHeight: shouldScroll ? maxCardHeight ?? undefined : undefined,
+                          borderRadius: 16,
+                          overflow: "hidden",
+                          border: "1px solid var(--border-strong)",
+                          boxShadow: "none",
+                          background: item.isPlaceholder
+                            ? `linear-gradient(135deg, hsla(${hue}, 70%, 62%, 0.16), rgba(255,255,255,0.04))`
+                            : "rgba(255,255,255,0.02)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transition: "width 0.24s ease, height 0.24s ease"
+                        }}
+                      >
                       {item.isPlaceholder ? (
                         <div
                           style={{
@@ -4021,6 +4202,7 @@ const ShowcaseMedia = ({
                           priority={cardIdx < 2}
                         />
                       )}
+                      </div>
                     </div>
                   </motion.div>
                 );
@@ -4038,7 +4220,7 @@ const ArticleFeaturedBlockSection = ({ block }: { block: ArticleFeaturedBlock })
   if (!post) return null;
   const published = formatDate(post.published_at);
   return (
-    <section className="container learn-shell" style={{ display: "grid", gap: 24, padding: "24px 0 48px" }}>
+    <section className="container learn-shell learn-featured-section" style={{ display: "grid", gap: 24 }}>
       <Link href={`/learn/${post.slug}`} className="learn-featured-link">
         <div className="learn-featured">
           <div className="learn-featured-content">
