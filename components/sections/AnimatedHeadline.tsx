@@ -136,7 +136,7 @@ function AnimatedText({
       <span style={{ display: "inline-flex", flexWrap: "wrap", justifyContent }}>
         {letters.map((letter, index) => {
           const localProgress = getStaggerProgress(index, letters.length, progress);
-          const y = (1 - localProgress) * 24;
+          const y = (1 - localProgress) * -24;
           const opacity = localProgress;
           return (
             <span
@@ -172,7 +172,7 @@ function AnimatedText({
           <span key={`word-${tokenIndex}`} style={{ display: "inline-flex", whiteSpace: "nowrap" }}>
             {token.chars.map(({ char, animationIndex }) => {
               const localProgress = getStaggerProgress(animationIndex, fadeCharacterTokens.characterCount, progress);
-              const y = (1 - localProgress) * 16;
+              const y = (1 - localProgress) * -16;
               const opacity = localProgress;
               return (
                 <span
@@ -328,7 +328,7 @@ export function AnimatedHeadline({
   };
 
   const subtextOpacity = clamp01((progressValue - 0.2) / 0.4);
-  const subtextY = (1 - subtextOpacity) * 12;
+  const subtextY = (1 - subtextOpacity) * -12;
 
   // Use scroll position (not IntersectionObserver) to control dark mode.
   // IntersectionObserver re-fires when theme changes cause layout shifts, creating a feedback loop.
@@ -394,9 +394,10 @@ export function AnimatedHeadline({
                 margin: 0,
                 maxWidth: 740,
                 color: "var(--muted)",
-                fontFamily: "var(--font-secondary)",
+                fontFamily: "var(--font-sans, var(--font-primary))",
                 fontSize: "var(--font-size-body-lg)",
-                fontWeight: 300,
+                fontWeight: 400,
+                lineHeight: 1.45,
                 transform: `translateY(${subtextY}px)`,
                 opacity: subtextOpacity,
                 transition: "transform 0.2s ease, opacity 0.2s ease"

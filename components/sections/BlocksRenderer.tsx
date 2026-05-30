@@ -3,7 +3,8 @@
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
+import type { MotionValue } from "framer-motion";
 import type {
   AnimatedHeadlineBlock,
   ArticleFeaturedBlock,
@@ -2688,19 +2689,27 @@ const formatStatValue = (value: number, useGrouping: boolean) =>
 
 const AnimatedStatValue = ({
   item,
-  active,
-  delayMs,
+  scrollProgress,
+  revealStart,
+  revealEnd,
   hideQualifierPrefix
 }: {
   item: StatItemRecord;
-  active: boolean;
-  delayMs: number;
+  scrollProgress: MotionValue<number>;
+  revealStart: number;
+  revealEnd: number;
   hideQualifierPrefix: boolean;
 }) => {
   const parsed = useMemo(() => parseStatValue(item.value), [item.value]);
+  const animatedValue = useTransform(scrollProgress, [revealStart, revealEnd], [0, parsed?.target ?? 1]);
   const [displayValue, setDisplayValue] = useState(() => {
     if (!parsed) return item.value;
     return `${formatStatValue(0, parsed.useGrouping)}${parsed.compactSuffix}`;
+  });
+
+  useMotionValueEvent(animatedValue, "change", (latest) => {
+    if (!parsed) return;
+    setDisplayValue(`${formatStatValue(Math.round(latest), parsed.useGrouping)}${parsed.compactSuffix}`);
   });
 
   useEffect(() => {
@@ -2709,37 +2718,8 @@ const AnimatedStatValue = ({
       return;
     }
 
-    if (!active) {
-      setDisplayValue(`${formatStatValue(0, parsed.useGrouping)}${parsed.compactSuffix}`);
-      return;
-    }
-
-    let frame = 0;
-    let startTime = 0;
-    let timeout = 0;
-    const duration = 950;
-
-    timeout = window.setTimeout(() => {
-      const tick = (timestamp: number) => {
-        if (!startTime) startTime = timestamp;
-        const progress = Math.min((timestamp - startTime) / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const value = Math.round(parsed.target * eased);
-        setDisplayValue(`${formatStatValue(value, parsed.useGrouping)}${parsed.compactSuffix}`);
-
-        if (progress < 1) {
-          frame = window.requestAnimationFrame(tick);
-        }
-      };
-
-      frame = window.requestAnimationFrame(tick);
-    }, delayMs);
-
-    return () => {
-      window.clearTimeout(timeout);
-      window.cancelAnimationFrame(frame);
-    };
-  }, [active, delayMs, item.value, parsed]);
+    setDisplayValue(`${formatStatValue(Math.round(animatedValue.get()), parsed.useGrouping)}${parsed.compactSuffix}`);
+  }, [animatedValue, item.value, parsed]);
 
   return (
     <>
@@ -2750,46 +2730,67 @@ const AnimatedStatValue = ({
   );
 };
 
-const statsContainerVariants = {
-  hidden: {},
-  visible: {
-    transition: {
-      delayChildren: 0.08,
-      staggerChildren: 0.12
-    }
-  }
+const getScrubWindow = (idx: number, total: number, start = 0.14, span = 0.28) => {
+  const stagger = total > 1 ? (idx / (total - 1)) * 0.14 : 0;
+  const revealStart = Math.min(0.78, start + stagger);
+  const revealEnd = Math.min(0.94, revealStart + span);
+  return { revealStart, revealEnd };
 };
 
-const statCardVariants = {
-  hidden: {
-    opacity: 0,
-    y: 34,
-    scale: 0.96,
-    rotateX: -6,
-    filter: "blur(10px)"
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    rotateX: 0,
-    filter: "blur(0px)",
-    transition: {
-      duration: 0.62,
-      ease: [0.22, 1, 0.36, 1]
-    }
-  }
+const ScrollScrubStatCard = ({
+  children,
+  idx,
+  total,
+  isCard,
+  scrollProgress
+}: {
+  children: ReactNode;
+  idx: number;
+  total: number;
+  isCard: boolean;
+  scrollProgress: MotionValue<number>;
+}) => {
+  const { revealStart, revealEnd } = getScrubWindow(idx, total);
+  const opacity = useTransform(scrollProgress, [revealStart, revealEnd], [0, 1]);
+  const y = useTransform(scrollProgress, [revealStart, revealEnd], [34, 0]);
+  const scale = useTransform(scrollProgress, [revealStart, revealEnd], [0.96, 1]);
+  const rotateX = useTransform(scrollProgress, [revealStart, revealEnd], [-6, 0]);
+  const filter = useTransform(scrollProgress, [revealStart, revealEnd], ["blur(10px)", "blur(0px)"]);
+
+  return (
+    <motion.div
+      style={{
+        minHeight: isCard ? 140 : undefined,
+        padding: isCard ? "28px 24px 22px" : 16,
+        borderRadius: 0,
+        border: "none",
+        background: isCard ? "var(--stats-card-bg)" : "transparent",
+        transformStyle: "preserve-3d",
+        willChange: "transform, opacity, filter",
+        opacity,
+        y,
+        scale,
+        rotateX,
+        filter
+      }}
+    >
+      {children}
+    </motion.div>
+  );
 };
 
 const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number }) => {
-  const preset = animationPresets[defaultAnimationPreset];
-  const gridRef = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(gridRef, { amount: 0.3, once: true });
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start 82%", "end 52%"]
+  });
   const items = block.items ?? [];
   const isCard = block.variant === "card";
 
   return (
     <motion.section
+      ref={sectionRef}
       key={block.id ?? index}
       style={{
         width: "100%",
@@ -2805,11 +2806,6 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
         alignItems: "center",
         justifyContent: "center"
       }}
-      variants={preset.item}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.3 }}
-      custom={index}
     >
       <style>{`
         @media (max-width: 600px) {
@@ -2833,7 +2829,6 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
           />
         ) : null}
         <motion.div
-          ref={gridRef}
           data-stats-grid
           className="grid"
           style={{
@@ -2844,27 +2839,18 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
             overflow: isCard ? "hidden" : undefined,
             perspective: 1000
           }}
-          variants={statsContainerVariants}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
         >
           {items.map((item, idx) => {
             const hasQualifierPrefix = Boolean(item.prefix?.trim() && /[A-Za-z]/.test(item.prefix));
+            const { revealStart, revealEnd } = getScrubWindow(idx, items.length);
 
             return (
-              <motion.div
+              <ScrollScrubStatCard
                 key={`${item.label}-${idx}`}
-                variants={statCardVariants}
-                whileHover={{ y: -4, scale: 1.015, transition: { duration: 0.18, ease: "easeOut" } }}
-                style={{
-                  minHeight: isCard ? 140 : undefined,
-                  padding: isCard ? "28px 24px 22px" : 16,
-                  borderRadius: 0,
-                  border: "none",
-                  background: isCard ? "rgba(255,255,255,0.02)" : "transparent",
-                  transformStyle: "preserve-3d",
-                  willChange: "transform, opacity, filter"
-                }}
+                idx={idx}
+                total={items.length}
+                isCard={isCard}
+                scrollProgress={scrollYProgress}
               >
                 <div
                   style={{
@@ -2878,8 +2864,9 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
                 >
                   <AnimatedStatValue
                     item={item}
-                    active={inView}
-                    delayMs={idx * 120}
+                    scrollProgress={scrollYProgress}
+                    revealStart={revealStart}
+                    revealEnd={revealEnd}
                     hideQualifierPrefix={hasQualifierPrefix}
                   />
                 </div>
@@ -2893,10 +2880,17 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
                 >
                   {item.label}
                 </div>
-              </motion.div>
+              </ScrollScrubStatCard>
             );
           })}
         </motion.div>
+        {block.ctaLabel && block.ctaHref ? (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <AnchorAwareLink className="btn secondary" href={block.ctaHref} trackingSection="stats_cta">
+              {block.ctaLabel}
+            </AnchorAwareLink>
+          </div>
+        ) : null}
       </div>
     </motion.section>
   );
@@ -2907,11 +2901,6 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
   const gridRef = useRef<HTMLDivElement | null>(null);
   const inView = useInView(gridRef, { amount: 0.3, once: true });
   const [colA, colB] = block.columns ?? [];
-
-  const staggerItems = {
-    hidden: {},
-    visible: { transition: { staggerChildren: 0.06 } }
-  };
   const fadeUp = {
     hidden: { opacity: 0, y: 8 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }
@@ -2952,365 +2941,20 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
     </span>
   );
 
-  if (block.variant === "feature_table" && (block.rows ?? []).length > 0) {
-    const highlightedColumn = block.columns?.find((col) => col.highlighted) ?? colB ?? colA;
-    const otherColumn = block.columns?.find((col) => !col.highlighted) ?? colA ?? colB;
-    const tableHeaders = {
-      feature: block.tableHeaders?.feature ?? "Feature",
-      highlighted: block.tableHeaders?.highlighted ?? highlightedColumn?.heading ?? "Campfire",
-      other: block.tableHeaders?.other ?? otherColumn?.heading ?? "The other guys"
-    };
-
-    return (
-      <motion.section
-        key={block.id ?? index}
-        style={{
-          width: "100%",
-          maxWidth: "var(--max-width)",
-          marginLeft: "auto",
-          marginRight: "auto",
-          paddingLeft: sectionPx,
-          paddingRight: sectionPx
-        }}
-        data-comparison-table-section
-        variants={preset.item}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
-        custom={index}
-      >
-        <style>{`
-          [data-comparison-table-section] {
-            --comparison-panel: color-mix(in srgb, var(--surface) 96%, var(--bg));
-            --comparison-header: color-mix(in srgb, var(--muted-surface) 52%, transparent);
-            --comparison-highlight: color-mix(in srgb, var(--accent-soft) 32%, var(--surface));
-            --comparison-highlight-border: color-mix(in srgb, var(--accent) 24%, var(--border-strong));
-            --comparison-highlight-text: color-mix(in srgb, var(--text) 88%, var(--accent));
-          }
-          [data-comparison-table] {
-            overflow: hidden;
-            position: relative;
-          }
-          [data-comparison-table-header],
-          [data-comparison-table-row],
-          [data-comparison-table-footer] {
-            display: grid;
-            grid-template-columns: minmax(140px, 0.7fr) minmax(0, 1.08fr) minmax(0, 1fr);
-            position: relative;
-            z-index: 1;
-          }
-          [data-comparison-table-header] > div,
-          [data-comparison-table-cell] {
-            padding: 13px 16px;
-          }
-          [data-comparison-table-row] {
-            border-top: 1px solid var(--border);
-          }
-          [data-table-highlight-cell] {
-            position: relative;
-            background: var(--comparison-highlight);
-            border-left: 1px solid var(--comparison-highlight-border);
-            border-right: 1px solid var(--comparison-highlight-border);
-          }
-          [data-comparison-table-footer] {
-            border-top: 1px solid var(--border-strong);
-            background: color-mix(in srgb, var(--muted-surface) 22%, transparent);
-          }
-          @media (max-width: 760px) {
-            [data-comparison-table-header] {
-              display: none;
-            }
-            [data-comparison-table-row],
-            [data-comparison-table-footer] {
-              display: block;
-            }
-            [data-comparison-table-row] {
-              border-top: 1px solid var(--border);
-              padding: 10px 0;
-            }
-            [data-comparison-table-header] > div,
-            [data-comparison-table-cell] {
-              padding: 5px 14px;
-            }
-            [data-table-feature-cell] {
-              padding-bottom: 8px;
-            }
-            [data-table-highlight-cell] {
-              background: transparent;
-              border: 0;
-            }
-            [data-table-highlight-cell],
-            [data-table-other-cell] {
-              display: grid;
-              grid-template-columns: 72px minmax(0, 1fr);
-              column-gap: 10px;
-              align-items: flex-start;
-            }
-            [data-table-highlight-cell]::before,
-            [data-table-other-cell]::before {
-              content: attr(data-column-label);
-              display: block;
-              padding-top: 3px;
-              color: var(--muted);
-              font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
-              font-size: 10px;
-              font-style: normal;
-              font-weight: 700;
-              letter-spacing: 0.06em;
-              text-transform: uppercase;
-            }
-            [data-table-highlight-cell]::before {
-              color: var(--accent-strong);
-            }
-            [data-comparison-table-footer] {
-              padding: 12px 0;
-            }
-          }
-        `}</style>
-        <div className="grid" style={{ gap: 18 }}>
-          {block.heading ? (
-            <SectionHeading
-              eyebrow={block.eyebrow}
-              title={block.heading}
-              kicker={block.body}
-              align="center"
-            />
-          ) : null}
-          <motion.div
-            ref={gridRef}
-            data-comparison-table
-            style={{
-              border: "1px solid var(--border-strong)",
-              borderRadius: 12,
-              background: "var(--comparison-panel)",
-              boxShadow: "none"
-            }}
-            variants={preset.container}
-            initial="hidden"
-            animate={inView ? "visible" : "hidden"}
-          >
-            <div
-              data-comparison-table-header
-              style={{
-                background: "var(--comparison-header)",
-                borderBottom: "1px solid var(--border)",
-                color: "var(--muted)",
-                fontSize: 12,
-                fontWeight: 600,
-                letterSpacing: "0.02em",
-                textTransform: "uppercase"
-              }}
-            >
-              <div
-                data-table-feature-cell
-                style={{
-                  color: "var(--muted)",
-                  lineHeight: 1.2
-                }}
-              >
-                {tableHeaders.feature}
-              </div>
-              <div
-                style={{
-                  background: "var(--comparison-highlight)",
-                  borderLeft: "1px solid var(--comparison-highlight-border)",
-                  borderRight: "1px solid var(--comparison-highlight-border)",
-                  color: "var(--accent)",
-                  fontWeight: 700,
-                  lineHeight: 1.2
-                }}
-              >
-                {tableHeaders.highlighted}
-              </div>
-              <div
-                data-table-feature-cell
-                style={{
-                  color: "var(--muted)",
-                  lineHeight: 1.2
-                }}
-              >
-                {tableHeaders.other}
-              </div>
-            </div>
-            <div data-comparison-table-body>
-              {(block.rows ?? []).map((row, rowIdx) => (
-                <motion.div
-                  key={`${row.feature}-${rowIdx}`}
-                  data-comparison-table-row
-                  variants={fadeUp}
-                >
-                  <div
-                    data-comparison-table-cell
-                    data-table-feature-cell
-                    data-table-side-cell
-                    style={{
-                      color: "var(--text)",
-                      fontWeight: 700,
-                      alignSelf: "stretch"
-                    }}
-                  >
-                    <div style={{ fontSize: "var(--font-size-body)", lineHeight: 1.2 }}>{row.feature}</div>
-                    {row.label ? (
-                      <div
-                        style={{
-                          marginTop: 4,
-                          color: "var(--muted)",
-                          fontSize: 10.5,
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.03em"
-                        }}
-                      >
-                        {row.label}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div
-                    data-comparison-table-cell
-                    data-table-highlight-cell
-                    data-column-label={tableHeaders.highlighted}
-                    style={{
-                      color: "var(--comparison-highlight-text)",
-                      fontSize: "var(--font-size-label)",
-                      lineHeight: 1.4,
-                      alignSelf: "stretch"
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
-                      <CheckIcon />
-                      <span style={{ fontWeight: 500 }}>{row.highlighted}</span>
-                    </div>
-                  </div>
-                  <div
-                    data-comparison-table-cell
-                    data-table-side-cell
-                    data-table-other-cell
-                    data-column-label={tableHeaders.other}
-                    style={{
-                      color: "var(--muted)",
-                      fontSize: "var(--font-size-label)",
-                      lineHeight: 1.4,
-                      alignSelf: "stretch"
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
-                      <XIcon />
-                      <span>{row.other}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-            {block.footer ? (
-              <div data-comparison-table-footer>
-                <div
-                  data-comparison-table-cell
-                  data-table-side-cell
-                  style={{
-                    color: "var(--text)",
-                    fontSize: "var(--font-size-body)",
-                    fontWeight: 700
-                  }}
-                >
-                  {block.footer.feature}
-                </div>
-                <div
-                  data-comparison-table-cell
-                  data-table-highlight-cell
-                  data-column-label={tableHeaders.highlighted}
-                  style={{
-                    color: "var(--accent-strong)",
-                    fontWeight: 700,
-                    lineHeight: 1.5
-                  }}
-                >
-                  {block.footer.highlighted}
-                </div>
-                <div
-                  data-comparison-table-cell
-                  data-table-side-cell
-                  data-table-other-cell
-                  data-column-label={tableHeaders.other}
-                  style={{
-                    color: "var(--muted)",
-                    lineHeight: 1.5
-                  }}
-                >
-                  {block.footer.other}
-                </div>
-              </div>
-            ) : null}
-          </motion.div>
-        </div>
-      </motion.section>
-    );
-  }
-
-  const renderColumn = (col: typeof colA, isHighlighted: boolean) => {
-    if (!col) return null;
-    return (
-      <div
-        style={{
-          padding: 28,
-          borderRadius: 20,
-          border: isHighlighted ? "2px solid var(--accent)" : "1px solid var(--border-strong)",
-          background: isHighlighted ? "var(--accent-soft)" : "rgba(255,255,255,0.02)",
-          display: "grid",
-          gap: 0,
-          alignContent: "start",
-          position: "relative"
-        }}
-      >
-        <h3
-          style={{
-            margin: 0,
-            fontSize: "var(--font-size-title-md)",
-            fontWeight: 700,
-            paddingBottom: 16,
-            borderBottom: isHighlighted ? "1px solid var(--accent)" : "1px solid var(--border-strong)",
-            color: isHighlighted ? "var(--fg)" : "var(--muted)",
-            letterSpacing: "-0.01em",
-            display: "flex",
-            alignItems: "center",
-            gap: 10
-          }}
-        >
-          {col.heading}
-        </h3>
-        <motion.ul
-          style={{ listStyle: "none", margin: 0, padding: 0 }}
-          variants={staggerItems}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-        >
-          {(col.items ?? []).map((item, idx) => (
-            <motion.li
-              key={idx}
-              variants={fadeUp}
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 12,
-                padding: "14px 0",
-                borderBottom: idx < col.items.length - 1
-                  ? `1px solid ${isHighlighted ? "rgba(255,112,11,0.15)" : "var(--border-strong)"}`
-                  : "none",
-                fontSize: "var(--font-size-body)",
-                color: isHighlighted ? "var(--fg)" : "var(--muted)",
-                lineHeight: 1.5,
-                textDecoration: isHighlighted ? "none" : "none",
-              }}
-            >
-              {isHighlighted ? <CheckIcon /> : <XIcon />}
-              <span style={{
-                opacity: isHighlighted ? 1 : 0.7,
-              }}>{item}</span>
-            </motion.li>
-          ))}
-        </motion.ul>
-      </div>
-    );
+  const highlightedColumn = block.columns?.find((col) => col.highlighted) ?? colB ?? colA;
+  const otherColumn = block.columns?.find((col) => !col.highlighted) ?? colA ?? colB;
+  const tableHeaders = {
+    feature: block.tableHeaders?.feature ?? "Feature",
+    highlighted: block.tableHeaders?.highlighted ?? highlightedColumn?.heading ?? "Campfire",
+    other: block.tableHeaders?.other ?? otherColumn?.heading ?? "The other guys"
   };
+  const tableRows: NonNullable<ComparisonBlock["rows"]> = (block.rows ?? []).length
+    ? block.rows ?? []
+    : Array.from({ length: Math.max(highlightedColumn?.items?.length ?? 0, otherColumn?.items?.length ?? 0) }, (_, rowIdx) => ({
+        feature: `Point ${rowIdx + 1}`,
+        highlighted: highlightedColumn?.items?.[rowIdx] ?? "",
+        other: otherColumn?.items?.[rowIdx] ?? ""
+      }));
 
   return (
     <motion.section
@@ -3323,21 +2967,102 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
         paddingLeft: sectionPx,
         paddingRight: sectionPx
       }}
-      data-comparison-section
+      data-comparison-table-section
       variants={preset.item}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.3 }}
+      viewport={{ once: true, amount: 0.25 }}
       custom={index}
     >
       <style>{`
-        @media (max-width: 680px) {
-          [data-comparison-grid] {
-            grid-template-columns: 1fr !important;
+        [data-comparison-table-section] {
+          --comparison-panel: color-mix(in srgb, var(--surface) 96%, var(--bg));
+          --comparison-header: color-mix(in srgb, var(--muted-surface) 52%, transparent);
+          --comparison-highlight: color-mix(in srgb, var(--accent-soft) 32%, var(--surface));
+          --comparison-highlight-border: color-mix(in srgb, var(--accent) 24%, var(--border-strong));
+          --comparison-highlight-text: color-mix(in srgb, var(--text) 88%, var(--accent));
+        }
+        [data-comparison-table] {
+          overflow: hidden;
+          position: relative;
+        }
+        [data-comparison-table-header],
+        [data-comparison-table-row],
+        [data-comparison-table-footer] {
+          display: grid;
+          grid-template-columns: minmax(140px, 0.7fr) minmax(0, 1.08fr) minmax(0, 1fr);
+          position: relative;
+          z-index: 1;
+        }
+        [data-comparison-table-header] > div,
+        [data-comparison-table-cell] {
+          padding: 13px 16px;
+        }
+        [data-comparison-table-row] {
+          border-top: 1px solid var(--border);
+        }
+        [data-table-highlight-cell] {
+          position: relative;
+          background: var(--comparison-highlight);
+          border-left: 1px solid var(--comparison-highlight-border);
+          border-right: 1px solid var(--comparison-highlight-border);
+        }
+        [data-comparison-table-footer] {
+          border-top: 1px solid var(--border-strong);
+          background: color-mix(in srgb, var(--muted-surface) 22%, transparent);
+        }
+        @media (max-width: 760px) {
+          [data-comparison-table-header] {
+            display: none;
+          }
+          [data-comparison-table-row],
+          [data-comparison-table-footer] {
+            display: block;
+          }
+          [data-comparison-table-row] {
+            border-top: 1px solid var(--border);
+            padding: 10px 0;
+          }
+          [data-comparison-table-header] > div,
+          [data-comparison-table-cell] {
+            padding: 5px 14px;
+          }
+          [data-table-feature-cell] {
+            padding-bottom: 8px;
+          }
+          [data-table-highlight-cell] {
+            background: transparent;
+            border: 0;
+          }
+          [data-table-highlight-cell],
+          [data-table-other-cell] {
+            display: grid;
+            grid-template-columns: 72px minmax(0, 1fr);
+            column-gap: 10px;
+            align-items: flex-start;
+          }
+          [data-table-highlight-cell]::before,
+          [data-table-other-cell]::before {
+            content: attr(data-column-label);
+            display: block;
+            padding-top: 3px;
+            color: var(--muted);
+            font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
+            font-size: 10px;
+            font-style: normal;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+          }
+          [data-table-highlight-cell]::before {
+            color: var(--accent-strong);
+          }
+          [data-comparison-table-footer] {
+            padding: 12px 0;
           }
         }
       `}</style>
-      <div className="grid" style={{ gap: 24 }}>
+      <div className="grid" style={{ gap: 18 }}>
         {block.heading ? (
           <SectionHeading
             eyebrow={block.eyebrow}
@@ -3348,23 +3073,152 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
         ) : null}
         <motion.div
           ref={gridRef}
-          data-comparison-grid
-          className="grid"
+          data-comparison-table
           style={{
-            gridTemplateColumns: "1fr 1fr",
-            gap: 20,
-            alignItems: "start"
+            border: "1px solid var(--border-strong)",
+            borderRadius: 12,
+            background: "var(--comparison-panel)",
+            boxShadow: "none"
           }}
           variants={preset.container}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
         >
-          <motion.div variants={preset.item}>
-            {renderColumn(colA, !!colA?.highlighted)}
-          </motion.div>
-          <motion.div variants={preset.item}>
-            {renderColumn(colB, !!colB?.highlighted)}
-          </motion.div>
+          <div
+            data-comparison-table-header
+            style={{
+              background: "var(--comparison-header)",
+              borderBottom: "1px solid var(--border)",
+              color: "var(--muted)",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              textTransform: "uppercase"
+            }}
+          >
+            <div data-table-feature-cell style={{ color: "var(--muted)", lineHeight: 1.2 }}>
+              {tableHeaders.feature}
+            </div>
+            <div
+              style={{
+                background: "var(--comparison-highlight)",
+                borderLeft: "1px solid var(--comparison-highlight-border)",
+                borderRight: "1px solid var(--comparison-highlight-border)",
+                color: "var(--accent)",
+                fontWeight: 700,
+                lineHeight: 1.2
+              }}
+            >
+              {tableHeaders.highlighted}
+            </div>
+            <div data-table-feature-cell style={{ color: "var(--muted)", lineHeight: 1.2 }}>
+              {tableHeaders.other}
+            </div>
+          </div>
+          <div data-comparison-table-body>
+            {tableRows.map((row, rowIdx) => (
+              <motion.div key={`${row.feature}-${rowIdx}`} data-comparison-table-row variants={fadeUp}>
+                <div
+                  data-comparison-table-cell
+                  data-table-feature-cell
+                  data-table-side-cell
+                  style={{
+                    color: "var(--text)",
+                    fontWeight: 700,
+                    alignSelf: "stretch"
+                  }}
+                >
+                  <div style={{ fontSize: "var(--font-size-body)", lineHeight: 1.2 }}>{row.feature}</div>
+                  {row.label ? (
+                    <div
+                      style={{
+                        marginTop: 4,
+                        color: "var(--muted)",
+                        fontSize: 10.5,
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.03em"
+                      }}
+                    >
+                      {row.label}
+                    </div>
+                  ) : null}
+                </div>
+                <div
+                  data-comparison-table-cell
+                  data-table-highlight-cell
+                  data-column-label={tableHeaders.highlighted}
+                  style={{
+                    color: "var(--comparison-highlight-text)",
+                    fontSize: "var(--font-size-label)",
+                    lineHeight: 1.4,
+                    alignSelf: "stretch"
+                  }}
+                >
+                  <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                    <CheckIcon />
+                    <span style={{ fontWeight: 500 }}>{row.highlighted}</span>
+                  </div>
+                </div>
+                <div
+                  data-comparison-table-cell
+                  data-table-side-cell
+                  data-table-other-cell
+                  data-column-label={tableHeaders.other}
+                  style={{
+                    color: "var(--muted)",
+                    fontSize: "var(--font-size-label)",
+                    lineHeight: 1.4,
+                    alignSelf: "stretch"
+                  }}
+                >
+                  <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                    <XIcon />
+                    <span>{row.other}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          {block.footer ? (
+            <div data-comparison-table-footer>
+              <div
+                data-comparison-table-cell
+                data-table-side-cell
+                style={{
+                  color: "var(--text)",
+                  fontSize: "var(--font-size-body)",
+                  fontWeight: 700
+                }}
+              >
+                {block.footer.feature}
+              </div>
+              <div
+                data-comparison-table-cell
+                data-table-highlight-cell
+                data-column-label={tableHeaders.highlighted}
+                style={{
+                  color: "var(--accent-strong)",
+                  fontWeight: 700,
+                  lineHeight: 1.5
+                }}
+              >
+                {block.footer.highlighted}
+              </div>
+              <div
+                data-comparison-table-cell
+                data-table-side-cell
+                data-table-other-cell
+                data-column-label={tableHeaders.other}
+                style={{
+                  color: "var(--muted)",
+                  lineHeight: 1.5
+                }}
+              >
+                {block.footer.other}
+              </div>
+            </div>
+          ) : null}
         </motion.div>
       </div>
     </motion.section>
@@ -3556,7 +3410,6 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
     ? "invert(1) grayscale(1) brightness(3.2) contrast(1.35)"
     : "grayscale(1)";
   const logoBlendMode = isDarkTheme ? "screen" : "normal";
-  const fadeColor = "var(--bg)";
   const wallBackground = "transparent";
 
   return (
@@ -3580,22 +3433,6 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
             gap: 12px;
           }
         }
-        [data-logos-fade] {
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          width: 96px;
-          pointer-events: none;
-          z-index: 2;
-        }
-        [data-logos-fade="left"] {
-          left: 0;
-          background: linear-gradient(90deg, var(--logos-fade-color, var(--surface)) 0%, var(--logos-fade-color, var(--surface)) 18%, transparent 100%);
-        }
-        [data-logos-fade="right"] {
-          right: 0;
-          background: linear-gradient(270deg, var(--logos-fade-color, var(--surface)) 0%, var(--logos-fade-color, var(--surface)) 18%, transparent 100%);
-        }
       `}</style>
       <div className="grid" style={{ gap: 14 }}>
         <div style={{ textAlign: "center", display: "grid", gap: 6 }}>
@@ -3609,13 +3446,10 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
             borderRadius: 0,
             background: wallBackground,
             padding: "14px 16px",
-            ["--logos-fade-color" as string]: fadeColor,
             ["--logos-duration" as string]: "26s"
           }}
           ref={wallRef}
         >
-          <div data-logos-fade="left" aria-hidden />
-          <div data-logos-fade="right" aria-hidden />
           <div style={{ display: "grid", gap: 12, position: "relative" }}>
             <div style={{ position: "relative", overflow: "hidden" }}>
               <motion.div
@@ -3720,6 +3554,47 @@ const stableUnitInterval = (value: string) => {
   return (hash >>> 0) / 4294967295;
 };
 
+const ScrollScrubShowcaseCard = ({
+  children,
+  idx,
+  total,
+  scrollProgress,
+  style,
+  onMouseEnter,
+  onMouseLeave
+}: {
+  children: ReactNode;
+  idx: number;
+  total: number;
+  scrollProgress: MotionValue<number>;
+  style?: CSSProperties;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) => {
+  const { revealStart, revealEnd } = getScrubWindow(idx, total, 0.08, 0.3);
+  const opacity = useTransform(scrollProgress, [revealStart, revealEnd], [0, 1]);
+  const y = useTransform(scrollProgress, [revealStart, revealEnd], [48, 0]);
+  const scale = useTransform(scrollProgress, [revealStart, revealEnd], [0.92, 1]);
+  const filter = useTransform(scrollProgress, [revealStart, revealEnd], ["blur(12px)", "blur(0px)"]);
+
+  return (
+    <motion.div
+      style={{
+        ...style,
+        opacity,
+        y,
+        scale,
+        filter,
+        willChange: "transform, opacity, filter"
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 const ShowcaseBlockSection = ({
   block,
   index,
@@ -3732,6 +3607,7 @@ const ShowcaseBlockSection = ({
   audienceFilter?: string;
 }) => {
   const basePaddingX = 0;
+  const sectionRef = useRef<HTMLElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const stackRef = useRef<HTMLDivElement | null>(null);
@@ -3751,9 +3627,10 @@ const ShowcaseBlockSection = ({
   const industryFilter = audienceFilter || block.industryFilter?.trim();
   const featuredOnly = Boolean(block.featuredOnly);
   const resultsLimit = clampNumber(block.limit ?? 6, 1, 24);
-  const presetName = block.animationPreset ?? defaultAnimationPreset;
-  const preset = animationPresets[presetName] ?? animationPresets[defaultAnimationPreset];
-  const stackInView = useInView(stackRef, { amount: 0.2, once: true });
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start 88%", "end 52%"]
+  });
 
   useEffect(() => {
     const el = frameRef.current;
@@ -4033,6 +3910,7 @@ const ShowcaseMedia = ({
 
   return (
     <section
+      ref={sectionRef}
       key={block.id ?? index}
       style={{
         width: "100%",
@@ -4105,9 +3983,6 @@ const ShowcaseMedia = ({
               paddingLeft: shouldScroll ? 4 : 0,
               paddingRight: shouldScroll ? 4 : 0
             }}
-            variants={preset.container}
-            initial="hidden"
-            animate={stackInView ? "visible" : "hidden"}
           >
             {displayItems.length ? (
               displayItems.map((item, cardIdx) => {
@@ -4130,10 +4005,11 @@ const ShowcaseMedia = ({
                 const liftY = isHovered ? (cardIdx % 2 === 0 ? -2 : 4) : cardIdx % 2 === 0 ? -4 : 6;
 
                 return (
-                  <motion.div
+                  <ScrollScrubShowcaseCard
                     key={cardKey}
-                    custom={cardIdx}
-                    variants={preset.item}
+                    idx={cardIdx}
+                    total={displayItems.length}
+                    scrollProgress={scrollYProgress}
                     style={{
                       marginLeft: cardIdx === 0 ? 0 : -overlap,
                       zIndex: isHovered ? baseZ + 200 : baseZ + 50,
@@ -4204,7 +4080,7 @@ const ShowcaseMedia = ({
                       )}
                       </div>
                     </div>
-                  </motion.div>
+                  </ScrollScrubShowcaseCard>
                 );
               })
             ) : null}
@@ -4310,6 +4186,17 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
   );
 };
 
+const GlowBackgroundLayer = ({ active }: { active: boolean }) => (
+  <div className={`block-background-glow${active ? " is-active" : ""}`} aria-hidden="true">
+    <div className="block-background-field">
+      <span />
+      <span />
+      <span />
+    </div>
+    <div className="block-background-texture" />
+  </div>
+);
+
 function BlocksRendererInner({ blocks }: BlocksRendererProps) {
   const searchParams = useSearchParams();
   const audienceFilter = searchParams.get("audience") ?? undefined;
@@ -4323,6 +4210,22 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
   const lazyLoadRef = useRef<HTMLDivElement | null>(null);
   const lazyInView = useInView(lazyLoadRef, { once: true, margin: "35% 0px" });
   const [renderRest, setRenderRest] = useState(!shouldLazyLoadRest);
+  const blockRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const glowRange = useMemo(() => {
+    const first = blocks.findIndex((block) => block.backgroundStyle === "glow");
+    if (first < 0) return null;
+    let last = first;
+    blocks.forEach((block, idx) => {
+      if (block.backgroundStyle === "glow") last = idx;
+    });
+    return {
+      first,
+      last,
+      firstKey: String(blocks[first]?.id ?? first),
+      lastKey: String(blocks[last]?.id ?? last)
+    };
+  }, [blocks]);
+  const [glowActive, setGlowActive] = useState(false);
   const shouldForceDarkOnLoad = useMemo(() => {
     const first = blocks[0];
     if (!first) return false;
@@ -4338,6 +4241,42 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
       setRenderRest(true);
     }
   }, [lazyInView, shouldLazyLoadRest]);
+  useEffect(() => {
+    if (!glowRange) {
+      setGlowActive(false);
+      return;
+    }
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const firstEl = blockRefs.current[glowRange.firstKey];
+      const lastEl = blockRefs.current[glowRange.lastKey];
+      if (!firstEl) {
+        setGlowActive(false);
+        return;
+      }
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const firstRect = firstEl.getBoundingClientRect();
+      const lastRect = lastEl?.getBoundingClientRect();
+      const hasStarted = firstRect.top <= viewportHeight;
+      const hasNotEnded = lastRect ? lastRect.bottom >= 0 : true;
+      setGlowActive(hasStarted && hasNotEnded);
+    };
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [glowRange, renderRest]);
   const initialThemeScript = useMemo(() => {
     const forceDark = shouldForceDarkOnLoad;
     return `(function(){try{var root=document.documentElement;if(!root)return;var base=root.getAttribute("data-base-theme");if(base!=="light"&&base!=="dark"){var prefersDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");var isDark=prefersDark&&prefersDark.matches;root.setAttribute("data-base-theme", isDark ? "dark" : "light");}if(${forceDark ? "true" : "false"} && root.getAttribute("data-theme")!=="dark"){root.setAttribute("data-theme","dark");}}catch(e){}})();`;
@@ -4347,9 +4286,11 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
       {shouldForceDarkOnLoad ? (
         <script id="initial-theme-shift" dangerouslySetInnerHTML={{ __html: initialThemeScript }} />
       ) : null}
-      <div className="grid" style={{ gap: "var(--block-gap, 24px)" }}>
+      <GlowBackgroundLayer active={glowActive} />
+      <div className="grid block-content-layer" style={{ gap: "var(--block-gap, 24px)" }}>
         {blocks.map((block, index) => {
           const key = block.id ?? index;
+          const refKey = String(key);
           const shouldDelayRender = shouldLazyLoadRest && index >= initialVisibleCount && !renderRest;
           if (shouldDelayRender) {
             if (index === initialVisibleCount) {
@@ -4410,12 +4351,32 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
           const shouldWrap = block.type !== "animated_headline" && block.enableDarkModeOnScroll;
           if (shouldWrap) {
             return (
-              <ThemeShiftRegion key={key} enabled>
-                {anchoredElement}
-              </ThemeShiftRegion>
+              <div
+                key={key}
+                ref={(node) => {
+                  blockRefs.current[refKey] = node;
+                }}
+                data-background-style={block.backgroundStyle ?? "blank"}
+                style={{ width: "100%" }}
+              >
+                <ThemeShiftRegion enabled>
+                  {anchoredElement}
+                </ThemeShiftRegion>
+              </div>
             );
           }
-          return anchoredElement;
+          return (
+            <div
+              key={key}
+              ref={(node) => {
+                blockRefs.current[refKey] = node;
+              }}
+              data-background-style={block.backgroundStyle ?? "blank"}
+              style={{ width: "100%" }}
+            >
+              {anchoredElement}
+            </div>
+          );
         })}
       </div>
     </>

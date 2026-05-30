@@ -2,6 +2,7 @@ import type { AnimationPresetName } from "@/components/sections/animationPresets
 import type { GhostPost } from "@/lib/ghost";
 
 export type PageStatus = "draft" | "published";
+export type BlockBackgroundStyle = "blank" | "glow";
 
 export type BlockMedia = {
   url: string;
@@ -257,6 +258,8 @@ export type StatsBlock = {
   eyebrow?: string;
   heading?: string;
   body?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   items: StatItem[];
   variant?: "default" | "card";
   enableDarkModeOnScroll?: boolean;
@@ -290,7 +293,7 @@ export type ComparisonBlock = {
   eyebrow?: string;
   heading?: string;
   body?: string;
-  variant?: "columns" | "feature_table";
+  variant?: "feature_table";
   tableHeaders?: {
     feature?: string;
     highlighted?: string;
@@ -302,7 +305,7 @@ export type ComparisonBlock = {
   enableDarkModeOnScroll?: boolean;
 };
 
-export type BlockRecord =
+export type BlockRecord = (
   | DividerBlock
   | HeroBlock
   | ThirdsBlock
@@ -319,7 +322,10 @@ export type BlockRecord =
   | ArticleGridBlock
   | ProductDemoBlock
   | StatsBlock
-  | ComparisonBlock;
+  | ComparisonBlock
+) & {
+  backgroundStyle?: BlockBackgroundStyle;
+};
 
 export type RedirectRule = {
   from: string;
