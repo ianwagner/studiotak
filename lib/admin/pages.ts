@@ -432,6 +432,7 @@ export const seedPages: PageRecord[] = [
         heading: "One link. Every ad. Total control.",
         body: "This is what reviewing ads in Campfire actually looks like — creative and copy side by side, with one-click approval. No logins, no PDFs, no email threads.",
         demoId: "ad_review",
+        typeFilter: "product_demo",
         exampleData: {
           index: 1,
           version: "V2",
@@ -664,6 +665,7 @@ export const seedPages: PageRecord[] = [
         heading: "One link. Every ad. Total control.",
         body: "This is what reviewing ads in Campfire actually looks like — creative and copy side by side, with one-click approval. No logins, no PDFs, no email threads.",
         demoId: "ad_review",
+        typeFilter: "product_demo",
         exampleData: {
           index: 1,
           version: "V2",
@@ -882,6 +884,7 @@ export const seedPages: PageRecord[] = [
         heading: "One link. Every ad. Total control.",
         body: "This is what reviewing ads in Campfire actually looks like — creative and copy side by side, with one-click approval. No logins, no PDFs, no email threads.",
         demoId: "ad_review",
+        typeFilter: "product_demo",
         exampleData: {
           index: 1,
           version: "V8",
@@ -1161,6 +1164,7 @@ export const seedPages: PageRecord[] = [
         heading: "One link. Every ad. Total control.",
         body: "This is what reviewing ads in Campfire actually looks like — creative and copy side by side, with one-click approval. No logins, no PDFs, no email threads.",
         demoId: "ad_review",
+        typeFilter: "product_demo",
         exampleData: {
           index: 1,
           version: "V2",

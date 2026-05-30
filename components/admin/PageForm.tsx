@@ -371,7 +371,7 @@ const newProductDemoBlock = (): ProductDemoBlock => ({
   heading: "",
   body: "",
   demoId: "ad_review",
-  typeFilter: "Example",
+  typeFilter: "product_demo",
   industryFilter: "",
   featuredOnly: false,
   exampleData: {
@@ -2822,7 +2822,7 @@ export function PageForm({
                   <label>Type filter</label>
                   <input
                     className="input"
-                    value={block.typeFilter ?? "Example"}
+                    value={block.typeFilter ?? "product_demo"}
                     onChange={(e) => handleProductDemoFieldChange(idx, "typeFilter", e.target.value)}
                     placeholder="Match the media 'type' field"
                   />

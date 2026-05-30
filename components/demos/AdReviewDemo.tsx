@@ -49,11 +49,22 @@ function AdCreative({
         aspectRatio: isPortrait ? "9 / 16" : "1 / 1",
         borderRadius: 12,
         overflow: "hidden",
-        background: imageUrl
-          ? `url(${imageUrl}) center / cover no-repeat`
-          : "linear-gradient(145deg, #e8c4a0 0%, #c69060 40%, #a07050 100%)",
+        background: imageUrl ? "#f3f4f6" : "linear-gradient(145deg, #e8c4a0 0%, #c69060 40%, #a07050 100%)",
       }}
-    />
+    >
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt=""
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "block",
+            objectFit: "contain"
+          }}
+        />
+      ) : null}
+    </div>
   );
 }
 

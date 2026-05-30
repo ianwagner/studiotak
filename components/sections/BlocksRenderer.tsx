@@ -127,6 +127,13 @@ const AnchorAwareLink = ({
       </a>
     );
   }
+  if (!isAnchor && href.startsWith("/")) {
+    return (
+      <Link className={className} href={href as any} style={style} onClick={handleClick}>
+        {children}
+      </Link>
+    );
+  }
   return (
     <a className={className} href={href} style={style} onClick={handleClick} {...(isAnchor ? { "data-anchor": true } : {})}>
       {children}
@@ -1391,6 +1398,71 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
   );
 };
 
+type ProductDemoMediaItem = {
+  id: string;
+  url: string;
+  name?: string;
+  mediaType?: "image" | "video";
+  width?: number;
+  height?: number;
+};
+
+type ProductDemoMediaSelection = {
+  portraitUrl?: string;
+  squareUrl?: string;
+};
+
+type ProductDemoFilterableItem = ProductDemoMediaItem & {
+  type?: string;
+  industry: string[];
+  featured: boolean;
+};
+
+const normalizeDemoTag = (value?: string | null) => value?.trim().toLowerCase() ?? "";
+
+const decodeMediaText = (value?: string) => {
+  if (!value) return "";
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+const filenameHasRatio = (item: ProductDemoMediaItem, ratio: "9x16" | "1x1") => {
+  const source = `${item.name ?? ""} ${decodeMediaText(item.url)}`;
+  const pattern =
+    ratio === "9x16"
+      ? /(?:^|[^a-z0-9])9\s*[xX:_-]\s*16(?:[^a-z0-9]|$)/
+      : /(?:^|[^a-z0-9])1\s*[xX:_-]\s*1(?:[^a-z0-9]|$)/;
+  return pattern.test(source);
+};
+
+const dimensionsMatchRatio = (item: ProductDemoMediaItem, ratio: "9x16" | "1x1") => {
+  if (!item.width || !item.height) return false;
+  const actual = item.width / item.height;
+  if (ratio === "9x16") return actual > 0.48 && actual < 0.66;
+  return actual > 0.9 && actual < 1.1;
+};
+
+const selectProductDemoMedia = (items: ProductDemoMediaItem[]): ProductDemoMediaSelection => {
+  const images = items.filter((item) => item.url && item.mediaType !== "video");
+  const portrait =
+    images.find((item) => filenameHasRatio(item, "9x16")) ??
+    images.find((item) => dimensionsMatchRatio(item, "9x16")) ??
+    images[0];
+  const square =
+    images.find((item) => item.id !== portrait?.id && filenameHasRatio(item, "1x1")) ??
+    images.find((item) => item.id !== portrait?.id && dimensionsMatchRatio(item, "1x1")) ??
+    images.find((item) => item.id !== portrait?.id) ??
+    portrait;
+
+  return {
+    portraitUrl: portrait?.url,
+    squareUrl: square?.url
+  };
+};
+
 const ProductDemoBlockSection = ({
   block,
   index,
@@ -1402,55 +1474,111 @@ const ProductDemoBlockSection = ({
 }) => {
   const hasCopy = !!(block.eyebrow || block.heading || block.body);
   const sectionId = `product-demo-${block.id ?? index}`;
-  const [dynamicImages, setDynamicImages] = useState<string[]>([]);
-  const typeFilter = block.typeFilter?.trim() || "Example";
+  const [dynamicMedia, setDynamicMedia] = useState<ProductDemoMediaSelection>({});
+  const typeFilter = block.typeFilter?.trim() || "product_demo";
   const industryFilter = audienceFilter || block.industryFilter?.trim();
   const featuredOnly = Boolean(block.featuredOnly);
-  const resultsLimit = 8;
+  const resultsLimit = 16;
 
   useEffect(() => {
     let canceled = false;
     const load = async () => {
       if (!typeFilter || !process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-        setDynamicImages([]);
+        setDynamicMedia({});
         return;
       }
 
       try {
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
+        const toItem = (doc: any): ProductDemoMediaItem => {
+          const raw = doc.data() as any;
+          const mediaType = raw.mediaType === "video" || raw.type === "video" ? "video" : "image";
+          return {
+            id: doc.id,
+            url: raw.url,
+            name: raw.name,
+            mediaType,
+            width: raw.width,
+            height: raw.height
+          };
+        };
+        const toFilterableItem = (doc: any): ProductDemoFilterableItem => {
+          const raw = doc.data() as any;
+          return {
+            ...toItem(doc),
+            type: raw.type,
+            industry: Array.isArray(raw.industry)
+              ? raw.industry
+              : typeof raw.industry === "string" && raw.industry.trim()
+                ? [raw.industry.trim()]
+                : [],
+            featured: Boolean(raw.featured)
+          };
+        };
+        const isMatch = (item: ProductDemoFilterableItem) => {
+          if (!item.url || item.mediaType === "video") return false;
+          if (normalizeDemoTag(item.type) !== normalizeDemoTag(typeFilter)) return false;
+          if (featuredOnly && !item.featured) return false;
+          return !industryFilter || item.industry.some((tag) => normalizeDemoTag(tag) === normalizeDemoTag(industryFilter));
+        };
         const baseConstraints: QueryConstraint[] = [where("status", "==", "published"), where("type", "==", typeFilter)];
         if (featuredOnly) {
           baseConstraints.push(where("featured", "==", true));
         }
-        let urls: string[] = [];
+        let items: ProductDemoMediaItem[] = [];
+        const appendRelaxedMatches = async () => {
+          const relaxedQ = query(mediaRef, where("status", "==", "published"), limit(120));
+          const relaxedSnap = await getDocs(relaxedQ);
+          if (canceled) return false;
+          const seen = new Set(items.map((item) => item.id));
+          const relaxedItems = relaxedSnap.docs
+            .map(toFilterableItem)
+            .filter((item) => isMatch(item) && !seen.has(item.id));
+          items = [...items, ...relaxedItems].slice(0, resultsLimit);
+          return true;
+        };
 
         if (industryFilter) {
-          const audienceQ = query(mediaRef, ...baseConstraints, where("industry", "array-contains", industryFilter), limit(resultsLimit));
-          const audienceSnap = await getDocs(audienceQ);
-          if (canceled) return;
-          urls = audienceSnap.docs
-            .map((doc) => doc.data() as any)
-            .filter((item) => item.url && (item.mediaType ?? item.type ?? "image") !== "video")
-            .map((item) => item.url as string);
+          try {
+            const audienceQ = query(mediaRef, ...baseConstraints, where("industry", "array-contains", industryFilter), limit(resultsLimit));
+            const audienceSnap = await getDocs(audienceQ);
+            if (canceled) return;
+            items = audienceSnap.docs.map(toItem).filter((item) => item.url && item.mediaType !== "video");
+          } catch (error) {
+            console.warn("Falling back to relaxed product demo media query", error);
+          }
         }
 
-        if (urls.length < 2) {
-          const fallbackQ = query(mediaRef, ...baseConstraints, limit(resultsLimit));
-          const fallbackSnap = await getDocs(fallbackQ);
-          if (canceled) return;
-          const seen = new Set(urls);
-          const fallbackUrls = fallbackSnap.docs
-            .map((doc) => doc.data() as any)
-            .filter((item) => item.url && (item.mediaType ?? item.type ?? "image") !== "video" && !seen.has(item.url))
-            .map((item) => item.url as string);
-          urls = [...urls, ...fallbackUrls];
+        if (industryFilter && items.length < resultsLimit) {
+          const shouldContinue = await appendRelaxedMatches();
+          if (!shouldContinue) return;
         }
 
-        setDynamicImages(urls.slice(0, 2));
+        if (items.length < resultsLimit) {
+          try {
+            const fallbackQ = query(mediaRef, ...baseConstraints, limit(resultsLimit));
+            const fallbackSnap = await getDocs(fallbackQ);
+            if (canceled) return;
+            const seen = new Set(items.map((item) => item.id));
+            const fallbackItems = fallbackSnap.docs
+              .map(toItem)
+              .filter((item) => item.url && item.mediaType !== "video" && !seen.has(item.id));
+            items = [...items, ...fallbackItems].slice(0, resultsLimit);
+          } catch (error) {
+            console.warn("Falling back to relaxed product demo media query", error);
+          }
+        }
+
+        if (items.length < 2) {
+          const shouldContinue = await appendRelaxedMatches();
+          if (!shouldContinue) return;
+        }
+
+        setDynamicMedia(selectProductDemoMedia(items));
       } catch (error) {
         console.error("Failed to load product demo media", error);
-        if (!canceled) setDynamicImages([]);
+        if (!canceled) setDynamicMedia({});
       }
     };
 
@@ -1461,7 +1589,7 @@ const ProductDemoBlockSection = ({
   }, [featuredOnly, industryFilter, resultsLimit, typeFilter]);
 
   const demoBlock = useMemo(() => {
-    if (!dynamicImages.length) return block;
+    if (!dynamicMedia.portraitUrl && !dynamicMedia.squareUrl) return block;
     const existing = block.exampleData ?? {};
     const portraitAd = existing.portraitAd ?? { imageUrl: "", brandName: "", headline: "" };
     const squareAd = existing.squareAd ?? portraitAd;
@@ -1471,15 +1599,15 @@ const ProductDemoBlockSection = ({
         ...existing,
         portraitAd: {
           ...portraitAd,
-          imageUrl: dynamicImages[0] ?? portraitAd.imageUrl
+          imageUrl: dynamicMedia.portraitUrl ?? portraitAd.imageUrl
         },
         squareAd: {
           ...squareAd,
-          imageUrl: dynamicImages[1] ?? dynamicImages[0] ?? squareAd.imageUrl
+          imageUrl: dynamicMedia.squareUrl ?? dynamicMedia.portraitUrl ?? squareAd.imageUrl
         }
       }
     };
-  }, [block, dynamicImages]);
+  }, [block, dynamicMedia]);
 
   return (
     <>
@@ -3017,7 +3145,7 @@ const StatsBlockSection = ({ block, index }: { block: StatsBlock; index: number 
         </motion.div>
         {block.ctaLabel && block.ctaHref ? (
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <AnchorAwareLink className="btn secondary" href={block.ctaHref} trackingSection="stats_cta">
+            <AnchorAwareLink className="btn" href={block.ctaHref} trackingSection="stats_cta">
               {block.ctaLabel}
             </AnchorAwareLink>
           </div>
