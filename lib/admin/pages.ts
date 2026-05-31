@@ -30,6 +30,7 @@ export type HeroBlock = {
   anchor?: string;
   eyebrow?: string;
   title: string;
+  italicTitleText?: string;
   subtitle?: string;
   primaryCtaLabel?: string;
   primaryCtaHref?: string;

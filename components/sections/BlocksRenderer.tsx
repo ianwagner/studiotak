@@ -141,6 +141,21 @@ const AnchorAwareLink = ({
   );
 };
 
+const renderHeroTitle = (title: string, italicText?: string) => {
+  const target = italicText?.trim();
+  if (!target) return title;
+  const start = title.toLocaleLowerCase().indexOf(target.toLocaleLowerCase());
+  if (start < 0) return title;
+  const end = start + target.length;
+  return (
+    <>
+      {title.slice(0, start)}
+      <em style={{ fontStyle: "italic", fontWeight: 300 }}>{title.slice(start, end)}</em>
+      {title.slice(end)}
+    </>
+  );
+};
+
 function ThemeShiftRegion({ enabled, children }: { enabled?: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const inView = useInView(ref, { margin: "-15% 0px", amount: 0.2 });
@@ -940,7 +955,7 @@ const renderHeroBlock = (
         marginLeft: isDynamicHero && !isSingleColumnDynamic ? "auto" : undefined,
         textAlign: isCenteredThirds ? "center" : undefined
       };
-  const headingSize = isCompact ? "var(--font-size-display-sm)" : "var(--font-size-display-md)";
+  const headingSize = isCompact ? "var(--font-size-display-md)" : "var(--font-size-display-lg)";
   const subtitleSize = isCompact ? "var(--font-size-body-lg)" : "var(--font-size-lede)";
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;
@@ -972,7 +987,7 @@ const renderHeroBlock = (
           margin: 0
         }}
       >
-        {block.title}
+        {renderHeroTitle(block.title, block.italicTitleText)}
       </h1>
       {block.subtitle ? (
         <p

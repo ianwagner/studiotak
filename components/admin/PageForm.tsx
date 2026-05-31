@@ -205,6 +205,7 @@ const newHeroBlock = (): HeroBlock => ({
   anchor: "",
   eyebrow: "",
   title: "Hero title",
+  italicTitleText: "",
   subtitle: "",
   primaryCtaLabel: "",
   primaryCtaHref: "",
@@ -1547,14 +1548,25 @@ export function PageForm({
                   placeholder={block.anchor || "hero"}
                 />
               </div>
-              <div className="field-group">
-                <label>Title</label>
-                <input
-                  className="input"
-                  value={block.title}
-                  onChange={(e) => handleHeroFieldChange(idx, "title", e.target.value)}
-                  placeholder="Hero headline"
-                />
+              <div className="grid" style={{ gridTemplateColumns: "minmax(0, 2fr) minmax(180px, 1fr)", gap: 12 }}>
+                <div className="field-group">
+                  <label>Title</label>
+                  <input
+                    className="input"
+                    value={block.title}
+                    onChange={(e) => handleHeroFieldChange(idx, "title", e.target.value)}
+                    placeholder="Hero headline"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Italic text</label>
+                  <input
+                    className="input"
+                    value={block.italicTitleText ?? ""}
+                    onChange={(e) => handleHeroFieldChange(idx, "italicTitleText", e.target.value)}
+                    placeholder="Word or phrase"
+                  />
+                </div>
               </div>
               <div className="field-group">
                 <label>Subtitle</label>
