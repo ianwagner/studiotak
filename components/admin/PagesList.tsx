@@ -65,7 +65,7 @@ export function PagesList() {
                       Edit
                     </Link>
                     <button
-                      className="btn secondary"
+                      className="btn danger"
                       type="button"
                       onClick={() => handleDelete(page)}
                       disabled={isDeleting}

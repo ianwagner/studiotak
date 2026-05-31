@@ -1042,7 +1042,7 @@ function MediaLibrary({
             <a className="btn secondary" href={item.url} target="_blank" rel="noreferrer">
               Open
             </a>
-            <button className="btn secondary" type="button" onClick={() => onDelete(item.id)}>
+            <button className="btn danger" type="button" onClick={() => onDelete(item.id)}>
               Delete
             </button>
           </div>
@@ -1289,7 +1289,7 @@ function MediaModal({
                   minute: "2-digit"
                 })}
               </span>
-              <button className="btn secondary" type="button" onClick={() => onDelete(item.id)}>
+              <button className="btn danger" type="button" onClick={() => onDelete(item.id)}>
                 Delete
               </button>
             </div>

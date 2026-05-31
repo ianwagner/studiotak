@@ -51,7 +51,20 @@ export default async function NotFoundPage() {
           <p style={{ margin: 0, color: "var(--muted)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
             404 — Page not found
           </p>
-          <h1 style={{ margin: 0, maxWidth: 560 }}>You&apos;ve wandered off the trail</h1>
+          <h1
+            style={{
+              margin: 0,
+              maxWidth: 560,
+              fontFamily: "var(--font-secondary)",
+              fontSize: "var(--font-size-display-sm)",
+              fontWeight: 300,
+              letterSpacing: 0,
+              lineHeight: 0.95,
+              textTransform: "none"
+            }}
+          >
+            You&apos;ve wandered off the trail
+          </h1>
           <p style={{ margin: "0 0 8px", color: "var(--muted)", maxWidth: 520 }}>
             The page you were looking for doesn&apos;t exist or has moved. Let&apos;s guide you back home.
           </p>

@@ -1567,6 +1567,16 @@ select {
   box-shadow: var(--shadow-xs);
 }
 
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: calc(var(--spacing-2xl) + var(--spacing-lg));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5 10 12.5 15 7.5' stroke='%236a6664' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-lg) center;
+  background-size: 20px 20px;
+}
+
 .input:focus,
 textarea:focus,
 select:focus {

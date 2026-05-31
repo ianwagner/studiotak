@@ -12,15 +12,33 @@ export function NavigationList() {
   const [footerSectionsList, setFooterSectionsList] = useState<string[]>([]);
   const [sectionSelections, setSectionSelections] = useState<Record<string, string>>({});
   const links = data?.data ?? [];
-  const headerLinks = links.filter((link) => link.showInHeader !== false);
-  const footerLinks = links.filter((link) => link.showInFooter);
-  const footerSections = footerLinks.reduce<Record<string, NavigationItemRecord[]>>((acc, link) => {
+  const sortedLinks = [...links].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.label.localeCompare(b.label));
+  const linkById = new Map(sortedLinks.map((link) => [link.id, link]));
+  const headerLinks = sortedLinks.filter((link) => link.showInHeader !== false);
+  const headerChildrenByParent = headerLinks
+    .filter((link) => link.parentId)
+    .reduce<Record<string, NavigationItemRecord[]>>((acc, link) => {
+      const parentId = link.parentId as string;
+      acc[parentId] = acc[parentId] ? [...acc[parentId], link] : [link];
+      return acc;
+    }, {});
+  const headerTopLevelLinks = headerLinks.filter((link) => !link.parentId);
+  const footerLinks = sortedLinks.filter((link) => link.showInFooter);
+  const footerChildrenByParent = footerLinks
+    .filter((link) => link.parentId)
+    .reduce<Record<string, NavigationItemRecord[]>>((acc, link) => {
+      const parentId = link.parentId as string;
+      acc[parentId] = acc[parentId] ? [...acc[parentId], link] : [link];
+      return acc;
+    }, {});
+  const footerParentLinks = footerLinks.filter((link) => !link.parentId);
+  const footerSections = footerParentLinks.reduce<Record<string, NavigationItemRecord[]>>((acc, link) => {
     const sectionName = link.footerSection?.trim() || "Links";
     acc[sectionName] = acc[sectionName] ? [...acc[sectionName], link] : [link];
     return acc;
   }, {});
-  const availableForHeader = links.filter((link) => link.showInHeader === false);
-  const availableForFooter = links.filter((link) => !link.showInFooter);
+  const availableForHeader = sortedLinks.filter((link) => link.showInHeader === false);
+  const availableForFooter = sortedLinks.filter((link) => !link.showInFooter);
 
   useEffect(() => {
     const keys = Object.keys(footerSections);
@@ -95,6 +113,10 @@ export function NavigationList() {
   };
 
   const sectionNames = Array.from(new Set([...footerSectionsList, ...Object.keys(footerSections)]));
+  const getParentLabel = (link: NavigationItemRecord) => {
+    if (!link.parentId) return "Top level";
+    return linkById.get(link.parentId)?.label ?? "Missing parent";
+  };
 
   return (
     <div className="grid" style={{ gap: 16 }}>
@@ -106,13 +128,8 @@ export function NavigationList() {
       </div>
 
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ display: "grid", gap: 4 }}>
-            <strong style={{ fontSize: 18 }}>Link library</strong>
-            <span style={{ color: "var(--muted)", fontSize: 14 }}>
-              Manage titles, destinations, and whether links open in a new tab.
-            </span>
-          </div>
+        <div className="admin-card-header">
+          <strong style={{ fontSize: 18 }}>Link library</strong>
           <Link className="btn" href="/admin/navigation/new">
             + Create link
           </Link>
@@ -122,40 +139,54 @@ export function NavigationList() {
             <tr>
               <th>Label</th>
               <th>Destination</th>
+              <th>Parent</th>
+              <th>Placement</th>
               <th style={{ width: 80 }}>Order</th>
-              <th style={{ width: 120 }}>Opens</th>
               <th style={{ width: 180 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={5} style={{ padding: 18, textAlign: "center" }}>
+                <td colSpan={6} style={{ padding: 18, textAlign: "center" }}>
                   Loading links…
                 </td>
               </tr>
             )}
             {!isLoading && links.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: 18, textAlign: "center", color: "var(--muted)" }}>
+                <td colSpan={6} style={{ padding: 18, textAlign: "center", color: "var(--muted)" }}>
                   No links yet. Create one to control the site nav and footer.
                 </td>
               </tr>
             ) : null}
             {!isLoading &&
-              links.map((link) => (
+              sortedLinks.map((link) => (
                 <tr key={link.id}>
-                  <td>{link.label}</td>
+                  <td>
+                    <div className="nav-admin-link-label">
+                      {link.icon ? <img src={link.icon} alt="" aria-hidden /> : null}
+                      <span>{link.label}</span>
+                    </div>
+                  </td>
                   <td style={{ color: "var(--muted)" }}>{link.href}</td>
+                  <td style={{ color: link.parentId ? "var(--text)" : "var(--muted)" }}>{getParentLabel(link)}</td>
+                  <td>
+                    <div className="nav-admin-placement">
+                      {link.showInHeader !== false ? <span className="badge">Header</span> : null}
+                      {link.showInFooter ? <span className="badge draft">Footer</span> : null}
+                      {link.showInHeader === false && !link.showInFooter ? <span className="badge neutral">Hidden</span> : null}
+                      {link.isExternal ? <span className="badge neutral">New tab</span> : null}
+                    </div>
+                  </td>
                   <td>{link.order ?? "—"}</td>
-                  <td>{link.isExternal ? "New tab" : "Same tab"}</td>
                   <td>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <Link className="btn secondary" href={`/admin/navigation/${link.id}`}>
                         Edit
                       </Link>
                       <button
-                        className="btn secondary"
+                        className="btn danger"
                         type="button"
                         onClick={() => handleDelete(link)}
                         disabled={isDeleting}
@@ -172,75 +203,85 @@ export function NavigationList() {
 
 
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ display: "grid", gap: 4 }}>
-            <strong style={{ fontSize: 18 }}>Top navigation</strong>
-            <span style={{ color: "var(--muted)", fontSize: 14 }}>
-              Links shown in the site header. Add or remove chips to control the order set by their numbers.
-            </span>
-          </div>
+        <div className="admin-card-header">
+          <strong style={{ fontSize: 18 }}>Top navigation</strong>
         </div>
-        <div className="chip-stack">
-          <p style={{ margin: "4px 0", color: "var(--muted)" }}>Showing</p>
-          <div className="chip-row">
+        <div className="nav-admin-browser">
+          <div className="nav-admin-browser-bar">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className="nav-admin-header-preview">
             {isLoading ? (
               <span style={{ color: "var(--muted)" }}>Loading links…</span>
-            ) : headerLinks.length ? (
-              headerLinks.map((link) => (
-                <button
-                  key={link.id}
-                  type="button"
-                  className="chip"
-                  onClick={() => handleRemoveFromHeader(link)}
-                  disabled={isUpdating}
-                  title="Remove from top navigation"
-                >
-                  <span>{link.label}</span>
-                  <span className="chip-meta">{link.href}</span>
-                  <span className="chip-action">Remove</span>
-                </button>
-              ))
+            ) : headerTopLevelLinks.length ? (
+              headerTopLevelLinks.map((link) => {
+                const children = headerChildrenByParent[link.id] ?? [];
+                return (
+                  <div key={link.id} className="nav-admin-tree-node">
+                    <button
+                      type="button"
+                      className="nav-admin-nav-pill"
+                      onClick={() => handleRemoveFromHeader(link)}
+                      disabled={isUpdating}
+                      title="Remove from top navigation"
+                    >
+                      {link.icon ? <img src={link.icon} alt="" aria-hidden /> : null}
+                      <span>{link.label}</span>
+                      {children.length ? <span className="nav-admin-count">{children.length}</span> : null}
+                    </button>
+                    {children.length ? (
+                      <div className="nav-admin-child-menu">
+                        {children.map((child) => (
+                          <button
+                            key={child.id}
+                            type="button"
+                            className="nav-admin-child-row"
+                            onClick={() => handleRemoveFromHeader(child)}
+                            disabled={isUpdating}
+                            title="Remove from top navigation"
+                          >
+                            {child.icon ? <img src={child.icon} alt="" aria-hidden /> : null}
+                            <span>{child.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
             ) : (
               <span style={{ color: "var(--muted)" }}>No links in the top navigation.</span>
             )}
           </div>
-          <p style={{ margin: "10px 0 4px", color: "var(--muted)" }}>Add from your library</p>
-          <div className="chip-row">
-            {availableForHeader.length ? (
-              availableForHeader.map((link) => (
-                <button
-                  key={link.id}
-                  type="button"
-                  className="chip muted"
-                  onClick={() => handleAddToHeader(link)}
-                  disabled={isUpdating}
-                  title="Add to top navigation"
-                >
-                  <span>{link.label}</span>
-                  <span className="chip-meta">{link.href}</span>
-                  <span className="chip-action">Add</span>
-                </button>
-              ))
-            ) : (
-              <span style={{ color: "var(--muted)" }}>All links are already in the top navigation.</span>
-            )}
-          </div>
         </div>
+        {availableForHeader.length ? (
+          <div className="nav-admin-add-row">
+            {availableForHeader.map((link) => (
+              <button
+                key={link.id}
+                type="button"
+                className="chip muted"
+                onClick={() => handleAddToHeader(link)}
+                disabled={isUpdating}
+                title="Add to top navigation"
+              >
+                <span>{link.label}</span>
+                <span className="chip-action">Add</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ display: "grid", gap: 4 }}>
-            <strong style={{ fontSize: 18 }}>Footer</strong>
-            <span style={{ color: "var(--muted)", fontSize: 14 }}>
-              Arrange footer sections and chips. Click a chip to remove it from the footer.
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="admin-card-header">
+          <strong style={{ fontSize: 18 }}>Footer</strong>
+          <div className="nav-admin-actions">
             <button className="btn secondary" type="button" onClick={handleAddSection} disabled={sectionNames.length >= 3}>
               + Add section
             </button>
-            <span style={{ color: "var(--muted)", fontSize: 13 }}>Max 3 sections</span>
           </div>
         </div>
         <div className="footer-section-grid">
@@ -252,36 +293,56 @@ export function NavigationList() {
               const selection = sectionSelections[section] ?? "";
               return (
                 <div key={section} className="footer-section-card">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <div className="nav-admin-footer-section-head">
                     <input
                       className="input"
                       value={section}
                       onChange={(e) => handleRenameSection(section, e.target.value)}
                       style={{ flex: 1, minWidth: 160 }}
                     />
-                    <span style={{ color: "var(--muted)", fontSize: 12 }}>{sectionLinks.length} link(s)</span>
+                    <span className="nav-admin-count">{sectionLinks.length}</span>
                   </div>
-                  <div className="chip-row">
+                  <div className="nav-admin-footer-list">
                     {sectionLinks.length ? (
-                      sectionLinks.map((link) => (
-                        <button
-                          key={link.id}
-                          type="button"
-                          className="chip"
-                          onClick={() => handleRemoveFromFooter(link)}
-                          disabled={isUpdating}
-                          title="Remove from footer"
-                        >
-                          <span>{link.label}</span>
-                          <span className="chip-meta">{link.isExternal ? "New tab" : "Same tab"}</span>
-                          <span className="chip-action">Remove</span>
-                        </button>
-                      ))
+                      sectionLinks.map((link) => {
+                        const children = footerChildrenByParent[link.id] ?? [];
+                        return (
+                          <div key={link.id} className="nav-admin-footer-parent">
+                            <button
+                              type="button"
+                              className="nav-admin-footer-link"
+                              onClick={() => handleRemoveFromFooter(link)}
+                              disabled={isUpdating}
+                              title="Remove from footer"
+                            >
+                              {link.icon ? <img src={link.icon} alt="" aria-hidden /> : null}
+                              <span>{link.label}</span>
+                            </button>
+                            {children.length ? (
+                              <div className="nav-admin-footer-children">
+                                {children.map((child) => (
+                                  <button
+                                    key={child.id}
+                                    type="button"
+                                    className="nav-admin-footer-child"
+                                    onClick={() => handleRemoveFromFooter(child)}
+                                    disabled={isUpdating}
+                                    title="Remove from footer"
+                                  >
+                                    {child.icon ? <img src={child.icon} alt="" aria-hidden /> : null}
+                                    <span>{child.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })
                     ) : (
                       <span style={{ color: "var(--muted)" }}>No links yet. Add one below.</span>
                     )}
                   </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <div className="nav-admin-add-control">
                     <select
                       className="input"
                       value={selection}

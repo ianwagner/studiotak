@@ -1336,17 +1336,16 @@ export function PageForm({
             border: "1.5px solid var(--border-strong)",
             boxShadow: "none"
           }}
-          draggable
-          onDragStart={() => setDragIndex(idx)}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
-            if (dragIndex !== null) {
-              moveBlockToIndex(dragIndex, idx);
+            const transferredIndex = Number(e.dataTransfer.getData("text/plain"));
+            const fromIndex = dragIndex ?? (Number.isInteger(transferredIndex) ? transferredIndex : null);
+            if (fromIndex !== null) {
+              moveBlockToIndex(fromIndex, idx);
             }
             setDragIndex(null);
           }}
-          onDragEnd={() => setDragIndex(null)}
         >
           <div
             style={{
@@ -1362,7 +1361,15 @@ export function PageForm({
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
               <span
                 aria-label="Drag to reorder"
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("text/plain", String(idx));
+                  setDragIndex(idx);
+                }}
+                onDragEnd={() => setDragIndex(null)}
                 style={{ ...iconButtonStyle, cursor: "grab" }}
+                title="Drag to reorder"
               >
                 <GripIcon size={16} />
               </span>
@@ -3577,11 +3584,6 @@ export function PageForm({
           <p style={{ margin: 0, color: "var(--muted)" }}>{intro}</p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
-          {onDelete ? (
-            <button className="btn secondary" type="button" onClick={onDelete} disabled={isSubmitting || isDeleting}>
-              {deleteText}
-            </button>
-          ) : null}
           <Link className="btn secondary" href={backHref}>
             ← Back to list
           </Link>
@@ -3599,33 +3601,36 @@ export function PageForm({
             </ul>
           </div>
         ) : null}
-        <div className="field-group">
-          <label>Title</label>
-          <input
-            className="input"
-            value={formState.title}
-            onChange={(e) => handleBasicChange("title", e.target.value)}
-            placeholder="Page title"
-          />
-        </div>
-        <div className="field-group">
-          <label>Slug</label>
-          <input
-            className="input"
-            value={formState.slug}
-            onChange={(e) => handleBasicChange("slug", e.target.value)}
-            placeholder="/about"
-          />
-        </div>
-        <div className="field-group">
-          <label>Status</label>
-          <select
-            value={formState.status}
-            onChange={(e) => handleBasicChange("status", e.target.value as PageStatus)}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
+        <div className="page-basics-grid">
+          <div className="field-group">
+            <label>Title</label>
+            <input
+              className="input"
+              value={formState.title}
+              onChange={(e) => handleBasicChange("title", e.target.value)}
+              placeholder="Page title"
+            />
+          </div>
+          <div className="field-group">
+            <label>Slug</label>
+            <input
+              className="input"
+              value={formState.slug}
+              onChange={(e) => handleBasicChange("slug", e.target.value)}
+              placeholder="/about"
+            />
+          </div>
+          <div className="field-group">
+            <label>Status</label>
+            <select
+              className={`status-select ${formState.status === "draft" ? "draft" : "published"}`}
+              value={formState.status}
+              onChange={(e) => handleBasicChange("status", e.target.value as PageStatus)}
+            >
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+          </div>
         </div>
 
         <fieldset>
@@ -3970,6 +3975,24 @@ export function PageForm({
           {message ? <span style={{ color: "var(--accent)" }}>{message}</span> : null}
         </div>
       </form>
+
+      {onDelete ? (
+        <section className="card danger-zone" aria-labelledby="page-danger-zone-title">
+          <div className="danger-zone-header">
+            <strong id="page-danger-zone-title" className="danger-zone-title">
+              Danger zone
+            </strong>
+            <p className="danger-zone-copy">
+              Delete this page permanently. This removes the page record and cannot be undone.
+            </p>
+          </div>
+          <div className="danger-zone-actions">
+            <button className="btn danger" type="button" onClick={onDelete} disabled={isSubmitting || isDeleting}>
+              {deleteText}
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       {mediaModal.open && mediaModal.blockIdx !== null ? (
         <MediaSelect
