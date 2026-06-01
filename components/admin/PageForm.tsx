@@ -1949,8 +1949,8 @@ export function PageForm({
               <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
                 <div className="field-group">
                   <label>Headline</label>
-                  <input
-                    className="input"
+                  <textarea
+                    rows={3}
                     value={block.headline}
                     onChange={(e) => handleAnimatedHeadlineFieldChange(idx, "headline", e.target.value)}
                     placeholder="Animated headline"

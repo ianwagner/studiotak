@@ -52,6 +52,59 @@ function AnimatedText({
   progress: number;
   align?: "left" | "center" | "right";
 }) {
+  const lines = text.split(/\r?\n/);
+  if (lines.length > 1) {
+    const lineWeights = lines.map((line) => Math.max(line.length, 1));
+    const totalWeight = lineWeights.reduce((sum, weight) => sum + weight, 0);
+    const playhead = progress * totalWeight;
+    let lineStart = 0;
+
+    return (
+      <span
+        style={{
+          display: "grid",
+          gap: "0.04em",
+          justifyItems: align === "center" ? "center" : align === "right" ? "end" : "start"
+        }}
+      >
+        {lines.map((line, index) => {
+          const start = lineStart;
+          const end = start + lineWeights[index];
+          const lineProgress = clamp01((playhead - start) / lineWeights[index]);
+          lineStart = end;
+
+          return (
+            <span key={`${line}-${index}`} style={{ display: "block" }}>
+              <AnimatedTextContent
+                text={line}
+                variant={variant}
+                progress={lineProgress}
+                align={align}
+                showCaret={playhead >= start && playhead <= end}
+              />
+            </span>
+          );
+        })}
+      </span>
+    );
+  }
+
+  return <AnimatedTextContent text={text} variant={variant} progress={progress} align={align} />;
+}
+
+function AnimatedTextContent({
+  text,
+  variant,
+  progress,
+  align = "center",
+  showCaret = true
+}: {
+  text: string;
+  variant: TextAnimationVariant;
+  progress: number;
+  align?: "left" | "center" | "right";
+  showCaret?: boolean;
+}) {
   const letters = useMemo(() => text.split(""), [text]);
   const fadeCharacterTokens = useMemo(() => {
     let animationIndex = 0;
@@ -79,7 +132,7 @@ function AnimatedText({
   if (variant === "typewriter") {
     const visibleCharacters = Math.floor(progress * (text.length + 2));
     const displayText = text.slice(0, visibleCharacters);
-    const caretVisible = visibleCharacters <= text.length;
+    const caretVisible = showCaret && visibleCharacters <= text.length;
     return (
       <span style={{ display: "inline-flex", alignItems: "center", justifyContent, gap: 6, minHeight: "1em" }}>
         <span>{displayText}</span>

@@ -511,6 +511,7 @@ type HeroMediaItem = {
   mediaType?: "image" | "video";
   width?: number;
   height?: number;
+  industry?: string[];
 };
 
 const heroPlaceholderPalette = ["#e1e9ff", "#e8f7ff", "#f4e8ff", "#ffeae3", "#eaf3e0", "#f3f1e8"];
@@ -542,6 +543,37 @@ const buildHeroPlaceholderMedia = (count: number, seed?: HeroBlock["media"]): He
   });
 };
 
+const diversifyHeroMediaByIndustry = (items: HeroMediaItem[], maxItems: number) => {
+  const grouped = new Map<string, HeroMediaItem[]>();
+  const seen = new Set<string>();
+
+  items.forEach((item) => {
+    if (!item.url || seen.has(item.id)) return;
+    seen.add(item.id);
+    const key = item.industry?.find((tag) => tag.trim())?.trim() || "Uncategorized";
+    const group = grouped.get(key) ?? [];
+    group.push(item);
+    grouped.set(key, group);
+  });
+
+  const groups = Array.from(grouped.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, group]) => group);
+  const diversified: HeroMediaItem[] = [];
+  let cursor = 0;
+
+  while (diversified.length < maxItems && groups.some((group) => cursor < group.length)) {
+    groups.forEach((group) => {
+      if (diversified.length < maxItems && group[cursor]) {
+        diversified.push(group[cursor]);
+      }
+    });
+    cursor += 1;
+  }
+
+  return diversified;
+};
+
 const DynamicHeroColumns = ({
   block,
   innerStyle,
@@ -571,10 +603,6 @@ const DynamicHeroColumns = ({
   useEffect(() => {
     let canceled = false;
     const load = async () => {
-      if (!industryTag && !typeTag) {
-        setItems([]);
-        return;
-      }
       if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
         setItems([]);
         return;
@@ -594,7 +622,12 @@ const DynamicHeroColumns = ({
             alt: data.alt ?? data.name ?? "Hero media",
             mediaType,
             width: data.width,
-            height: data.height
+            height: data.height,
+            industry: Array.isArray(data.industry)
+              ? data.industry.filter((tag: unknown): tag is string => typeof tag === "string" && Boolean(tag.trim()))
+              : typeof data.industry === "string" && data.industry.trim()
+              ? [data.industry.trim()]
+              : []
           };
         };
 
@@ -618,15 +651,18 @@ const DynamicHeroColumns = ({
 
         // 2. Backfill remaining spots with any-industry media
         if (results.length < maxItems) {
-          const remaining = maxItems - results.length;
-          const backfillQ = query(mediaRef, ...baseConstraints, limit(remaining + results.length));
+          const backfillLimit = Math.min(120, Math.max(maxItems * 4, maxItems + results.length));
+          const backfillQ = query(mediaRef, ...baseConstraints, limit(backfillLimit));
           const backfillSnap = await getDocs(backfillQ);
           if (canceled) return;
           const existingIds = new Set(results.map((r) => r.id));
           const backfill = backfillSnap.docs
             .map(toHeroItem)
             .filter((item) => item.url && !existingIds.has(item.id));
-          results = [...results, ...backfill].slice(0, maxItems);
+          const selectedBackfill = industryTag
+            ? diversifyHeroMediaByIndustry(backfill, maxItems - results.length)
+            : diversifyHeroMediaByIndustry(backfill, maxItems);
+          results = [...results, ...selectedBackfill].slice(0, maxItems);
         }
 
         setItems(results);
@@ -654,9 +690,7 @@ const DynamicHeroColumns = ({
     return buckets;
   }, [resolvedItems]);
   const statusText =
-    !industryTag && !typeTag
-      ? "Set an industry or type tag to pull media into the hero."
-      : !loading && !items.length
+    !loading && !items.length
       ? "No media matched those tags yet."
       : null;
   const itemGap = isCompact ? 12 : 14;
