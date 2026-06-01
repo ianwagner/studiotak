@@ -379,7 +379,7 @@ export function AnimatedHeadline({
               fontSize: "var(--font-size-display-md)",
               fontWeight: 300,
               letterSpacing: 0,
-              lineHeight: 0.94,
+              lineHeight: 1.04,
               margin: 0,
               maxWidth: "100%",
               overflowWrap: "break-word",

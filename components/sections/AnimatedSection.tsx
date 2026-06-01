@@ -75,7 +75,7 @@ export function SectionHeading({
           fontStyle: "normal",
           fontWeight: 300,
           letterSpacing: 0,
-          lineHeight: 0.95,
+          lineHeight: 1.06,
           textTransform: "none"
         }}
       >

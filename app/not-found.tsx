@@ -59,7 +59,7 @@ export default async function NotFoundPage() {
               fontSize: "var(--font-size-display-sm)",
               fontWeight: 300,
               letterSpacing: 0,
-              lineHeight: 0.95,
+              lineHeight: 1.06,
               textTransform: "none"
             }}
           >

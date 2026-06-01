@@ -981,7 +981,7 @@ const renderHeroBlock = (
           fontFamily: "var(--font-secondary)",
           fontSize: headingSize,
           fontWeight: 300,
-          lineHeight: isCompact ? 0.98 : 0.94,
+          lineHeight: isCompact ? 1.08 : 1.04,
           letterSpacing: 0,
           textTransform: "none",
           margin: 0
