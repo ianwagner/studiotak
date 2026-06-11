@@ -168,6 +168,7 @@ type HeroCopyColorBlockLayout = {
   width: number;
   height: number;
   lineHeight: number;
+  rowHeight: number;
   paddingX: number;
   paddingTop: number;
   path: string;
@@ -285,13 +286,15 @@ function HeroCopyColorBlockText({
   italicTitleText,
   backgroundColor,
   textColor,
-  alignment
+  alignment,
+  lineHeightScale
 }: {
   title: string;
   italicTitleText?: string;
   backgroundColor: string;
   textColor: "black" | "white";
   alignment: "left" | "centered";
+  lineHeightScale: number;
 }) {
   const wrapperRef = useRef<HTMLSpanElement | null>(null);
   const [layout, setLayout] = useState<HeroCopyColorBlockLayout | null>(null);
@@ -310,11 +313,10 @@ function HeroCopyColorBlockText({
     const updateLayout = () => {
       const computed = window.getComputedStyle(heading);
       const fontSize = Number.parseFloat(computed.fontSize) || 64;
-      const lineHeight = fontSize * 1.16;
+      const lineHeight = fontSize * lineHeightScale;
       const paddingX = fontSize * 0.14;
-      const paddingTop = fontSize * 0.035;
-      const paddingBottom = fontSize * 0.055;
-      const rowHeight = lineHeight + paddingTop + paddingBottom;
+      const paddingTop = 0;
+      const rowHeight = lineHeight;
       const radius = fontSize * 0.18;
       const measurementElement = heading.parentElement ?? heading;
       const availableWidth = Math.max(measurementElement.clientWidth - paddingX * 2, fontSize * 4);
@@ -356,7 +358,7 @@ function HeroCopyColorBlockText({
       const height = lines.length * rowHeight;
       const path = buildHeroCopyColorBlockPath(lines, rowHeight, width, paddingX, radius);
 
-      setLayout({ lines, width, height, lineHeight, paddingX, paddingTop, path });
+      setLayout({ lines, width, height, lineHeight, rowHeight, paddingX, paddingTop, path });
     };
 
     let frameId: number | null = null;
@@ -381,7 +383,7 @@ function HeroCopyColorBlockText({
       window.removeEventListener("resize", scheduleUpdate);
       window.visualViewport?.removeEventListener("resize", scheduleUpdate);
     };
-  }, [alignment, normalizedTitle]);
+  }, [alignment, lineHeightScale, normalizedTitle]);
 
   if (!layout || !normalizedTitle) {
     return (
@@ -428,7 +430,7 @@ function HeroCopyColorBlockText({
           className="hero-copy-color-block-line"
           style={{
             left: line.x + layout.paddingX,
-            top: idx * (layout.height / layout.lines.length) + layout.paddingTop,
+            top: idx * layout.rowHeight + layout.paddingTop,
             lineHeight: `${layout.lineHeight}px`,
             color: resolvedTextColor
           }}
@@ -1312,6 +1314,7 @@ const renderHeroBlock = (
         textAlign: isCenteredCopy ? "center" : undefined
       };
   const headingSize = isCompact ? "var(--font-size-display-md)" : "var(--font-size-display-lg)";
+  const headingLineHeight = 1;
   const subtitleSize = isCompact ? "var(--font-size-body-lg)" : "var(--font-size-lede)";
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;
@@ -1340,7 +1343,7 @@ const renderHeroBlock = (
           fontFamily: "var(--font-secondary)",
           fontSize: headingSize,
           fontWeight: 300,
-          lineHeight: hasCopyColorBlock ? 1.16 : isCompact ? 1.08 : 1.04,
+          lineHeight: headingLineHeight,
           letterSpacing: 0,
           textTransform: "none",
           margin: 0,
@@ -1359,6 +1362,7 @@ const renderHeroBlock = (
             backgroundColor={block.copyColorBlockColor || "#ffffff"}
             textColor={block.copyColorBlockTextColor ?? "black"}
             alignment={copyColorBlockAlignment}
+            lineHeightScale={headingLineHeight}
           />
         ) : (
           renderHeroTitle(block.title, block.italicTitleText)
