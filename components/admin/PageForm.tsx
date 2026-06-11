@@ -214,6 +214,10 @@ const newHeroBlock = (): HeroBlock => ({
   alignment: "centered",
   background: undefined,
   overlayStyle: "gradient",
+  copyColorBlockEnabled: false,
+  copyColorBlockColor: "#ffffff",
+  copyColorBlockAlignment: "left",
+  copyColorBlockTextColor: "black",
   enableDarkModeOnScroll: false,
   mode: "static",
   mediaIndustryTag: "",
@@ -676,6 +680,15 @@ export function PageForm({
 
   const handleHeroAlignmentChange = (idx: number, alignment: HeroLikeBlock["alignment"]) => {
     updateBlock(idx, (block) => (isHeroLikeBlock(block) ? { ...block, alignment } : block));
+  };
+
+  const handleHeroCopyColorBlockAlignmentChange = (
+    idx: number,
+    alignment: NonNullable<HeroBlock["copyColorBlockAlignment"]>
+  ) => {
+    updateBlock(idx, (block) =>
+      isHeroLikeBlock(block) ? { ...block, copyColorBlockAlignment: alignment } : block
+    );
   };
 
   const handleThirdsLayoutChange = (idx: number, layout: NonNullable<ThirdsBlock["layout"]>) => {
@@ -1566,6 +1579,61 @@ export function PageForm({
                     onChange={(e) => handleHeroFieldChange(idx, "italicTitleText", e.target.value)}
                     placeholder="Word or phrase"
                   />
+                </div>
+              </div>
+              <div className="card" style={{ padding: 12, border: "1px solid var(--border-strong)", display: "grid", gap: 10 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={!!block.copyColorBlockEnabled}
+                    onChange={(e) => handleHeroFieldChange(idx, "copyColorBlockEnabled", e.target.checked)}
+                  />
+                  <span>Use copy color-block behind title</span>
+                </label>
+                <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+                  <div className="field-group">
+                    <label>Copy color-block alignment</label>
+                    <select
+                      value={block.copyColorBlockAlignment ?? "left"}
+                      disabled={!block.copyColorBlockEnabled}
+                      onChange={(e) => handleHeroCopyColorBlockAlignmentChange(idx, e.target.value as NonNullable<HeroBlock["copyColorBlockAlignment"]>)}
+                    >
+                      <option value="left">Left</option>
+                      <option value="centered">Centered</option>
+                    </select>
+                  </div>
+                  <div className="field-group">
+                    <label>Font color</label>
+                    <select
+                      value={block.copyColorBlockTextColor ?? "black"}
+                      disabled={!block.copyColorBlockEnabled}
+                      onChange={(e) =>
+                        handleHeroFieldChange(idx, "copyColorBlockTextColor", e.target.value as HeroBlock["copyColorBlockTextColor"])
+                      }
+                    >
+                      <option value="black">Black</option>
+                      <option value="white">White</option>
+                    </select>
+                  </div>
+                  <div className="field-group">
+                    <label>Copy color-block color</label>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <input
+                        type="color"
+                        value={block.copyColorBlockColor ?? "#ffffff"}
+                        disabled={!block.copyColorBlockEnabled}
+                        onChange={(e) => handleHeroFieldChange(idx, "copyColorBlockColor", e.target.value)}
+                        style={{ width: 48, height: 40, padding: 4 }}
+                      />
+                      <input
+                        className="input"
+                        value={block.copyColorBlockColor ?? "#ffffff"}
+                        disabled={!block.copyColorBlockEnabled}
+                        onChange={(e) => handleHeroFieldChange(idx, "copyColorBlockColor", e.target.value)}
+                        placeholder="#ffffff"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="field-group">

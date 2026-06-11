@@ -40,6 +40,10 @@ export type HeroBlock = {
   background?: BlockMedia;
   alignment: "image_left" | "image_right" | "centered";
   overlayStyle?: "full" | "gradient";
+  copyColorBlockEnabled?: boolean;
+  copyColorBlockColor?: string;
+  copyColorBlockAlignment?: "left" | "centered";
+  copyColorBlockTextColor?: "black" | "white";
   enableDarkModeOnScroll?: boolean;
   mode?: "static" | "dynamic";
   mediaIndustryTag?: string;

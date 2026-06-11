@@ -156,6 +156,290 @@ const renderHeroTitle = (title: string, italicText?: string) => {
   );
 };
 
+type HeroCopyColorBlockLine = {
+  text: string;
+  start: number;
+  width: number;
+  x: number;
+};
+
+type HeroCopyColorBlockLayout = {
+  lines: HeroCopyColorBlockLine[];
+  width: number;
+  height: number;
+  lineHeight: number;
+  paddingX: number;
+  paddingTop: number;
+  path: string;
+};
+
+const normalizeHeroTitle = (title: string) => title.replace(/\s+/g, " ").trim();
+
+const roundedShapePath = (points: Array<[number, number]>, radius: number) => {
+  const cleanPoints = points.filter((point, idx) => {
+    const prev = points[idx - 1];
+    return !prev || prev[0] !== point[0] || prev[1] !== point[1];
+  });
+  const firstPoint = cleanPoints[0];
+  const lastPoint = cleanPoints[cleanPoints.length - 1];
+  if (firstPoint && lastPoint && firstPoint[0] === lastPoint[0] && firstPoint[1] === lastPoint[1]) {
+    cleanPoints.pop();
+  }
+  if (cleanPoints.length < 3) return "";
+
+  const corners = cleanPoints.map((point, idx) => {
+    const prev = cleanPoints[(idx - 1 + cleanPoints.length) % cleanPoints.length];
+    const next = cleanPoints[(idx + 1) % cleanPoints.length];
+    const inX = point[0] - prev[0];
+    const inY = point[1] - prev[1];
+    const outX = next[0] - point[0];
+    const outY = next[1] - point[1];
+    const inLength = Math.hypot(inX, inY);
+    const outLength = Math.hypot(outX, outY);
+    const cornerRadius = Math.min(radius, inLength / 2, outLength / 2);
+
+    if (cornerRadius <= 0 || (inX === 0 && outX === 0) || (inY === 0 && outY === 0)) {
+      return { point, start: point, end: point };
+    }
+
+    const inUnitX = inX / inLength;
+    const inUnitY = inY / inLength;
+    const outUnitX = outX / outLength;
+    const outUnitY = outY / outLength;
+
+    return {
+      point,
+      start: [point[0] - inUnitX * cornerRadius, point[1] - inUnitY * cornerRadius] as [number, number],
+      end: [point[0] + outUnitX * cornerRadius, point[1] + outUnitY * cornerRadius] as [number, number]
+    };
+  });
+
+  const format = (value: number) => Number(value.toFixed(2));
+  let path = `M ${format(corners[0].start[0])} ${format(corners[0].start[1])}`;
+  corners.forEach((corner) => {
+    path += ` Q ${format(corner.point[0])} ${format(corner.point[1])} ${format(corner.end[0])} ${format(corner.end[1])}`;
+    const nextCorner = corners[(corners.indexOf(corner) + 1) % corners.length];
+    path += ` L ${format(nextCorner.start[0])} ${format(nextCorner.start[1])}`;
+  });
+  return `${path} Z`;
+};
+
+const buildHeroCopyColorBlockPath = (
+  lines: HeroCopyColorBlockLine[],
+  rowHeight: number,
+  width: number,
+  paddingX: number,
+  radius: number
+) => {
+  if (!lines.length) return "";
+  const rightPoints: Array<[number, number]> = [[lines[0].x + lines[0].width + paddingX * 2, 0]];
+  for (let idx = 0; idx < lines.length - 1; idx += 1) {
+    const y = (idx + 1) * rowHeight;
+    const currentRight = lines[idx].x + lines[idx].width + paddingX * 2;
+    const nextRight = lines[idx + 1].x + lines[idx + 1].width + paddingX * 2;
+    rightPoints.push([currentRight, y]);
+    if (currentRight !== nextRight) rightPoints.push([nextRight, y]);
+  }
+  rightPoints.push([lines[lines.length - 1].x + lines[lines.length - 1].width + paddingX * 2, lines.length * rowHeight]);
+
+  const leftPoints: Array<[number, number]> = [[lines[lines.length - 1].x, lines.length * rowHeight]];
+  for (let idx = lines.length - 1; idx > 0; idx -= 1) {
+    const y = idx * rowHeight;
+    const currentLeft = lines[idx].x;
+    const previousLeft = lines[idx - 1].x;
+    leftPoints.push([currentLeft, y]);
+    if (currentLeft !== previousLeft) leftPoints.push([previousLeft, y]);
+  }
+  leftPoints.push([lines[0].x, 0]);
+
+  return roundedShapePath([[lines[0].x, 0], [lines[0].x + lines[0].width + paddingX * 2, 0], ...rightPoints.slice(1), ...leftPoints], radius);
+};
+
+const renderHeroTitleLine = (title: string, line: HeroCopyColorBlockLine, italicText?: string) => {
+  const target = italicText?.trim();
+  if (!target) return line.text;
+
+  const italicStart = title.toLocaleLowerCase().indexOf(target.toLocaleLowerCase());
+  if (italicStart < 0) return line.text;
+
+  const italicEnd = italicStart + target.length;
+  const lineStart = line.start;
+  const lineEnd = line.start + line.text.length;
+  const overlapStart = Math.max(lineStart, italicStart);
+  const overlapEnd = Math.min(lineEnd, italicEnd);
+  if (overlapStart >= overlapEnd) return line.text;
+
+  const localStart = overlapStart - lineStart;
+  const localEnd = overlapEnd - lineStart;
+  return (
+    <>
+      {line.text.slice(0, localStart)}
+      <em style={{ fontStyle: "italic", fontWeight: 300 }}>{line.text.slice(localStart, localEnd)}</em>
+      {line.text.slice(localEnd)}
+    </>
+  );
+};
+
+function HeroCopyColorBlockText({
+  title,
+  italicTitleText,
+  backgroundColor,
+  textColor,
+  alignment
+}: {
+  title: string;
+  italicTitleText?: string;
+  backgroundColor: string;
+  textColor: "black" | "white";
+  alignment: "left" | "centered";
+}) {
+  const wrapperRef = useRef<HTMLSpanElement | null>(null);
+  const [layout, setLayout] = useState<HeroCopyColorBlockLayout | null>(null);
+  const normalizedTitle = normalizeHeroTitle(title);
+  const resolvedTextColor = textColor === "white" ? "#ffffff" : "#050505";
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    const heading = wrapper?.closest("h1") as HTMLElement | null;
+    if (!wrapper || !heading || !normalizedTitle) return;
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    const updateLayout = () => {
+      const computed = window.getComputedStyle(heading);
+      const fontSize = Number.parseFloat(computed.fontSize) || 64;
+      const lineHeight = fontSize * 1.16;
+      const paddingX = fontSize * 0.14;
+      const paddingTop = fontSize * 0.035;
+      const paddingBottom = fontSize * 0.055;
+      const rowHeight = lineHeight + paddingTop + paddingBottom;
+      const radius = fontSize * 0.18;
+      const measurementElement = heading.parentElement ?? heading;
+      const availableWidth = Math.max(measurementElement.clientWidth - paddingX * 2, fontSize * 4);
+      const font =
+        computed.font ||
+        `${computed.fontStyle} ${computed.fontWeight} ${computed.fontSize} ${computed.fontFamily}`;
+      context.font = font;
+
+      const words = normalizedTitle.split(" ");
+      const measuredLines: Array<Omit<HeroCopyColorBlockLine, "x">> = [];
+      let current = "";
+      let currentStart = 0;
+      let cursor = 0;
+
+      words.forEach((word) => {
+        const wordStart = cursor;
+        const candidate = current ? `${current} ${word}` : word;
+        const candidateWidth = context.measureText(candidate).width;
+        if (current && candidateWidth > availableWidth) {
+          measuredLines.push({ text: current, start: currentStart, width: context.measureText(current).width });
+          current = word;
+          currentStart = wordStart;
+        } else {
+          current = candidate;
+          if (!current) currentStart = wordStart;
+        }
+        cursor += word.length + 1;
+      });
+      if (current) {
+        measuredLines.push({ text: current, start: currentStart, width: context.measureText(current).width });
+      }
+
+      const maxTextWidth = Math.max(...measuredLines.map((line) => line.width), 0);
+      const width = maxTextWidth + paddingX * 2;
+      const lines = measuredLines.map((line) => ({
+        ...line,
+        x: alignment === "centered" ? (width - (line.width + paddingX * 2)) / 2 : 0
+      }));
+      const height = lines.length * rowHeight;
+      const path = buildHeroCopyColorBlockPath(lines, rowHeight, width, paddingX, radius);
+
+      setLayout({ lines, width, height, lineHeight, paddingX, paddingTop, path });
+    };
+
+    let frameId: number | null = null;
+    const scheduleUpdate = () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        updateLayout();
+      });
+    };
+
+    updateLayout();
+    const resizeObserver = new ResizeObserver(scheduleUpdate);
+    resizeObserver.observe(heading.parentElement ?? heading);
+    window.addEventListener("resize", scheduleUpdate);
+    window.visualViewport?.addEventListener("resize", scheduleUpdate);
+    document.fonts?.ready.then(scheduleUpdate).catch(() => undefined);
+
+    return () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", scheduleUpdate);
+      window.visualViewport?.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [alignment, normalizedTitle]);
+
+  if (!layout || !normalizedTitle) {
+    return (
+      <span
+        ref={wrapperRef}
+        className="hero-copy-color-block"
+        style={
+          {
+            "--hero-copy-color-block-bg": backgroundColor,
+            "--hero-copy-color-block-text": resolvedTextColor
+          } as CSSProperties
+        }
+      >
+        {renderHeroTitle(title, italicTitleText)}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      ref={wrapperRef}
+      className="hero-copy-color-block"
+      data-align={alignment}
+      style={
+        {
+          "--hero-copy-color-block-bg": backgroundColor,
+          "--hero-copy-color-block-text": resolvedTextColor,
+          width: layout.width,
+          height: layout.height
+        } as CSSProperties
+      }
+    >
+      <svg
+        className="hero-copy-color-block-shape"
+        viewBox={`0 0 ${layout.width} ${layout.height}`}
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path d={layout.path} fill={backgroundColor} />
+      </svg>
+      {layout.lines.map((line, idx) => (
+        <span
+          key={`${line.start}-${line.text}`}
+          className="hero-copy-color-block-line"
+          style={{
+            left: line.x + layout.paddingX,
+            top: idx * (layout.height / layout.lines.length) + layout.paddingTop,
+            lineHeight: `${layout.lineHeight}px`,
+            color: resolvedTextColor
+          }}
+        >
+          {renderHeroTitleLine(normalizedTitle, line, italicTitleText)}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function ThemeShiftRegion({ enabled, children }: { enabled?: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const inView = useInView(ref, { margin: "-15% 0px", amount: 0.2 });
@@ -579,6 +863,7 @@ const DynamicHeroColumns = ({
   innerStyle,
   layoutGap,
   content,
+  contentPlacement = "default",
   isCompact,
   gridTemplate,
   hideColumns,
@@ -588,6 +873,7 @@ const DynamicHeroColumns = ({
   innerStyle: CSSProperties;
   layoutGap: number;
   content: ReactNode;
+  contentPlacement?: "default" | "start";
   isCompact: boolean;
   gridTemplate: string;
   hideColumns: boolean;
@@ -813,12 +1099,32 @@ const DynamicHeroColumns = ({
         style={{
           gap: containerGap,
           alignItems: "center",
+          justifyItems: contentPlacement === "start" ? "start" : undefined,
+          justifyContent: contentPlacement === "start" ? "start" : undefined,
           ...innerStyle,
           gridTemplateColumns: gridTemplate,
           paddingRight: 0
         }}
       >
-        {content}
+        {contentPlacement === "start" ? (
+          <div
+            data-dynamic-hero-content
+            style={{
+              justifySelf: "start",
+              alignSelf: "center",
+              width: "100%",
+              maxWidth: "min(var(--max-width), 640px)",
+              marginLeft: 0,
+              marginRight: "auto",
+              textAlign: "left",
+              display: "grid"
+            }}
+          >
+            {content}
+          </div>
+        ) : (
+          content
+        )}
         {!hideColumns ? (
           <div
             className="grid"
@@ -907,6 +1213,14 @@ const renderHeroBlock = (
   const isCompact = block.type === "thirds";
   const thirdsLayout = block.type === "thirds" ? block.layout ?? "left" : "left";
   const isCenteredThirds = isCompact && thirdsLayout === "centered";
+  const hasCopyColorBlock = !!block.copyColorBlockEnabled;
+  const copyColorBlockAlignment = block.copyColorBlockAlignment ?? "left";
+  const useLeftHeroCopyLayout = (hasCopyColorBlock || isDynamicHero) && copyColorBlockAlignment === "left";
+  const isCenteredCopy = useLeftHeroCopyLayout
+    ? false
+    : hasCopyColorBlock
+    ? copyColorBlockAlignment === "centered"
+    : block.alignment === "centered" || isCenteredThirds;
   const fullBleedHeroStyle = getFullBleedHeroStyle(headerHeight, isCompact, viewportWidth);
   const removeStroke = isDynamicHero || !!block.media?.url;
   const hideColumns = isDynamicHero && viewportWidth !== null && viewportWidth < 1100;
@@ -985,9 +1299,17 @@ const renderHeroBlock = (
         maxWidth:
           isSingleColumnDynamic ? "min(var(--max-width), 880px)" : isDynamicHero ? "min(var(--max-width), 640px)" : "min(var(--max-width), 600px)",
         width: "100%",
-        justifySelf: isDynamicHero ? (isSingleColumnDynamic ? "start" : "end") : isCenteredThirds ? "center" : "start",
-        marginLeft: isDynamicHero && !isSingleColumnDynamic ? "auto" : undefined,
-        textAlign: isCenteredThirds ? "center" : undefined
+        justifySelf: useLeftHeroCopyLayout
+          ? "start"
+          : isDynamicHero
+          ? isSingleColumnDynamic
+            ? "start"
+            : "end"
+          : isCenteredThirds
+          ? "center"
+          : "start",
+        marginLeft: useLeftHeroCopyLayout ? undefined : isDynamicHero && !isSingleColumnDynamic ? "auto" : undefined,
+        textAlign: isCenteredCopy ? "center" : undefined
       };
   const headingSize = isCompact ? "var(--font-size-display-md)" : "var(--font-size-display-lg)";
   const subtitleSize = isCompact ? "var(--font-size-body-lg)" : "var(--font-size-lede)";
@@ -1006,25 +1328,45 @@ const renderHeroBlock = (
         gap: dynamicStackGap,
         alignSelf: "center",
         ...textOnlyContentStyle,
-        ...(isCenteredThirds ? { textAlign: "center", justifyItems: "center", maxWidth: "min(var(--max-width), 820px)" } : {})
+        ...(isCenteredCopy ? { textAlign: "center", justifyItems: "center" } : {}),
+        ...(useLeftHeroCopyLayout ? { textAlign: "left", justifyItems: "start" } : {}),
+        ...(isCenteredThirds ? { maxWidth: "min(var(--max-width), 820px)" } : {})
       }}
     >
       {block.eyebrow ? <Pill>{block.eyebrow}</Pill> : null}
       <h1
+        className={hasCopyColorBlock ? "hero-copy-color-block-title" : undefined}
         style={{
           fontFamily: "var(--font-secondary)",
           fontSize: headingSize,
           fontWeight: 300,
-          lineHeight: isCompact ? 1.08 : 1.04,
+          lineHeight: hasCopyColorBlock ? 1.16 : isCompact ? 1.08 : 1.04,
           letterSpacing: 0,
           textTransform: "none",
-          margin: 0
+          margin: 0,
+          ...(hasCopyColorBlock
+            ? {
+                justifySelf: copyColorBlockAlignment === "centered" ? "center" : "start",
+                textAlign: copyColorBlockAlignment === "centered" ? "center" : "left"
+              }
+            : {})
         }}
       >
-        {renderHeroTitle(block.title, block.italicTitleText)}
+        {hasCopyColorBlock ? (
+          <HeroCopyColorBlockText
+            title={block.title}
+            italicTitleText={block.italicTitleText}
+            backgroundColor={block.copyColorBlockColor || "#ffffff"}
+            textColor={block.copyColorBlockTextColor ?? "black"}
+            alignment={copyColorBlockAlignment}
+          />
+        ) : (
+          renderHeroTitle(block.title, block.italicTitleText)
+        )}
       </h1>
       {block.subtitle ? (
         <p
+          className={hasCopyColorBlock ? "hero-copy-subtitle-wrap" : undefined}
           style={{
             maxWidth: isCompact ? "52ch" : "48ch",
             color: "var(--muted)",
@@ -1033,10 +1375,22 @@ const renderHeroBlock = (
             fontStyle: "normal",
             fontWeight: 400,
             lineHeight: isCompact ? 1.4 : 1.45,
-            margin: 0
+            margin: 0,
+            ...(hasCopyColorBlock
+              ? {
+                  justifySelf: copyColorBlockAlignment === "centered" ? "center" : "start",
+                  width: "fit-content"
+                }
+              : {})
           }}
         >
-          {block.subtitle}
+          {hasCopyColorBlock ? (
+            <span className="hero-copy-subtitle-block">
+              {block.subtitle}
+            </span>
+          ) : (
+            block.subtitle
+          )}
         </p>
       ) : null}
       <div
@@ -1045,7 +1399,7 @@ const renderHeroBlock = (
           gap: isCompact ? 10 : 12,
           alignItems: "flex-start",
           flexWrap: "wrap",
-          justifyContent: isCenteredThirds ? "center" : undefined,
+          justifyContent: isCenteredCopy ? "center" : undefined,
           paddingTop: isNarrowViewport ? 10 : undefined
         }}
       >
@@ -1105,6 +1459,7 @@ const renderHeroBlock = (
           innerStyle={dynamicInnerStyle}
           layoutGap={layoutGap}
           content={content}
+          contentPlacement={useLeftHeroCopyLayout ? "start" : "default"}
           isCompact={isCompact}
           gridTemplate={dynamicGridTemplate}
           hideColumns={hideColumns}
