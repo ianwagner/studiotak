@@ -4,7 +4,7 @@ import styles from "@/components/StaticPage.module.css";
 export const revalidate = 120;
 export const dynamic = "force-static";
 
-const lastUpdated = "May 28, 2026";
+const lastUpdated = "July 15, 2026";
 const description =
   "The terms that govern your use of Studio Tak (Campfire) creative production services and our website.";
 
@@ -44,7 +44,7 @@ export default function TermsOfServicePage() {
               <strong>3.2</strong> &quot;Deliverables&quot; means the ad creative assets, designs, videos, images, and other content that we develop and deliver specifically for you based on your project scope. Deliverables do not include Licensed Content or AI-Generated Content, which are subject to the license restrictions described in Sections 5 and 6 below.
             </p>
             <p>
-              <strong>3.3</strong> We will use commercially reasonable efforts to deliver work within agreed-upon timelines. However, delivery timelines are estimates and not guarantees. Factors including project complexity, revision requests, and third-party dependencies (such as UGC creator availability) may affect delivery schedules.
+              <strong>3.3</strong> We will use commercially reasonable efforts to deliver work in a timely manner. Any delivery timelines we provide are estimates only and are not guarantees.
             </p>
             <p>
               <strong>3.4</strong> You are responsible for providing accurate and complete brand assets, guidelines, product information, performance data, and any other materials necessary for us to perform the Services (&quot;Customer Content&quot;). By submitting Customer Content to us, you represent that you own or have the necessary rights, licenses, and authorization to share it. You grant us a worldwide, royalty-free, non-exclusive license to use Customer Content solely to provide the Services.
@@ -70,7 +70,7 @@ export default function TermsOfServicePage() {
               <strong>4.5</strong> You grant us a perpetual, irrevocable, worldwide, non-exclusive, transferable, sublicensable right and license to commercially exploit in any manner any feedback, suggestions, or recommendations that you provide to us regarding the Services.
             </p>
             <p>
-              <strong>4.6</strong> Upon written request within sixty (60) days of project completion or termination of the engagement, and provided all applicable fees have been paid, we will deliver to you the working source files (such as layered design files and video project files) used to produce your Deliverables. We are not obligated to maintain or deliver source files requested more than sixty (60) days after completion or termination, and source files are delivered &quot;as is&quot; without warranty.
+              <strong>4.6</strong> Deliverables consist of final exported assets only. Working source files (such as layered design files and video project files) used to produce your Deliverables remain the exclusive property of Studio Tak LLC and are not included in Deliverables or subject to the ownership provisions of this Section 4.
             </p>
 
             <h2 id="licensed-content">5. Licensed Content</h2>
@@ -95,7 +95,7 @@ export default function TermsOfServicePage() {
               <strong>6.1</strong> &quot;AI-Generated Content&quot; means any content created, in whole or in part, using artificial intelligence tools in the course of producing your Deliverables. This may include AI-assisted image generation, text generation, or other AI-enhanced creative elements.
             </p>
             <p>
-              <strong>6.2</strong> We will inform you when AI tools are used in the production of your Deliverables. If you prefer that AI tools not be used in your creative production, you may notify us in writing and we will accommodate that preference. This may affect pricing, timelines, or scope of deliverables.
+              <strong>6.2</strong> We will inform you when AI tools are used in the production of your Deliverables. If you prefer that AI tools not be used in your creative production, you may notify us in writing and we will make commercially reasonable efforts to accommodate that preference. This may affect pricing, timelines, or scope of deliverables.
             </p>
             <p>
               <strong>6.3</strong> AI-Generated Content may be subject to the terms of the underlying AI platform provider (such as OpenAI, Adobe Firefly, or similar services). To the extent applicable, you agree to comply with such third-party terms as they relate to AI-Generated Content incorporated in your Deliverables.
@@ -104,7 +104,7 @@ export default function TermsOfServicePage() {
               <strong>6.4</strong> We make no warranty or representation regarding the ownership, originality, accuracy, or non-infringement of any AI-Generated Content. By accepting Deliverables that incorporate AI-Generated Content, you acknowledge and agree that the use of such content is at your own risk.
             </p>
             <p>
-              <strong>6.5</strong> Intellectual property rights in AI-Generated Content may be limited or uncertain under current law. We will use commercially reasonable efforts to ensure that AI-Generated Content is suitable for your intended commercial use, but we cannot guarantee exclusive ownership rights over AI-Generated Content in the same manner as human-created original work.
+              <strong>6.5</strong> Intellectual property rights in AI-Generated Content may be limited or uncertain under current law. We cannot guarantee exclusive ownership rights over AI-Generated Content in the same manner as human-created original work.
             </p>
 
             <h2 id="fees">7. Fees and Payment</h2>
@@ -115,27 +115,27 @@ export default function TermsOfServicePage() {
               <strong>7.2</strong> Invoices are due upon receipt unless otherwise agreed in writing. Overdue payments will accrue interest at the rate of 1.5% per month, or the maximum rate permitted by law, whichever is lower. We reserve the right to suspend work on any active projects if you have outstanding unpaid invoices.
             </p>
             <p>
-              <strong>7.3</strong> There are no long-term contracts required. You may engage our Services on a per-project or per-ad basis. You are not obligated to purchase a minimum number of ads or commit to a recurring schedule.
+              <strong>7.3</strong> We reserve the right to change our pricing at any time. Any price changes will apply only to new projects or ads agreed upon after the change, not retroactively to work already in progress or previously invoiced.
             </p>
             <p>
-              <strong>7.4</strong> We reserve the right to change our pricing at any time. Any price changes will apply only to new projects or ads agreed upon after the change, not retroactively to work already in progress or previously invoiced.
+              <strong>7.4</strong> All fees are non-refundable once work has commenced on a project. If you cancel a project after work has begun, you will be invoiced for all work completed up to the point of cancellation. If you cancel before work has begun, no fees will be charged.
             </p>
             <p>
-              <strong>7.5</strong> All fees are non-refundable once work has commenced on a project. If you cancel a project after work has begun, you will be invoiced for all work completed up to the point of cancellation. If you cancel before work has begun, no fees will be charged.
-            </p>
-            <p>
-              <strong>7.6</strong> You are responsible for all applicable taxes related to the Services. Unless otherwise stated, fees do not include taxes, levies, or duties imposed by taxing authorities.
+              <strong>7.5</strong> You are responsible for all applicable taxes related to the Services. Unless otherwise stated, fees do not include taxes, levies, or duties imposed by taxing authorities.
             </p>
 
-            <h2 id="approval">8. Approval and Revisions</h2>
+            <h2 id="approval">8. Approval, Edits, and Replacements</h2>
             <p>
               <strong>8.1</strong> We will deliver Deliverables to you for review and approval before finalizing. You agree to review all delivered files for errors or omissions and notify us of any required changes within seven (7) business days of receipt. If we do not receive feedback within this period, Deliverables will be deemed approved.
             </p>
             <p>
-              <strong>8.2</strong> Each project includes one round of revisions at no additional charge. &quot;Revisions&quot; means changes to existing work, not new concepts or significant scope changes. Rejected ads will not be replaced unless you request a replacement and provide direction on what you want instead. We do not charge for ads you reject. Additional revision rounds or new concepts may be subject to additional fees, which will be communicated before work begins.
+              <strong>8.2</strong> Each project includes two (2) edit requests at no additional charge. &quot;Edits&quot; means changes to existing work, not new concepts or significant scope changes. Additional edit requests may be subject to additional fees, which will be communicated before work begins.
             </p>
             <p>
-              <strong>8.3</strong> We will deliver all final Deliverables directly to your Meta ad account (or other designated platform) upon your approval, unless otherwise agreed. You are responsible for providing necessary account access for delivery.
+              <strong>8.3</strong> All delivered ads are billable, including ads you elect to reject. If you reject an ad, you are responsible for requesting a replacement and providing direction on what you want instead. Each project includes two (2) replacement ads at no additional charge. Additional replacements may be subject to additional fees, which will be communicated before work begins.
+            </p>
+            <p>
+              <strong>8.4</strong> Upon your approval, we will deliver final ad assets and any accompanying platform copy. You are responsible for uploading and publishing assets to your ad accounts or platforms.
             </p>
 
             <h2 id="confidential">9. Confidential Information</h2>
@@ -165,10 +165,10 @@ export default function TermsOfServicePage() {
 
             <h2 id="termination">11. Term and Termination</h2>
             <p>
-              <strong>11.1</strong> This Agreement is effective as of the date you first engage our Services and remains in effect for the duration of our working relationship. Because Campfire operates on a per-ad, no-contract basis, either party may terminate this Agreement at any time with written notice.
+              <strong>11.1</strong> This Agreement is effective as of the date you first engage our Services and remains in effect for the duration of our working relationship. Because our Services are engaged on a per-project basis, either party may terminate this Agreement at any time with written notice.
             </p>
             <p>
-              <strong>11.2</strong> Upon termination: (a) you will pay all outstanding fees for work completed prior to termination; (b) we will deliver any completed or in-progress Deliverables for which you have paid; (c) all licenses to Licensed Content will remain in effect for Deliverables that have been fully paid for; (d) source files may be requested per Section 4.6; and (e) each party will return or destroy the other party&apos;s Confidential Information upon request.
+              <strong>11.2</strong> Upon termination: (a) you will pay all outstanding fees for work completed prior to termination; (b) we will deliver any completed or in-progress Deliverables for which you have paid; (c) all licenses to Licensed Content will remain in effect for Deliverables that have been fully paid for; and (d) each party will return or destroy the other party&apos;s Confidential Information upon request.
             </p>
             <p>
               <strong>11.3</strong> We may terminate this Agreement immediately upon notice if you breach any material term, including but not limited to failure to pay invoiced amounts within 30 days of the due date.
