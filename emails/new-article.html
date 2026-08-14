@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>New from Studio Tak</title>
+    <!--
+      Resend Broadcast master
+
+      Required variables:
+      ARTICLE_TITLE, ARTICLE_INTRO, ARTICLE_IMAGE_URL, ARTICLE_IMAGE_ALT,
+      ARTICLE_URL, PREHEADER
+
+      Send this as a Resend Broadcast so RESEND_UNSUBSCRIBE_URL is replaced
+      with a recipient-specific unsubscribe URL.
+    -->
+    <style>
+      @media only screen and (max-width: 620px) {
+        .email-shell { width: 100% !important; }
+        .email-padding { padding-left: 24px !important; padding-right: 24px !important; }
+        .article-title { font-size: 36px !important; line-height: 1.06 !important; letter-spacing: -1.35px !important; }
+        .hero-image { height: auto !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0;padding:0;background:#f9f7f6;">
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;opacity:0;color:transparent;">
+      {{{PREHEADER}}}
+    </div>
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;opacity:0;color:transparent;">
+      &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+    </div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin:0;padding:0;background:#f9f7f6;">
+      <tr>
+        <td align="center" style="padding:28px 16px 48px;">
+          <table class="email-shell" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #d9d5d3;border-radius:12px;overflow:hidden;">
+            <tr>
+              <td class="email-padding" style="padding:27px 32px 24px;border-bottom:1px solid #e5e2e0;">
+                <a href="https://studiotak.co" target="_blank" style="display:inline-block;text-decoration:none;">
+                  <img src="https://www.studiotak.co/LOGO_EMAIL.png" width="140" height="24" alt="Studio Tak" style="display:block;width:140px;height:24px;border:0;outline:none;text-decoration:none;" />
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td class="email-padding" style="padding:32px 32px 0;">
+                <p style="margin:0;color:#ff700b;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;line-height:1.2;text-transform:uppercase;">New from Studio Tak</p>
+                <h1 class="article-title" style="margin:16px 0 0;color:#1b1817;font-family:Georgia,'Times New Roman',serif;font-size:44px;font-weight:400;letter-spacing:-1.8px;line-height:1.02;">{{{ARTICLE_TITLE}}}</h1>
+                <p style="margin:22px 0 0;color:#3e3a38;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.62;">{{{ARTICLE_INTRO}}}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 0 0;">
+                <a href="{{{ARTICLE_URL}}}" target="_blank" style="display:block;text-decoration:none;">
+                  <img class="hero-image" src="{{{ARTICLE_IMAGE_URL}}}" width="600" height="338" alt="{{{ARTICLE_IMAGE_ALT}}}" style="display:block;width:100%;height:338px;border:0;object-fit:cover;outline:none;text-decoration:none;" />
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td class="email-padding" style="padding:28px 32px 32px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td style="background:#ff700b;border-radius:8px;">
+                      <a href="{{{ARTICLE_URL}}}" target="_blank" style="display:inline-block;padding:14px 17px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;line-height:1;text-decoration:none;">Read the article&nbsp;&nbsp;→</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td class="email-padding" style="padding:0 32px 32px;">
+                <div style="border-top:1px solid #e5e2e0;padding-top:24px;">
+                  <p style="margin:0;color:#6a6664;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.55;">Studio Tak makes creative that people stop to notice—and teams can actually run.</p>
+                  <p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.55;"><a href="https://studiotak.co/campfire" target="_blank" style="color:#1b1817;font-weight:700;text-decoration:underline;text-underline-offset:2px;">See what we could make together →</a></p>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="email-padding" style="padding:0 32px 34px;color:#9c9896;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.55;">
+                <p style="margin:0;">You’re receiving this because you opted in to occasional updates from Studio Tak.</p>
+                <p style="margin:8px 0 0;"><a href="{{{RESEND_UNSUBSCRIBE_URL}}}" target="_blank" style="color:#6a6664;text-decoration:underline;">Unsubscribe</a><span style="color:#cdc8c5;">&nbsp;&nbsp;·&nbsp;&nbsp;</span><a href="https://studiotak.co/privacy-policy" target="_blank" style="color:#6a6664;text-decoration:underline;">Privacy Policy</a></p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

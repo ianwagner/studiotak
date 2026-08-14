@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getMarketingSegmentId } from "@/lib/resendMarketing";
 import { sendSlackFormNotification } from "@/lib/slackFormNotifications";
 
 export const runtime = "nodejs";
@@ -60,6 +61,7 @@ const MARKETING_CONSENT_VERSION = "website_marketing_v1";
 
 async function addMarketingContact(apiKey: string, details: MarketingContactDetails) {
   const { email, firstName, lastName, businessName, monthlyMetaSpend, creativeSetup, signupPath, utmSource, utmMedium, utmCampaign } = details;
+  const marketingSegmentId = await getMarketingSegmentId(apiKey);
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
@@ -85,6 +87,7 @@ async function addMarketingContact(apiKey: string, details: MarketingContactDeta
     first_name: firstName,
     last_name: lastName,
     unsubscribed: false,
+    ...(marketingSegmentId ? { segments: [{ id: marketingSegmentId }] } : {}),
     properties
   });
   const updateContact = JSON.stringify({
@@ -98,6 +101,17 @@ async function addMarketingContact(apiKey: string, details: MarketingContactDeta
     }
   });
 
+  const addToMarketingSegment = async () => {
+    if (!marketingSegmentId) return;
+    const segmentResponse = await fetch(
+      `https://api.resend.com/contacts/${encodeURIComponent(email)}/segments/${encodeURIComponent(marketingSegmentId)}`,
+      { method: "POST", headers, cache: "no-store" }
+    );
+    if (!segmentResponse.ok && segmentResponse.status !== 409) {
+      console.error("Unable to add marketing contact to the Resend segment", segmentResponse.status);
+    }
+  };
+
   try {
     const createResponse = await fetch("https://api.resend.com/contacts", {
       method: "POST",
@@ -105,7 +119,10 @@ async function addMarketingContact(apiKey: string, details: MarketingContactDeta
       body: createContact,
       cache: "no-store"
     });
-    if (createResponse.ok) return;
+    if (createResponse.ok) {
+      await addToMarketingSegment();
+      return;
+    }
     if (createResponse.status !== 409) {
       console.error("Unable to add marketing contact to Resend", createResponse.status);
       return;
@@ -117,7 +134,11 @@ async function addMarketingContact(apiKey: string, details: MarketingContactDeta
       body: updateContact,
       cache: "no-store"
     });
-    if (!updateResponse.ok) console.error("Unable to update marketing contact in Resend", updateResponse.status);
+    if (!updateResponse.ok) {
+      console.error("Unable to update marketing contact in Resend", updateResponse.status);
+      return;
+    }
+    await addToMarketingSegment();
   } catch {
     console.error("Unable to sync marketing contact to Resend");
   }

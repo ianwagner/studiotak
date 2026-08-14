@@ -35,6 +35,26 @@ type GhostSingleResponse = {
   posts: GhostPost[];
 };
 
+const postFields = [
+  "id",
+  "title",
+  "slug",
+  "excerpt",
+  "html",
+  "feature_image",
+  "feature_image_alt",
+  "feature_image_caption",
+  "published_at",
+  "updated_at",
+  "canonical_url",
+  "meta_title",
+  "meta_description",
+  "og_title",
+  "og_description",
+  "twitter_title",
+  "twitter_description"
+].join(",");
+
 const ghostUrl = process.env.GHOST_CONTENT_URL;
 const ghostKey = process.env.GHOST_CONTENT_API_KEY;
 
@@ -107,26 +127,17 @@ export async function getGhostPostBySlug(slug: string): Promise<GhostPost | null
     include: "tags",
     limit: "1",
     filter: `slug:${slug}`,
-    fields: [
-      "id",
-      "title",
-      "slug",
-      "excerpt",
-      "html",
-      "feature_image",
-      "feature_image_alt",
-      "feature_image_caption",
-      "published_at",
-      "updated_at",
-      "canonical_url",
-      "meta_title",
-      "meta_description",
-      "og_title",
-      "og_description",
-      "twitter_title",
-      "twitter_description"
-    ].join(",")
+    fields: postFields
   });
   const data = await fetchGhost<GhostSingleResponse>("posts/", params);
+  return data?.posts?.[0] ?? null;
+}
+
+export async function getGhostPostById(id: string): Promise<GhostPost | null> {
+  const params = new URLSearchParams({
+    include: "tags",
+    fields: postFields
+  });
+  const data = await fetchGhost<GhostSingleResponse>(`posts/${encodeURIComponent(id)}/`, params, 0);
   return data?.posts?.[0] ?? null;
 }
