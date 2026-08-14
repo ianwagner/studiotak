@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 
 const MAX_FORM_AGE_MS = 1000 * 60 * 60 * 24;
 const MIN_FORM_COMPLETION_MS = 900;
+const TURNSTILE_ACTION = "spec_ads_application";
 
 type FormPayload = {
   name?: unknown;
@@ -69,20 +70,28 @@ async function addMarketingContact(apiKey: string, email: string) {
   }
 }
 
-async function verifyTurnstile(token: string, remoteIp: string | null) {
+type TurnstileVerification =
+  | { verified: true }
+  | { verified: false; reason: "configuration" | "invalid" | "unavailable" };
+
+const normalizeHostname = (hostname: string) => hostname.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+
+async function verifyTurnstile(token: string): Promise<TurnstileVerification> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   const allowedHostnames = new Set(
     (process.env.TURNSTILE_HOSTNAMES ?? "")
       .split(",")
-      .map((hostname) => hostname.trim())
+      .map(normalizeHostname)
       .filter(Boolean)
   );
-  if (!secret || !allowedHostnames.size) return false;
+  if (!secret) {
+    console.error("Turnstile verification is unavailable: TURNSTILE_SECRET_KEY is not configured.");
+    return { verified: false, reason: "configuration" };
+  }
 
   const formData = new FormData();
   formData.set("secret", secret);
   formData.set("response", token);
-  if (remoteIp) formData.set("remoteip", remoteIp);
 
   try {
     const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
@@ -91,12 +100,34 @@ async function verifyTurnstile(token: string, remoteIp: string | null) {
       cache: "no-store",
       signal: AbortSignal.timeout(10_000)
     });
-    if (!response.ok) return false;
+    if (!response.ok) {
+      console.error("Turnstile verification request failed", { status: response.status });
+      return { verified: false, reason: "unavailable" };
+    }
 
-    const result = (await response.json().catch(() => null)) as { success?: boolean; action?: string; hostname?: string } | null;
-    return result?.success === true && result.action === "spec_ads_application" && allowedHostnames.has(result.hostname ?? "");
+    const result = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      action?: string;
+      hostname?: string;
+      "error-codes"?: string[];
+    } | null;
+    const hostname = normalizeHostname(result?.hostname ?? "");
+    const hostnameMatches = !allowedHostnames.size || allowedHostnames.has(hostname);
+    const verified = result?.success === true && result.action === TURNSTILE_ACTION && hostnameMatches;
+
+    if (!verified) {
+      console.warn("Turnstile verification was rejected", {
+        action: result?.action ?? null,
+        errorCodes: result?.["error-codes"] ?? [],
+        hostname: hostname || null,
+        hostnameMatches
+      });
+    }
+
+    return verified ? { verified: true } : { verified: false, reason: "invalid" };
   } catch {
-    return false;
+    console.error("Turnstile verification request could not be completed.");
+    return { verified: false, reason: "unavailable" };
   }
 }
 
@@ -134,8 +165,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please complete each field with a valid email address." }, { status: 400 });
   }
 
-  const verified = await verifyTurnstile(captchaToken, request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null);
-  if (!verified) return NextResponse.json({ error: "The security check expired. Please refresh and try again." }, { status: 400 });
+  const turnstile = await verifyTurnstile(captchaToken);
+  if (!turnstile.verified) {
+    if (turnstile.reason === "configuration") {
+      return NextResponse.json({ error: "The security service is temporarily unavailable. Please try again shortly.", code: "turnstile_configuration" }, { status: 503 });
+    }
+    if (turnstile.reason === "unavailable") {
+      return NextResponse.json({ error: "We couldn't verify the security check. Please try again shortly.", code: "turnstile_unavailable" }, { status: 503 });
+    }
+    return NextResponse.json({ error: "The security check expired. Please complete it again and resubmit.", code: "turnstile_expired" }, { status: 400 });
+  }
 
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.RESEND_FROM_EMAIL;

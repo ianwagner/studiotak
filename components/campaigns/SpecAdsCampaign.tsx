@@ -217,8 +217,15 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         })
       });
 
-      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (!response.ok) throw new Error(payload?.error || "We couldn't send your application. Please try again.");
+      const payload = (await response.json().catch(() => null)) as { error?: string; code?: string } | null;
+      if (!response.ok) {
+        if (payload?.code === "turnstile_expired") {
+          setCaptchaError("The security check expired. Please complete it again before submitting.");
+          setSubmitState("idle");
+          return;
+        }
+        throw new Error(payload?.error || "We couldn't send your application. Please try again.");
+      }
 
       setSubmitState("success");
       form.reset();
