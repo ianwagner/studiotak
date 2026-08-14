@@ -6,8 +6,8 @@ const MAX_FORM_AGE_MS = 1000 * 60 * 60 * 24;
 const MIN_FORM_COMPLETION_MS = 900;
 
 type FormPayload = {
-  name?: unknown;
-  title?: unknown;
+  firstName?: unknown;
+  lastName?: unknown;
   email?: unknown;
   businessName?: unknown;
   productToFeature?: unknown;
@@ -21,8 +21,8 @@ type FormPayload = {
 };
 
 const fieldLimits = {
-  name: 200,
-  title: 150,
+  firstName: 100,
+  lastName: 100,
   email: 254,
   businessName: 200,
   productToFeature: 2000,
@@ -144,8 +144,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please refresh the page and try again." }, { status: 400 });
   }
 
-  const name = getString(payload.name, fieldLimits.name);
-  const title = getString(payload.title, fieldLimits.title);
+  const firstName = getString(payload.firstName, fieldLimits.firstName);
+  const lastName = getString(payload.lastName, fieldLimits.lastName);
   const email = getString(payload.email, fieldLimits.email).toLowerCase();
   const businessName = getString(payload.businessName, fieldLimits.businessName);
   const productToFeature = getString(payload.productToFeature, fieldLimits.productToFeature);
@@ -155,7 +155,7 @@ export async function POST(request: Request) {
   const marketingConsent = getString(payload.marketingConsent, 10) === "yes";
   const captchaToken = getString(payload.captchaToken, 2048);
 
-  if (!name || !title || !email || !businessName || !productToFeature || !monthlyMetaSpend || !creativeSetup || !creativeChallenge || !emailPattern.test(email)) {
+  if (!firstName || !lastName || !email || !businessName || !productToFeature || !monthlyMetaSpend || !creativeSetup || !creativeChallenge || !emailPattern.test(email)) {
     return NextResponse.json({ error: "Please complete each field with a valid email address." }, { status: 400 });
   }
 
@@ -178,8 +178,8 @@ export async function POST(request: Request) {
   }
 
   const entries: Array<[string, string]> = [
-    ["Name", name],
-    ["Title", title],
+    ["First name", firstName],
+    ["Last name", lastName],
     ["Email", email],
     ["Business", businessName],
     ["Product to feature", productToFeature],
@@ -192,8 +192,8 @@ export async function POST(request: Request) {
   const html = entries
     .map(([label, value]) => `<tr><td style="padding:8px 14px 8px 0;color:#6b665f;font-weight:600;vertical-align:top">${escapeHtml(label)}</td><td style="padding:8px 0;white-space:pre-wrap">${escapeHtml(value)}</td></tr>`)
     .join("");
-  const applicantText = `Hi ${name},\n\nThank you for sharing your brand with us. We’re excited to take a proper look and see what we could make together.\n\nWe review every submission and select a focused group of brands for spec work. We’d genuinely love to work with everyone; keeping the group tight means we can give the work real attention and make something your team would actually want to run.\n\nIf it feels like a fit, we’ll be in touch soon.\n\nIn the meantime, see what we’re thinking: https://studiotak.co/learn\n\nWarmly,\nThe team at Studio Tak`;
-  const applicantHtml = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin:0;padding:0;background:#f9f7f6;"><tr><td align="center" style="padding:28px 16px 48px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #d9d5d3;border-radius:12px;"><tr><td style="padding:28px 32px 24px;border-bottom:1px solid #e5e2e0;"><img src="https://www.studiotak.co/LOGO_EMAIL.png" width="140" height="24" alt="Studio Tak" style="display:block;width:140px;height:24px;border:0;outline:none;text-decoration:none;" /></td></tr><tr><td style="padding:32px 32px 0;"><p style="margin:0;color:#ff700b;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;line-height:1.2;text-transform:uppercase;">Campfire / 5 free spec ads</p><h1 style="margin:16px 0 0;color:#1b1817;font-family:Georgia,'Times New Roman',serif;font-size:42px;font-weight:400;letter-spacing:-1.6px;line-height:1.02;">Let’s make something<br />worth running.</h1></td></tr><tr><td style="padding:26px 32px 8px;color:#3e3a38;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;"><p style="margin:0 0 20px;">Hi ${escapeHtml(name)},</p><p style="margin:0 0 20px;">Thanks for putting your brand in front of us. We’re excited to take a proper look and see what we could make together.</p><p style="margin:0 0 20px;">We review every submission and select a focused group of brands for spec work. We’d genuinely love to work with everyone; keeping the group tight means we can give the work real attention and make something your team would actually want to run.</p><p style="margin:0;">If it feels like a fit, we’ll be in touch soon.</p></td></tr><tr><td style="padding:28px 32px 24px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td style="background:#ff700b;border-radius:8px;"><a href="https://studiotak.co/learn" target="_blank" style="display:inline-block;padding:13px 16px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;line-height:1;text-decoration:none;">See what we’re thinking&nbsp;&nbsp;→</a></td></tr></table></td></tr><tr><td style="padding:0 32px 34px;color:#6a6664;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;"><div style="border-top:1px solid #e5e2e0;padding-top:20px;">Warmly,<br />The team at Studio Tak</div></td></tr></table></td></tr></table>`;
+  const applicantText = `Hi ${firstName},\n\nThank you for sharing your brand with us. We’re excited to take a proper look and see what we could make together.\n\nWe review every submission and select a focused group of brands for spec work. We’d genuinely love to work with everyone; keeping the group tight means we can give the work real attention and make something your team would actually want to run.\n\nIf it feels like a fit, we’ll be in touch soon.\n\nIn the meantime, see what we’re thinking: https://studiotak.co/learn\n\nWarmly,\nThe team at Studio Tak`;
+  const applicantHtml = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin:0;padding:0;background:#f9f7f6;"><tr><td align="center" style="padding:28px 16px 48px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #d9d5d3;border-radius:12px;"><tr><td style="padding:28px 32px 24px;border-bottom:1px solid #e5e2e0;"><img src="https://www.studiotak.co/LOGO_EMAIL.png" width="140" height="24" alt="Studio Tak" style="display:block;width:140px;height:24px;border:0;outline:none;text-decoration:none;" /></td></tr><tr><td style="padding:32px 32px 0;"><p style="margin:0;color:#ff700b;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;line-height:1.2;text-transform:uppercase;">Campfire / 5 free spec ads</p><h1 style="margin:16px 0 0;color:#1b1817;font-family:Georgia,'Times New Roman',serif;font-size:42px;font-weight:400;letter-spacing:-1.6px;line-height:1.02;">Let’s make something<br />worth running.</h1></td></tr><tr><td style="padding:26px 32px 8px;color:#3e3a38;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;"><p style="margin:0 0 20px;">Hi ${escapeHtml(firstName)},</p><p style="margin:0 0 20px;">Thanks for putting your brand in front of us. We’re excited to take a proper look and see what we could make together.</p><p style="margin:0 0 20px;">We review every submission and select a focused group of brands for spec work. We’d genuinely love to work with everyone; keeping the group tight means we can give the work real attention and make something your team would actually want to run.</p><p style="margin:0;">If it feels like a fit, we’ll be in touch soon.</p></td></tr><tr><td style="padding:28px 32px 24px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td style="background:#ff700b;border-radius:8px;"><a href="https://studiotak.co/learn" target="_blank" style="display:inline-block;padding:13px 16px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;line-height:1;text-decoration:none;">See what we’re thinking&nbsp;&nbsp;→</a></td></tr></table></td></tr><tr><td style="padding:0 32px 34px;color:#6a6664;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;"><div style="border-top:1px solid #e5e2e0;padding-top:20px;">Warmly,<br />The team at Studio Tak</div></td></tr></table></td></tr></table>`;
   const applicantComplianceText = "You’re receiving this because you applied for Campfire spec work.\nPrivacy Policy: https://studiotak.co/privacy-policy\nTerms of Service: https://studiotak.co/terms-of-service";
   const applicantHtmlWithFooter = applicantHtml
     .replace("Let’s make something<br />worth running.", "Glad you found us.")
@@ -218,7 +218,7 @@ export async function POST(request: Request) {
         from: fromEmail,
         to: [email],
         subject: "Thanks for your interest in Campfire",
-        template: { id: applicationTemplateId, variables: { NAME: name } }
+        template: { id: applicationTemplateId, variables: { NAME: firstName } }
       }
     : fallbackApplicantEmail;
 

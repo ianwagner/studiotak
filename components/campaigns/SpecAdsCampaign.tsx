@@ -378,12 +378,12 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                 <form onSubmit={handleSubmit}>
                   <div className={styles.fieldGrid}>
                     <label>
-                      <span>Name</span>
-                      <input name="name" type="text" autoComplete="name" required maxLength={200} />
+                      <span>First name</span>
+                      <input name="firstName" type="text" autoComplete="given-name" required maxLength={100} />
                     </label>
                     <label>
-                      <span>Title</span>
-                      <input name="title" type="text" autoComplete="organization-title" required maxLength={150} />
+                      <span>Last name</span>
+                      <input name="lastName" type="text" autoComplete="family-name" required maxLength={100} />
                     </label>
                   </div>
                   <label>
