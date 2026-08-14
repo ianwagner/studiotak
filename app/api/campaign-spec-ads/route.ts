@@ -4,7 +4,6 @@ export const runtime = "nodejs";
 
 const MAX_FORM_AGE_MS = 1000 * 60 * 60 * 24;
 const MIN_FORM_COMPLETION_MS = 900;
-const TURNSTILE_ACTION = "spec_ads_application";
 
 type FormPayload = {
   name?: unknown;
@@ -74,16 +73,10 @@ type TurnstileVerification =
   | { verified: true }
   | { verified: false; reason: "configuration" | "invalid" | "unavailable" };
 
-const normalizeHostname = (hostname: string) => hostname.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+const turnstileConfigurationErrors = new Set(["missing-input-secret", "invalid-input-secret"]);
 
 async function verifyTurnstile(token: string): Promise<TurnstileVerification> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  const allowedHostnames = new Set(
-    (process.env.TURNSTILE_HOSTNAMES ?? "")
-      .split(",")
-      .map(normalizeHostname)
-      .filter(Boolean)
-  );
   if (!secret) {
     console.error("Turnstile verification is unavailable: TURNSTILE_SECRET_KEY is not configured.");
     return { verified: false, reason: "configuration" };
@@ -111,19 +104,20 @@ async function verifyTurnstile(token: string): Promise<TurnstileVerification> {
       hostname?: string;
       "error-codes"?: string[];
     } | null;
-    const hostname = normalizeHostname(result?.hostname ?? "");
-    const hostnameMatches = !allowedHostnames.size || allowedHostnames.has(hostname);
-    const verified = result?.success === true && result.action === TURNSTILE_ACTION && hostnameMatches;
+    const errorCodes = result?.["error-codes"] ?? [];
+    const verified = result?.success === true;
 
     if (!verified) {
       console.warn("Turnstile verification was rejected", {
         action: result?.action ?? null,
-        errorCodes: result?.["error-codes"] ?? [],
-        hostname: hostname || null,
-        hostnameMatches
+        errorCodes,
+        hostname: result?.hostname ?? null
       });
     }
 
+    if (errorCodes.some((code) => turnstileConfigurationErrors.has(code))) {
+      return { verified: false, reason: "configuration" };
+    }
     return verified ? { verified: true } : { verified: false, reason: "invalid" };
   } catch {
     console.error("Turnstile verification request could not be completed.");
