@@ -84,7 +84,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
   const captchaContainerRef = useRef<HTMLDivElement>(null);
   const captchaWidgetRef = useRef<string | null>(null);
   const heroArtworkRef = useRef<HTMLDivElement>(null);
-  const formCardRef = useRef<HTMLDivElement>(null);
+  const successMessageRef = useRef<HTMLDivElement>(null);
   const formStartedAtRef = useRef(Date.now());
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
@@ -92,7 +92,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
   const [featuredExamples, setFeaturedExamples] = useState<HeroExampleAd[]>([]);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitError, setSubmitError] = useState("");
-  const [submittedFormHeight, setSubmittedFormHeight] = useState<number | null>(null);
   const animationPreset = animationPresets[defaultAnimationPreset];
 
   useEffect(() => {
@@ -194,6 +193,16 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (submitState !== "success") return;
+
+    const scrollTimeout = window.setTimeout(() => {
+      successMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 0);
+
+    return () => window.clearTimeout(scrollTimeout);
+  }, [submitState]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -234,7 +243,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         throw new Error(payload?.error || "We couldn't send your application. Please try again.");
       }
 
-      setSubmittedFormHeight(formCardRef.current?.getBoundingClientRect().height ?? null);
       setSubmitState("success");
       form.reset();
     } catch (error) {
@@ -375,13 +383,9 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
               </div>
             </div>
 
-            <div
-              ref={formCardRef}
-              className={styles.formCard}
-              style={submittedFormHeight ? { minHeight: `${submittedFormHeight}px` } : undefined}
-            >
+            <div className={`${styles.formCard} ${submitState === "success" ? styles.formCardSuccess : ""}`}>
               {submitState === "success" ? (
-                <div className={styles.successMessage} role="status">
+                <div ref={successMessageRef} className={styles.successMessage} role="status" tabIndex={-1}>
                   <span>✓</span>
                   <h3>Application received.</h3>
                   <p>Thanks for sharing your brand. We&apos;ll review the details and be in touch if it&apos;s a fit.</p>
