@@ -3892,7 +3892,19 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
   );
 };
 
-const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock; index: number; audienceFilter?: string }) => {
+export const LogosBlockSection = ({
+  block,
+  index,
+  audienceFilter,
+  forceDark = false,
+  hideHeading = false
+}: {
+  block: LogosBlock;
+  index: number;
+  audienceFilter?: string;
+  forceDark?: boolean;
+  hideHeading?: boolean;
+}) => {
   const maxLogosBase = clampNumber(block.limit ?? 12, 1, 20);
   // Enforce an even count so we can split the wall evenly between two rows.
   const maxLogos = Math.max(2, maxLogosBase - (maxLogosBase % 2));
@@ -4013,6 +4025,10 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
     if (!root) return;
     const prefersDark = () => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
     const computeTheme = () => {
+      if (forceDark) {
+        setIsDarkTheme(true);
+        return;
+      }
       const attrTheme = root.getAttribute("data-theme") || root.getAttribute("data-base-theme");
       if (attrTheme === "dark" || attrTheme === "light") {
         setIsDarkTheme(attrTheme === "dark");
@@ -4030,7 +4046,7 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
       observer.disconnect();
       media?.removeEventListener?.("change", handleMedia);
     };
-  }, []);
+  }, [forceDark]);
 
   useEffect(() => {
     const measure = () => {
@@ -4102,9 +4118,11 @@ const LogosBlockSection = ({ block, index, audienceFilter }: { block: LogosBlock
         }
       `}</style>
       <div className="grid" style={{ gap: 14 }}>
-        <div style={{ textAlign: "center", display: "grid", gap: 6 }}>
-          <SectionHeading eyebrow={block.eyebrow} title={block.heading ?? "Partners"} align="center" />
-        </div>
+        {!hideHeading ? (
+          <div style={{ textAlign: "center", display: "grid", gap: 6 }}>
+            <SectionHeading eyebrow={block.eyebrow} title={block.heading ?? "Partners"} align="center" />
+          </div>
+        ) : null}
         <div
           data-logos-wall
           style={{
