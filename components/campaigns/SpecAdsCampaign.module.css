@@ -72,16 +72,18 @@
 .disclaimer { max-width: 420px; margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--line); }
 .disclaimer strong { font-size: 13px; }
 .disclaimer p { margin: 8px 0 0; color: var(--campaign-form-copy); font-size: 13px; line-height: 1.55; }
-.formCard { padding: clamp(22px, 4vw, 40px); background: var(--campaign-form-card); border: 1px solid var(--campaign-form-card-border); box-shadow: 0 16px 34px rgba(49, 34, 22, .08); }
+.formCard { padding: clamp(22px, 4vw, 40px); border: 1px solid var(--campaign-form-card-border); border-radius: 18px; background: var(--campaign-form-card); box-shadow: 0 16px 34px rgba(49, 34, 22, .08); }
 .formCard form { display: grid; gap: 20px; }
 .fieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .formCard label { display: grid; gap: 8px; color: var(--campaign-form-label); font-size: 13px; font-weight: 700; }
-.formCard input, .formCard select, .formCard textarea { width: 100%; appearance: none; padding: 12px 0; border: 0; border-bottom: 1px solid var(--campaign-form-field-border); border-radius: 0; background: transparent; color: var(--campaign-form-label); font: inherit; font-size: 15px; line-height: 1.35; outline: none; transition: border-color 150ms ease; }
-.formCard select { cursor: pointer; background: linear-gradient(45deg, transparent 50%, #554d46 50%) calc(100% - 6px) 50%/5px 5px no-repeat, linear-gradient(135deg, #554d46 50%, transparent 50%) calc(100% - 1px) 50%/5px 5px no-repeat; }
-.formCard textarea { resize: vertical; min-height: 75px; }
-.formCard input:focus, .formCard select:focus, .formCard textarea:focus { border-color: var(--orange); box-shadow: 0 1px 0 var(--orange); }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.formCard input, .formCard select, .formCard textarea { width: 100%; appearance: none; padding: 12px 14px; border: 1px solid var(--campaign-form-field-border); border-radius: 10px; background: transparent; color: var(--campaign-form-label); font: inherit; font-size: 15px; font-weight: 500; line-height: 1.35; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease; }
+.formCard input::placeholder, .formCard textarea::placeholder, .formCard select:invalid { color: #817971; opacity: 1; }
+.formCard select { cursor: pointer; background: linear-gradient(45deg, transparent 50%, #554d46 50%) calc(100% - 18px) 50%/5px 5px no-repeat, linear-gradient(135deg, #554d46 50%, transparent 50%) calc(100% - 13px) 50%/5px 5px no-repeat; }
+.formCard textarea { resize: none; min-height: 75px; }
+.formCard input:focus, .formCard select:focus, .formCard textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255, 112, 11, .14); }
 .formCard input:-webkit-autofill, .formCard input:-webkit-autofill:hover, .formCard input:-webkit-autofill:focus { -webkit-text-fill-color: var(--campaign-form-label); -webkit-box-shadow: 0 0 0 1000px var(--campaign-form-card) inset; box-shadow: 0 0 0 1000px var(--campaign-form-card) inset; caret-color: var(--campaign-form-label); }
-.formCard input:-webkit-autofill:focus { -webkit-box-shadow: 0 1px 0 var(--orange), 0 0 0 1000px var(--campaign-form-card) inset; box-shadow: 0 1px 0 var(--orange), 0 0 0 1000px var(--campaign-form-card) inset; }
+.formCard input:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 3px rgba(255, 112, 11, .14), 0 0 0 1000px var(--campaign-form-card) inset; box-shadow: 0 0 0 3px rgba(255, 112, 11, .14), 0 0 0 1000px var(--campaign-form-card) inset; }
 .formLegal { display: grid; gap: 13px; padding-top: 2px; }
 .formLegal p { margin: 0; color: var(--campaign-form-copy); font-size: 12px; line-height: 1.5; }
 .formLegal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
