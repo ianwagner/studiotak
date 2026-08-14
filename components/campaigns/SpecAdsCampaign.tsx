@@ -205,6 +205,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
     setSubmitError("");
 
     const fields = Object.fromEntries(new FormData(form).entries());
+    const searchParams = new URLSearchParams(window.location.search);
 
     try {
       const response = await fetch("/api/campaign-spec-ads", {
@@ -213,7 +214,11 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         body: JSON.stringify({
           ...fields,
           captchaToken,
-          formStartedAt: formStartedAtRef.current
+          formStartedAt: formStartedAtRef.current,
+          signupPath: window.location.pathname,
+          utmSource: searchParams.get("utm_source") ?? "",
+          utmMedium: searchParams.get("utm_medium") ?? "",
+          utmCampaign: searchParams.get("utm_campaign") ?? ""
         })
       });
 

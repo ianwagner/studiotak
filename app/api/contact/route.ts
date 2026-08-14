@@ -11,6 +11,10 @@ type ContactPayload = {
   email?: unknown;
   creativeChallenge?: unknown;
   marketingConsent?: unknown;
+  signupPath?: unknown;
+  utmSource?: unknown;
+  utmMedium?: unknown;
+  utmCampaign?: unknown;
   website?: unknown;
   captchaToken?: unknown;
   formStartedAt?: unknown;
@@ -20,7 +24,9 @@ const fieldLimits = {
   firstName: 100,
   lastName: 100,
   email: 254,
-  creativeChallenge: 3000
+  creativeChallenge: 3000,
+  signupPath: 2_000,
+  utm: 255
 } as const;
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -72,19 +78,60 @@ async function verifyTurnstile(token: string): Promise<TurnstileVerification> {
   }
 }
 
-async function addMarketingContact(apiKey: string, email: string, firstName: string, lastName: string) {
+type MarketingContactDetails = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  signupPath: string;
+  utmSource: string;
+  utmMedium: string;
+  utmCampaign: string;
+};
+
+const MARKETING_CONSENT_VERSION = "website_marketing_v1";
+
+async function addMarketingContact(apiKey: string, details: MarketingContactDetails) {
+  const { email, firstName, lastName, signupPath, utmSource, utmMedium, utmCampaign } = details;
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
     "User-Agent": "studio-tak-website/contact"
   };
-  const contact = JSON.stringify({ email, first_name: firstName, last_name: lastName, unsubscribed: false });
+  const properties = {
+    source: "contact",
+    first_source: "contact",
+    latest_source: "contact",
+    marketing_consent: "true",
+    marketing_consent_at: new Date().toISOString(),
+    marketing_consent_version: MARKETING_CONSENT_VERSION,
+    signup_path: signupPath,
+    ...(utmSource ? { utm_source: utmSource } : {}),
+    ...(utmMedium ? { utm_medium: utmMedium } : {}),
+    ...(utmCampaign ? { utm_campaign: utmCampaign } : {})
+  };
+  const createContact = JSON.stringify({
+    email,
+    first_name: firstName,
+    last_name: lastName,
+    unsubscribed: false,
+    properties
+  });
+  const updateContact = JSON.stringify({
+    email,
+    first_name: firstName,
+    last_name: lastName,
+    unsubscribed: false,
+    properties: {
+      ...properties,
+      first_source: undefined
+    }
+  });
 
   try {
     const createResponse = await fetch("https://api.resend.com/contacts", {
       method: "POST",
       headers,
-      body: contact,
+      body: createContact,
       cache: "no-store"
     });
     if (createResponse.ok) return;
@@ -96,7 +143,7 @@ async function addMarketingContact(apiKey: string, email: string, firstName: str
     const updateResponse = await fetch(`https://api.resend.com/contacts/${encodeURIComponent(email)}`, {
       method: "PATCH",
       headers,
-      body: contact,
+      body: updateContact,
       cache: "no-store"
     });
     if (!updateResponse.ok) console.error("Unable to update contact in Resend", updateResponse.status);
@@ -129,6 +176,10 @@ export async function POST(request: Request) {
   const email = getString(payload.email, fieldLimits.email).toLowerCase();
   const creativeChallenge = getString(payload.creativeChallenge, fieldLimits.creativeChallenge);
   const marketingConsent = getString(payload.marketingConsent, 10) === "yes";
+  const signupPath = getString(payload.signupPath, fieldLimits.signupPath);
+  const utmSource = getString(payload.utmSource, fieldLimits.utm);
+  const utmMedium = getString(payload.utmMedium, fieldLimits.utm);
+  const utmCampaign = getString(payload.utmCampaign, fieldLimits.utm);
   const captchaToken = getString(payload.captchaToken, 2048);
 
   if (!firstName || !lastName || !email || !emailPattern.test(email)) {
@@ -178,7 +229,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "We couldn't send your message. Please try again." }, { status: 502 });
   }
 
-  if (marketingConsent) await addMarketingContact(apiKey, email, firstName, lastName);
+  if (marketingConsent) {
+    await addMarketingContact(apiKey, {
+      email,
+      firstName,
+      lastName,
+      signupPath,
+      utmSource,
+      utmMedium,
+      utmCampaign
+    });
+  }
 
   return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }

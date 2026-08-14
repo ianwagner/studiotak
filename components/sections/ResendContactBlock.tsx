@@ -97,6 +97,7 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
     setSubmitError("");
 
     const fields = Object.fromEntries(new FormData(form).entries());
+    const searchParams = new URLSearchParams(window.location.search);
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
@@ -104,7 +105,11 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
         body: JSON.stringify({
           ...fields,
           captchaToken,
-          formStartedAt: formStartedAtRef.current
+          formStartedAt: formStartedAtRef.current,
+          signupPath: window.location.pathname,
+          utmSource: searchParams.get("utm_source") ?? "",
+          utmMedium: searchParams.get("utm_medium") ?? "",
+          utmCampaign: searchParams.get("utm_campaign") ?? ""
         })
       });
       const payload = (await response.json().catch(() => null)) as { error?: string; code?: string } | null;
