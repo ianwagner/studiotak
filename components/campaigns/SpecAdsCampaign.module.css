@@ -97,7 +97,7 @@
 .submitError { margin: -5px 0 0; font-size: 13px; font-weight: 600; }
 .submitButton { width: fit-content; margin-top: 4px; cursor: pointer; }
 .submitButton:disabled { cursor: not-allowed; opacity: .55; }
-.successMessage { padding: 46px 16px; text-align: center; }
+.successMessage { display: grid; min-height: 100%; place-content: center; justify-items: center; padding: 46px 16px; text-align: center; }
 .successMessage > span { display: inline-grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: var(--orange); color: #fff; font-weight: 800; }
 .successMessage h3 { margin: 24px 0 10px; font-family: var(--font-secondary); font-size: 39px; font-weight: 300; letter-spacing: -.06em; }
 .successMessage p { max-width: 350px; margin: 0 auto; color: var(--campaign-form-copy); font-size: 15px; line-height: 1.55; }

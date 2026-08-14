@@ -84,6 +84,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
   const captchaContainerRef = useRef<HTMLDivElement>(null);
   const captchaWidgetRef = useRef<string | null>(null);
   const heroArtworkRef = useRef<HTMLDivElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
   const formStartedAtRef = useRef(Date.now());
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
@@ -91,6 +92,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
   const [featuredExamples, setFeaturedExamples] = useState<HeroExampleAd[]>([]);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitError, setSubmitError] = useState("");
+  const [submittedFormHeight, setSubmittedFormHeight] = useState<number | null>(null);
   const animationPreset = animationPresets[defaultAnimationPreset];
 
   useEffect(() => {
@@ -232,6 +234,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         throw new Error(payload?.error || "We couldn't send your application. Please try again.");
       }
 
+      setSubmittedFormHeight(formCardRef.current?.getBoundingClientRect().height ?? null);
       setSubmitState("success");
       form.reset();
     } catch (error) {
@@ -372,7 +375,11 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
               </div>
             </div>
 
-            <div className={styles.formCard}>
+            <div
+              ref={formCardRef}
+              className={styles.formCard}
+              style={submittedFormHeight ? { minHeight: `${submittedFormHeight}px` } : undefined}
+            >
               {submitState === "success" ? (
                 <div className={styles.successMessage} role="status">
                   <span>✓</span>
