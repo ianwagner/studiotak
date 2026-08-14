@@ -195,32 +195,36 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           }
           [data-resend-contact-form] {
-            padding: 12px 14px;
+            padding: clamp(22px, 4vw, 40px);
             border: 1px solid var(--border-strong);
-            border-radius: 12px;
+            border-radius: 18px;
             background: var(--input-bg);
             font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
           }
-          [data-resend-contact-form] form { display: grid; gap: 10px; }
+          [data-resend-contact-form] form { display: grid; gap: 20px; }
           [data-resend-contact-form] label { display: grid; }
-          [data-resend-contact-form] .contact-name-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+          [data-resend-contact-form] .contact-name-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
           [data-resend-contact-form] .contact-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
           [data-resend-contact-form] input[type="text"],
           [data-resend-contact-form] input[type="email"],
           [data-resend-contact-form] textarea {
             width: 100%;
             box-sizing: border-box;
-            padding: 8px 0;
-            border: 0;
-            border-bottom: 1px solid var(--border-strong);
-            border-radius: 0;
+            padding: 12px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
             background: transparent;
             color: var(--text);
             font: inherit;
+            font-weight: 500;
+            line-height: 1.35;
+            transition: border-color 150ms ease, box-shadow 150ms ease;
           }
-          [data-resend-contact-form] textarea { min-height: 72px; resize: vertical; }
+          [data-resend-contact-form] input::placeholder,
+          [data-resend-contact-form] textarea::placeholder { color: var(--muted); opacity: .78; }
+          [data-resend-contact-form] textarea { min-height: 72px; resize: none; }
           [data-resend-contact-form] input:focus,
-          [data-resend-contact-form] textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 1px 0 var(--accent); }
+          [data-resend-contact-form] textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
           [data-resend-contact-form] .contact-consent { grid-template-columns: 16px 1fr; align-items: start; gap: 10px; color: var(--muted); font-size: var(--font-size-label); font-weight: 500; line-height: 1.5; }
           [data-resend-contact-form] .contact-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--accent); }
           [data-resend-contact-form] .contact-legal { margin: 0; color: var(--muted); font-size: var(--font-size-xs); line-height: 1.5; }

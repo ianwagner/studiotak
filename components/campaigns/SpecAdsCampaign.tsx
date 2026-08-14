@@ -383,31 +383,31 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                 <form onSubmit={handleSubmit}>
                   <div className={styles.fieldGrid}>
                     <label>
-                      <span>First name</span>
-                      <input name="firstName" type="text" autoComplete="given-name" required maxLength={100} />
+                      <span className={styles.srOnly}>First name</span>
+                      <input name="firstName" type="text" autoComplete="given-name" placeholder="First name" required maxLength={100} />
                     </label>
                     <label>
-                      <span>Last name</span>
-                      <input name="lastName" type="text" autoComplete="family-name" required maxLength={100} />
+                      <span className={styles.srOnly}>Last name</span>
+                      <input name="lastName" type="text" autoComplete="family-name" placeholder="Last name" required maxLength={100} />
                     </label>
                   </div>
                   <label>
-                    <span>Work email</span>
-                    <input name="email" type="email" autoComplete="email" required maxLength={254} />
+                    <span className={styles.srOnly}>Work email</span>
+                    <input name="email" type="email" autoComplete="email" placeholder="Work email" required maxLength={254} />
                   </label>
                   <label>
-                    <span>Business name</span>
-                    <input name="businessName" type="text" autoComplete="organization" required maxLength={200} />
+                    <span className={styles.srOnly}>Business name</span>
+                    <input name="businessName" type="text" autoComplete="organization" placeholder="Business name" required maxLength={200} />
                   </label>
                   <label>
-                    <span>What product would you like us to feature?</span>
-                    <textarea name="productToFeature" required maxLength={2000} rows={4} />
+                    <span className={styles.srOnly}>What product would you like us to feature?</span>
+                    <textarea name="productToFeature" placeholder="What product would you like us to feature?" required maxLength={2000} rows={4} />
                   </label>
                   <label>
-                    <span>Average monthly spend on Meta</span>
+                    <span className={styles.srOnly}>Average monthly spend on Meta</span>
                     <select name="monthlyMetaSpend" required defaultValue="">
                       <option value="" disabled>
-                        Select a range
+                        Average monthly Meta spend
                       </option>
                       {spendOptions.map((option) => (
                         <option key={option} value={option}>
@@ -417,10 +417,10 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                     </select>
                   </label>
                   <label>
-                    <span>How is your creative currently produced?</span>
+                    <span className={styles.srOnly}>How is your creative currently produced?</span>
                     <select name="creativeSetup" required defaultValue="">
                       <option value="" disabled>
-                        Select an option
+                        How is your creative currently produced?
                       </option>
                       {creativeSetupOptions.map((option) => (
                         <option key={option} value={option}>
@@ -430,8 +430,8 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                     </select>
                   </label>
                   <label>
-                    <span>What would make your creative more effective right now?</span>
-                    <textarea name="creativeChallenge" required maxLength={3000} rows={5} />
+                    <span className={styles.srOnly}>What would make your creative more effective right now?</span>
+                    <textarea name="creativeChallenge" placeholder="What would make your creative more effective right now?" required maxLength={3000} rows={5} />
                   </label>
                   <div className={styles.formLegal}>
                     <p>
