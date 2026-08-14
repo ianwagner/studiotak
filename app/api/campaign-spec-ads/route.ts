@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendSlackFormNotification } from "@/lib/slackFormNotifications";
 
 export const runtime = "nodejs";
 
@@ -348,6 +349,24 @@ export async function POST(request: Request) {
       utmCampaign
     });
   }
+
+  await sendSlackFormNotification({
+    formName: "Campfire spec ads application",
+    fields: [
+      { label: "Name", value: `${firstName} ${lastName}` },
+      { label: "Email", value: email },
+      { label: "Business", value: businessName },
+      { label: "Product to feature", value: productToFeature },
+      { label: "Monthly Meta spend", value: monthlyMetaSpend },
+      { label: "Creative setup", value: creativeSetup },
+      { label: "Creative opportunity", value: creativeChallenge },
+      { label: "Marketing email opt-in", value: marketingConsent ? "Yes" : "No" },
+      { label: "Signup path", value: signupPath },
+      { label: "UTM source", value: utmSource },
+      { label: "UTM medium", value: utmMedium },
+      { label: "UTM campaign", value: utmCampaign }
+    ]
+  });
 
   return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }
