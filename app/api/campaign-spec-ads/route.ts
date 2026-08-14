@@ -204,6 +204,13 @@ export async function POST(request: Request) {
       "<td style=\"padding:28px 32px 24px;\"><table role=\"presentation\"",
       "<td style=\"padding:28px 32px 24px;\"><p style=\"margin:0 0 14px;color:#3e3a38;font-size:15px;line-height:1.5;\">In the meantime, take a look at our thinking.</p><table role=\"presentation\""
     );
+  const fallbackApplicantEmail = {
+    from: fromEmail,
+    to: [email],
+    subject: "Thanks for your interest in Campfire",
+    text: `${applicantText}\n\n${applicantComplianceText}`,
+    html: applicantHtmlWithFooter
+  };
   const applicantEmail = applicationTemplateId
     ? {
         from: fromEmail,
@@ -211,13 +218,7 @@ export async function POST(request: Request) {
         subject: "Thanks for your interest in Campfire",
         template: { id: applicationTemplateId, variables: { NAME: name } }
       }
-    : {
-        from: fromEmail,
-        to: [email],
-        subject: "Thanks for your interest in Campfire",
-        text: `${applicantText}\n\n${applicantComplianceText}`,
-        html: applicantHtmlWithFooter
-      };
+    : fallbackApplicantEmail;
 
   const resendHeaders = {
     Authorization: `Bearer ${apiKey}`,
@@ -257,6 +258,21 @@ export async function POST(request: Request) {
       status: applicantEmailResponse.status,
       response: (await applicantEmailResponse.text()).slice(0, 1000)
     });
+
+    if (applicationTemplateId) {
+      const fallbackApplicantEmailResponse = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: resendHeaders,
+        body: JSON.stringify(fallbackApplicantEmail),
+        cache: "no-store"
+      });
+      if (!fallbackApplicantEmailResponse.ok) {
+        console.error("Resend rejected the fallback applicant confirmation", {
+          status: fallbackApplicantEmailResponse.status,
+          response: (await fallbackApplicantEmailResponse.text()).slice(0, 1000)
+        });
+      }
+    }
   }
 
   if (marketingConsent) await addMarketingContact(apiKey, email);
