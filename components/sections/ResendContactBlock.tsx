@@ -201,20 +201,23 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
           [data-resend-contact-form] .contact-label { color: var(--muted); font-size: var(--font-size-label); font-weight: 700; }
           [data-resend-contact-form] .contact-name-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
           [data-resend-contact-form] input[type="text"],
-          [data-resend-contact-form] input[type="email"] {
+          [data-resend-contact-form] input[type="email"],
+          [data-resend-contact-form] textarea {
             width: 100%;
             box-sizing: border-box;
-            padding: 10px 12px;
-            border: 1px solid var(--border-strong);
-            border-radius: 12px;
-            background: var(--input-bg);
+            padding: 12px 0;
+            border: 0;
+            border-bottom: 1px solid var(--border-strong);
+            border-radius: 0;
+            background: transparent;
             color: var(--text);
             font: inherit;
           }
-          [data-resend-contact-form] input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(255, 112, 11, .16); }
-          [data-resend-contact-form] .contact-consent { grid-template-columns: 18px 1fr; align-items: start; gap: 10px; color: var(--text); font-size: var(--font-size-label); line-height: 1.5; }
-          [data-resend-contact-form] .contact-consent input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--accent); }
-          [data-resend-contact-form] .contact-caption { margin: -7px 0 0 28px; color: var(--muted); font-size: var(--font-size-xs); line-height: 1.45; }
+          [data-resend-contact-form] textarea { min-height: 100px; resize: vertical; }
+          [data-resend-contact-form] input:focus,
+          [data-resend-contact-form] textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 1px 0 var(--accent); }
+          [data-resend-contact-form] .contact-consent { grid-template-columns: 16px 1fr; align-items: start; gap: 10px; color: var(--muted); font-size: var(--font-size-label); font-weight: 500; line-height: 1.5; }
+          [data-resend-contact-form] .contact-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--accent); }
           [data-resend-contact-form] .contact-captcha-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: var(--font-size-label); font-weight: 700; }
           [data-resend-contact-form] .contact-error { margin: 0; padding: 8px 10px; border: 1px solid rgba(214, 54, 54, .28); border-radius: 10px; background: rgba(214, 54, 54, .08); color: var(--danger); font-size: var(--font-size-sm); line-height: 1.45; }
           [data-resend-contact-form] .contact-submit {
@@ -259,10 +262,6 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
                   <div data-resend-contact-success aria-live="polite">Thank you! We&apos;ll reach out soon.</div>
                 ) : (
                   <form onSubmit={handleSubmit} onFocus={handleFormStart} onInput={handleFormStart}>
-                    <label>
-                      <span className="contact-label">Enter your email address</span>
-                      <input type="email" name="email" autoComplete="email" placeholder="Email" required maxLength={254} />
-                    </label>
                     <div className="contact-name-row">
                       <label>
                         <span className="contact-label">Enter your first name</span>
@@ -273,11 +272,18 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
                         <input type="text" name="lastName" autoComplete="family-name" placeholder="Last name" required maxLength={100} />
                       </label>
                     </div>
-                    <label className="contact-consent">
-                      <input type="checkbox" name="marketingConsent" value="yes" required />
-                      <span>I agree to receive communications from Studio Tak.</span>
+                    <label>
+                      <span className="contact-label">Work email</span>
+                      <input type="email" name="email" autoComplete="email" placeholder="Email" required maxLength={254} />
                     </label>
-                    <p className="contact-caption">You may unsubscribe at any time using the link in our emails.</p>
+                    <label>
+                      <span className="contact-label">What would make your creative more effective right now? <em>(Optional)</em></span>
+                      <textarea name="creativeChallenge" maxLength={3000} rows={5} />
+                    </label>
+                    <label className="contact-consent">
+                      <input type="checkbox" name="marketingConsent" value="yes" />
+                      <span>Send me Studio Tak&apos;s occasional thinking, Campfire updates, and useful creative ideas by email. I can unsubscribe anytime.</span>
+                    </label>
                     <div>
                       <span className="contact-captcha-label">Security check</span>
                       <div ref={captchaContainerRef} />

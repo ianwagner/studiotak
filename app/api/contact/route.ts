@@ -9,6 +9,7 @@ type ContactPayload = {
   firstName?: unknown;
   lastName?: unknown;
   email?: unknown;
+  creativeChallenge?: unknown;
   marketingConsent?: unknown;
   website?: unknown;
   captchaToken?: unknown;
@@ -18,7 +19,8 @@ type ContactPayload = {
 const fieldLimits = {
   firstName: 100,
   lastName: 100,
-  email: 254
+  email: 254,
+  creativeChallenge: 3000
 } as const;
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -125,10 +127,11 @@ export async function POST(request: Request) {
   const firstName = getString(payload.firstName, fieldLimits.firstName);
   const lastName = getString(payload.lastName, fieldLimits.lastName);
   const email = getString(payload.email, fieldLimits.email).toLowerCase();
+  const creativeChallenge = getString(payload.creativeChallenge, fieldLimits.creativeChallenge);
   const marketingConsent = getString(payload.marketingConsent, 10) === "yes";
   const captchaToken = getString(payload.captchaToken, 2048);
 
-  if (!firstName || !lastName || !email || !marketingConsent || !emailPattern.test(email)) {
+  if (!firstName || !lastName || !email || !emailPattern.test(email)) {
     return NextResponse.json({ error: "Please complete each field with a valid email address." }, { status: 400 });
   }
 
@@ -161,8 +164,8 @@ export async function POST(request: Request) {
       to: ["info@studiotak.co"],
       reply_to: email,
       subject: `Website contact — ${firstName} ${lastName}`,
-      text: `New website contact\n\nFirst name: ${firstName}\nLast name: ${lastName}\nEmail: ${email}\nMarketing email opt-in: Yes`,
-      html: `<h2 style="font-family:Arial,sans-serif">New website contact</h2><table style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45"><tr><td style="padding:5px 12px 5px 0;font-weight:600">First name</td><td>${escapeHtml(firstName)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Last name</td><td>${escapeHtml(lastName)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Email</td><td>${escapeHtml(email)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Marketing email opt-in</td><td>Yes</td></tr></table>`
+      text: `New website contact\n\nFirst name: ${firstName}\nLast name: ${lastName}\nEmail: ${email}\nWhat would make your creative more effective right now?: ${creativeChallenge || "Not provided"}\nMarketing email opt-in: ${marketingConsent ? "Yes" : "No"}`,
+      html: `<h2 style="font-family:Arial,sans-serif">New website contact</h2><table style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45"><tr><td style="padding:5px 12px 5px 0;font-weight:600">First name</td><td>${escapeHtml(firstName)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Last name</td><td>${escapeHtml(lastName)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Email</td><td>${escapeHtml(email)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600;vertical-align:top">What would make your creative more effective right now?</td><td style="white-space:pre-wrap">${escapeHtml(creativeChallenge || "Not provided")}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Marketing email opt-in</td><td>${marketingConsent ? "Yes" : "No"}</td></tr></table>`
     }),
     cache: "no-store"
   });
@@ -175,7 +178,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "We couldn't send your message. Please try again." }, { status: 502 });
   }
 
-  await addMarketingContact(apiKey, email, firstName, lastName);
+  if (marketingConsent) await addMarketingContact(apiKey, email, firstName, lastName);
 
   return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }
