@@ -208,6 +208,7 @@ export async function POST(request: Request) {
     ? {
         from: fromEmail,
         to: [email],
+        subject: "Thanks for your interest in Campfire",
         template: { id: applicationTemplateId, variables: { NAME: name } }
       }
     : {
@@ -218,29 +219,44 @@ export async function POST(request: Request) {
         html: applicantHtmlWithFooter
       };
 
-  const emailResponse = await fetch("https://api.resend.com/emails/batch", {
+  const resendHeaders = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+    "User-Agent": "studio-tak-website/campfire-spec-ads"
+  };
+  const applicationEmailResponse = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "User-Agent": "studio-tak-website/campfire-spec-ads"
-    },
-    body: JSON.stringify([
-      {
-        from: fromEmail,
-        to: ["info@studiotak.co"],
-        reply_to: email,
-        subject: `Spec ads application — ${businessName}`,
-        text: `New Campfire spec ads application\n\n${text}`,
-        html: `<h2 style="font-family:Arial,sans-serif">New Campfire spec ads application</h2><table style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45">${html}</table>`
-      },
-      applicantEmail
-    ]),
+    headers: resendHeaders,
+    body: JSON.stringify({
+      from: fromEmail,
+      to: ["info@studiotak.co"],
+      reply_to: email,
+      subject: `Spec ads application — ${businessName}`,
+      text: `New Campfire spec ads application\n\n${text}`,
+      html: `<h2 style="font-family:Arial,sans-serif">New Campfire spec ads application</h2><table style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45">${html}</table>`
+    }),
     cache: "no-store"
   });
 
-  if (!emailResponse.ok) {
+  if (!applicationEmailResponse.ok) {
+    console.error("Resend rejected the application email", {
+      status: applicationEmailResponse.status,
+      response: (await applicationEmailResponse.text()).slice(0, 1000)
+    });
     return NextResponse.json({ error: "We couldn't send your application. Please try again." }, { status: 502 });
+  }
+
+  const applicantEmailResponse = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: resendHeaders,
+    body: JSON.stringify(applicantEmail),
+    cache: "no-store"
+  });
+  if (!applicantEmailResponse.ok) {
+    console.error("Resend rejected the applicant confirmation", {
+      status: applicantEmailResponse.status,
+      response: (await applicantEmailResponse.text()).slice(0, 1000)
+    });
   }
 
   if (marketingConsent) await addMarketingContact(apiKey, email);
