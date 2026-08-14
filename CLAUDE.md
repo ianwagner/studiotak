@@ -56,6 +56,8 @@ Global CSS with custom properties in `app/globals.css` (no Tailwind). Rubik font
 
 **Analytics**: `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_SITE_URL` (default: `https://studiotak.co`)
 
+**Form notifications**: `SLACK_FORM_SUBMISSIONS_WEBHOOK_URL` (optional Slack Incoming Webhook for contact and Campfire spec-ads submissions)
+
 **Admin**: `SEED_TOKEN` (for admin API endpoints — optional, if unset all requests are allowed)
 
 ## Content Management API
