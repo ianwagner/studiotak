@@ -341,10 +341,6 @@ const newContactBlock = (): ContactBlock => ({
   body: "Tell us about your product, timeline, and the outcomes you want. We'll follow up with a focused plan.",
   anchor: "contact",
   media: undefined,
-  formId: "bb99355b-ad00-407a-81e7-882535a3c4be",
-  portalId: "244262601",
-  region: "na2",
-  formScriptSrc: "https://js-na2.hsforms.net/forms/embed/244262601.js",
   enableDarkModeOnScroll: false
 });
 
@@ -1875,44 +1871,6 @@ export function PageForm({
                   placeholder="Tell visitors what happens after they submit."
                 />
               </div>
-              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-                <div className="field-group">
-                  <label>HubSpot portal ID</label>
-                  <input
-                    className="input"
-                    value={block.portalId ?? ""}
-                    onChange={(e) => handleContactFieldChange(idx, "portalId", e.target.value)}
-                    placeholder="244262601"
-                  />
-                </div>
-                <div className="field-group">
-                  <label>Form ID</label>
-                  <input
-                    className="input"
-                    value={block.formId ?? ""}
-                    onChange={(e) => handleContactFieldChange(idx, "formId", e.target.value)}
-                    placeholder="bb99355b-ad00-407a-81e7-882535a3c4be"
-                  />
-                </div>
-                <div className="field-group">
-                  <label>Region</label>
-                  <input
-                    className="input"
-                    value={block.region ?? ""}
-                    onChange={(e) => handleContactFieldChange(idx, "region", e.target.value)}
-                    placeholder="na2"
-                  />
-                </div>
-                <div className="field-group">
-                  <label>Form script src</label>
-                  <input
-                    className="input"
-                    value={block.formScriptSrc ?? ""}
-                    onChange={(e) => handleContactFieldChange(idx, "formScriptSrc", e.target.value)}
-                    placeholder="https://js-na2.hsforms.net/forms/embed/244262601.js"
-                  />
-                </div>
-              </div>
               <MediaRow>
                 <MediaField
                   blockId={blockId}
@@ -1936,9 +1894,9 @@ export function PageForm({
                 <span>Trigger dark mode while this block is in view</span>
               </label>
               <div className="card" style={{ padding: 12, border: "1px dashed var(--border-strong)", display: "grid", gap: 6 }}>
-                <strong style={{ fontSize: 14 }}>HubSpot embed</strong>
+                <strong style={{ fontSize: 14 }}>Resend form</strong>
                 <span style={{ color: "var(--muted)", fontSize: 13 }}>
-                  Uses the HubSpot embed script and the <code>hs-form-frame</code> container to render the form alongside your media.
+                  Uses the sitewide Resend contact form rendered by the public page component.
                 </span>
               </div>
             </div>

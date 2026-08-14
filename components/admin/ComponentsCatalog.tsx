@@ -70,8 +70,8 @@ const componentEntries: ComponentEntry[] = [
   {
     id: "contact",
     title: "Contact",
-    summary: "Two-column layout pairing a HubSpot embed with optional media.",
-    fields: ["Eyebrow + heading + body copy", "Anchor ID for #contact links", "HubSpot portal + form + region", "Optional media"],
+    summary: "Two-column layout pairing the Resend contact form with optional media.",
+    fields: ["Eyebrow + heading + body copy", "Anchor ID for #contact links", "Sitewide Resend lead capture", "Optional media"],
     usage: "Use for lead capture or inquiries. Drop near the end of a page so CTAs can jump visitors into the form."
   }
 ];

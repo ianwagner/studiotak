@@ -37,6 +37,7 @@ import Script from "next/script";
 import Head from "next/head";
 import Link from "next/link";
 import AdReviewDemo from "@/components/demos/AdReviewDemo";
+import { ResendContactBlockSection } from "./ResendContactBlock";
 
 const viewportWidthVar = "var(--full-bleed-width, 100vw)";
 const viewportShiftVar = "var(--full-bleed-shift, calc(50% - 50vw))";
@@ -5012,7 +5013,7 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
           } else if (block.type === "article_grid") {
             element = <ArticleGridBlockSection key={key} block={block} />;
           } else if (block.type === "contact") {
-            element = <ContactBlockSection key={key} block={block} index={index} />;
+            element = <ResendContactBlockSection key={key} block={block} index={index} />;
           } else if (block.type === "product_demo") {
             element = <ProductDemoBlockSection key={key} block={block} index={index} audienceFilter={audienceFilter} />;
           } else if (block.type === "divider") {
