@@ -190,22 +190,22 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           }
           [data-resend-contact-form] {
-            padding: 16px;
+            padding: 12px 14px;
             border: 1px solid var(--border-strong);
             border-radius: 12px;
             background: var(--input-bg);
             font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
           }
-          [data-resend-contact-form] form { display: grid; gap: 14px; }
-          [data-resend-contact-form] label { display: grid; gap: 6px; }
-          [data-resend-contact-form] .contact-label { color: var(--muted); font-size: var(--font-size-label); font-weight: 700; }
-          [data-resend-contact-form] .contact-name-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+          [data-resend-contact-form] form { display: grid; gap: 10px; }
+          [data-resend-contact-form] label { display: grid; }
+          [data-resend-contact-form] .contact-name-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+          [data-resend-contact-form] .contact-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
           [data-resend-contact-form] input[type="text"],
           [data-resend-contact-form] input[type="email"],
           [data-resend-contact-form] textarea {
             width: 100%;
             box-sizing: border-box;
-            padding: 12px 0;
+            padding: 8px 0;
             border: 0;
             border-bottom: 1px solid var(--border-strong);
             border-radius: 0;
@@ -213,11 +213,13 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
             color: var(--text);
             font: inherit;
           }
-          [data-resend-contact-form] textarea { min-height: 100px; resize: vertical; }
+          [data-resend-contact-form] textarea { min-height: 72px; resize: vertical; }
           [data-resend-contact-form] input:focus,
           [data-resend-contact-form] textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 1px 0 var(--accent); }
           [data-resend-contact-form] .contact-consent { grid-template-columns: 16px 1fr; align-items: start; gap: 10px; color: var(--muted); font-size: var(--font-size-label); font-weight: 500; line-height: 1.5; }
           [data-resend-contact-form] .contact-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--accent); }
+          [data-resend-contact-form] .contact-legal { margin: 0; color: var(--muted); font-size: var(--font-size-xs); line-height: 1.5; }
+          [data-resend-contact-form] .contact-legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
           [data-resend-contact-form] .contact-captcha-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: var(--font-size-label); font-weight: 700; }
           [data-resend-contact-form] .contact-error { margin: 0; padding: 8px 10px; border: 1px solid rgba(214, 54, 54, .28); border-radius: 10px; background: rgba(214, 54, 54, .08); color: var(--danger); font-size: var(--font-size-sm); line-height: 1.45; }
           [data-resend-contact-form] .contact-submit {
@@ -264,22 +266,26 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
                   <form onSubmit={handleSubmit} onFocus={handleFormStart} onInput={handleFormStart}>
                     <div className="contact-name-row">
                       <label>
-                        <span className="contact-label">Enter your first name</span>
-                        <input type="text" name="firstName" autoComplete="given-name" placeholder="First name" required maxLength={100} />
+                        <span className="contact-sr-only">First name</span>
+                        <input type="text" name="firstName" autoComplete="given-name" placeholder="First name" aria-label="First name" required maxLength={100} />
                       </label>
                       <label>
-                        <span className="contact-label">Enter your last name</span>
-                        <input type="text" name="lastName" autoComplete="family-name" placeholder="Last name" required maxLength={100} />
+                        <span className="contact-sr-only">Last name</span>
+                        <input type="text" name="lastName" autoComplete="family-name" placeholder="Last name" aria-label="Last name" required maxLength={100} />
                       </label>
                     </div>
                     <label>
-                      <span className="contact-label">Work email</span>
-                      <input type="email" name="email" autoComplete="email" placeholder="Email" required maxLength={254} />
+                      <span className="contact-sr-only">Work email</span>
+                      <input type="email" name="email" autoComplete="email" placeholder="Work email" aria-label="Work email" required maxLength={254} />
                     </label>
                     <label>
-                      <span className="contact-label">What would make your creative more effective right now? <em>(Optional)</em></span>
-                      <textarea name="creativeChallenge" maxLength={3000} rows={5} />
+                      <span className="contact-sr-only">What would make your creative more effective right now? Optional</span>
+                      <textarea name="creativeChallenge" placeholder="What would make your creative more effective right now? (Optional)" aria-label="What would make your creative more effective right now? Optional" maxLength={3000} rows={3} />
                     </label>
+                    <p className="contact-legal">
+                      By submitting, you acknowledge our <a href="/privacy-policy">Privacy Policy</a> and agree to our{" "}
+                      <a href="/terms-of-service">Terms of Service</a>.
+                    </p>
                     <label className="contact-consent">
                       <input type="checkbox" name="marketingConsent" value="yes" />
                       <span>Send me Studio Tak&apos;s occasional thinking, Campfire updates, and useful creative ideas by email. I can unsubscribe anytime.</span>
