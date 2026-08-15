@@ -4,7 +4,7 @@ import styles from "@/components/StaticPage.module.css";
 export const revalidate = 120;
 export const dynamic = "force-static";
 
-const lastUpdated = "May 28, 2026";
+const lastUpdated = "August 14, 2026";
 const description =
   "How Studio Tak (Campfire) collects, uses, shares, and protects your information when you use our website or engage our services.";
 
@@ -118,30 +118,27 @@ export default function PrivacyPolicyPage() {
 
             <h2 id="cookies">5. Cookies and Tracking Technologies</h2>
             <p>
-              <strong>5.1</strong> We use cookies, pixel tags, web beacons, and similar technologies (collectively, &quot;Tracking Technologies&quot;) to collect information about your interactions with our Site, improve your experience, and deliver targeted advertising.
+              <strong>5.1</strong> We use cookies, pixel tags, and similar technologies (collectively, &quot;Tracking Technologies&quot;). Some are strictly necessary to operate and secure the Site. We use analytics and marketing technologies only when you actively choose the relevant category in our Cookie Preferences tool. You can refuse or withdraw that choice at any time without affecting your ability to use the Site.
             </p>
 
             <h3>5.2 Types of Cookies We Use</h3>
             <ul>
-              <li><strong>Essential Cookies:</strong> Required for the Site to function properly. These enable core features like security, account access, and form submissions. You cannot opt out of essential cookies.</li>
-              <li><strong>Analytics Cookies:</strong> We use Google Analytics (GA4) and similar tools to understand how visitors interact with our Site, including which pages are visited most, how long visitors stay, and how they navigate between pages. This data helps us improve our Site and Services.</li>
-              <li><strong>Advertising Cookies:</strong> We use Meta (Facebook) Pixel and similar tracking technologies to measure the effectiveness of our advertising, deliver targeted ads to relevant audiences, and build custom audiences for remarketing. These cookies may track your activity across other websites and platforms.</li>
-              <li><strong>Functionality Cookies:</strong> These cookies remember choices you make and preferences you set, such as your language and display settings, to provide a more personalized experience. Disabling them may affect how certain features of our Site behave.</li>
-              <li><strong>Security Cookies:</strong> We use these cookies to help identify and prevent potential security risks, support authentication, and protect against fraudulent activity.</li>
-              <li><strong>Third-Party Cookies:</strong> Our Site may include content and tools from third-party services (such as embedded forms, chat widgets, or social media integrations) that may set their own cookies. We do not control these third-party cookies.</li>
+              <li><strong>Strictly necessary:</strong> Our first-party <code>st_cookie_preferences</code> cookie records your cookie choices so we can respect them. It contains your category selections and the date they were saved, lasts up to 12 months, and is not used for advertising. Cloudflare Turnstile may also use security technologies when you submit a form to prevent spam and abuse.</li>
+              <li><strong>Analytics:</strong> If you opt in, Google Analytics (GA4) uses cookies and similar technologies to help us understand site traffic and usage, such as pages viewed, navigation, device and browser information, and approximate location derived from IP address. We use this information to improve the Site. Google acts as our service provider for this processing.</li>
+              <li><strong>Marketing:</strong> If you opt in, Meta Pixel uses cookies and similar technologies to measure whether Studio Tak ads on Meta led to a visit or completed lead form on this Site. Meta may receive online identifiers, browser and device information, pages viewed, and completed lead-form events. This can involve tracking across websites or services and may be used to create audiences or improve delivery of our ads on Meta.</li>
             </ul>
 
             <h3>5.3 Managing Cookies</h3>
             <p>
-              Most web browsers allow you to control cookies through their settings. You can set your browser to refuse cookies, delete existing cookies, or alert you when a cookie is being placed. However, disabling cookies may affect the functionality of our Site.
+              You can accept, reject, or change optional categories at any time by selecting <strong>Cookie Preferences</strong> in the Site footer. Withdrawing consent stops future analytics and marketing tracking and asks your browser to remove the relevant first-party cookies where possible. You can also control or delete cookies through your browser settings. Essential security technologies cannot be switched off through our tool because they are needed to provide the Site or the form security you request.
             </p>
             <p>
-              You can opt out of Google Analytics tracking by installing the Google Analytics Opt-Out Browser Add-on. You can manage your Meta ad preferences through your Facebook account settings.
+              You may also use the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics Opt-out Browser Add-on</a> or manage ad preferences in your Meta account. Your choices are specific to the browser and device on which you make them.
             </p>
 
             <h3>5.4 Do Not Track</h3>
             <p>
-              Our Site does not currently respond to &quot;Do Not Track&quot; (DNT) signals sent by web browsers. Some third-party services integrated with our Site may track your browsing activity across other websites.
+              Our Site does not rely on browser Do Not Track signals. Please use Cookie Preferences to control optional Tracking Technologies on this Site.
             </p>
 
             <h2 id="sharing">6. How We Share Your Information</h2>
@@ -191,7 +188,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <h3>8.4 Cookie Preferences</h3>
             <p>
-              You can manage your cookie preferences through your browser settings. See Section 5.3 for details on managing specific types of cookies.
+              You can change or withdraw your optional cookie choices at any time through the <strong>Cookie Preferences</strong> link in the Site footer. See Section 5.3 for more information.
             </p>
 
             <h2 id="retention">9. Data Retention</h2>

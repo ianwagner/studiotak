@@ -1,0 +1,241 @@
+.banner,
+.preferences {
+  position: fixed;
+  z-index: 10000;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-color-default);
+  box-shadow: var(--shadow-lg);
+}
+
+.banner {
+  right: 18px;
+  bottom: 18px;
+  width: min(414px, calc(100vw - 36px));
+  padding: 18px;
+  border-radius: 14px;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-secondary);
+  font-size: 1.45rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  text-transform: none;
+}
+
+.copy {
+  margin: 9px 0 0;
+  color: var(--text-body);
+  font-size: 0.8rem;
+  line-height: 1.48;
+}
+
+.copy a,
+.manage {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.button,
+.buttonSecondary,
+.manage {
+  min-height: 36px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.button,
+.buttonSecondary {
+  padding: 0 13px;
+  border: 1px solid var(--border-strong);
+}
+
+.button {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.button:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.buttonSecondary {
+  color: var(--text-primary);
+  background: var(--surface-card);
+}
+
+.buttonSecondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.manage {
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+}
+
+.manage:hover {
+  color: var(--accent);
+}
+
+.backdrop {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 14, 13, 0.46);
+}
+
+.preferences {
+  position: relative;
+  width: min(520px, 100%);
+  max-height: min(680px, calc(100dvh - 40px));
+  overflow-y: auto;
+  padding: 22px;
+  border-radius: 16px;
+}
+
+.preferencesHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.close {
+  display: grid;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  place-items: center;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-color-default);
+  border-radius: 50%;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.categories {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.category {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface-page);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+}
+
+.categoryTitle {
+  display: block;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.categoryCopy {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+}
+
+.switch {
+  align-self: start;
+  width: 40px;
+  height: 23px;
+  margin: 0;
+  appearance: none;
+  background: var(--border-strong);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.switch::after {
+  display: block;
+  width: 17px;
+  height: 17px;
+  margin: 3px;
+  content: "";
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.18s ease;
+}
+
+.switch:checked {
+  background: var(--accent);
+}
+
+.switch:checked::after {
+  transform: translateX(17px);
+}
+
+.switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.modalActions {
+  justify-content: space-between;
+}
+
+@media (max-width: 560px) {
+  .banner {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
+    padding: 16px;
+  }
+
+  .preferences {
+    padding: 18px;
+  }
+
+  .modalActions {
+    align-items: stretch;
+  }
+}

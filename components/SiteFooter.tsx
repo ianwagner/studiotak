@@ -3,6 +3,7 @@ import type { Route } from "next";
 import type { NavigationItemRecord } from "@/lib/admin/navigation";
 import { getNavigationItems } from "@/lib/navigation";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { CookiePreferencesButton } from "./CookiePreferencesButton";
 
 type SiteFooterProps = {
   navItems?: NavigationItemRecord[];
@@ -134,6 +135,7 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
             <span>© {year} Studio Tak. All rights reserved.</span>
             <Link href={"/terms-of-service" as Route} className="footer-legal-link">Terms of Service</Link>
             <Link href={"/privacy-policy" as Route} className="footer-legal-link">Privacy Policy</Link>
+            <CookiePreferencesButton />
           </div>
           <div className="footer-cta">
             <Link href={"/campfire/demo" as Route} className="footer-cta-link">

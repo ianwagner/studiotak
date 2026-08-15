@@ -54,7 +54,7 @@ Global CSS with custom properties in `app/globals.css` (no Tailwind). Rubik font
 
 **Ghost CMS**: `GHOST_CONTENT_URL`, `GHOST_CONTENT_API_KEY`
 
-**Analytics**: `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_SITE_URL` (default: `https://studiotak.co`)
+**Analytics**: `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_SITE_URL` (default: `https://studiotak.co`). Google Analytics and Meta Pixel are loaded only after the visitor opts into their corresponding category in Cookie Preferences.
 
 **Form notifications**: `SLACK_FORM_SUBMISSIONS_WEBHOOK_URL` (optional Slack Incoming Webhook for contact and Campfire spec-ads submissions)
 

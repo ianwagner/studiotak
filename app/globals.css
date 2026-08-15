@@ -2018,6 +2018,14 @@ footer[data-site-footer] .footer-shell {
   transition: color 0.2s;
 }
 
+.footer-cookie-preferences {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
 .footer-legal-link:hover {
   color: var(--fg);
 }

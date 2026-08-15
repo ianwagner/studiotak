@@ -6,6 +6,7 @@ import Script from "next/script";
 import type { ContactBlock } from "@/lib/admin/pages";
 import { AnimatedSection, SectionHeading } from "./AnimatedSection";
 import { animationPresets, defaultAnimationPreset } from "./animationPresets";
+import { trackMetaEvent } from "@/lib/cookieConsent";
 
 declare global {
   interface Window {
@@ -129,6 +130,7 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
         method: "resend",
         section: block.anchor ?? "contact"
       });
+      trackMetaEvent("Lead", { content_name: "Contact form" });
     } catch (error) {
       setSubmitState("error");
       setSubmitError(error instanceof Error ? error.message : "We couldn't send your message. Please try again.");

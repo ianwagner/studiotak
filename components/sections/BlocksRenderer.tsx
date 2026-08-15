@@ -38,6 +38,7 @@ import Head from "next/head";
 import Link from "next/link";
 import AdReviewDemo from "@/components/demos/AdReviewDemo";
 import { ResendContactBlockSection } from "./ResendContactBlock";
+import { trackMetaEvent } from "@/lib/cookieConsent";
 
 const viewportWidthVar = "var(--full-bleed-width, 100vw)";
 const viewportShiftVar = "var(--full-bleed-shift, calc(50% - 50vw))";
@@ -2238,6 +2239,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
           method: "brevo_embed",
           section: block.anchor ?? "contact"
         });
+        trackMetaEvent("Lead", { content_name: "Newsletter form" });
         form.reset();
         const errorEls = form.querySelectorAll<HTMLElement>(".entry__error");
         errorEls.forEach((el) => (el.textContent = ""));
