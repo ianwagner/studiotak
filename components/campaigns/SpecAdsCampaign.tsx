@@ -8,6 +8,7 @@ import { getFirebaseApp } from "@/lib/firebaseClient";
 import { animationPresets, defaultAnimationPreset } from "@/components/sections/animationPresets";
 import { LogosBlockSection } from "@/components/sections/BlocksRenderer";
 import type { LogosBlock } from "@/lib/admin/pages";
+import { trackMetaEvent } from "@/lib/cookieConsent";
 import styles from "./SpecAdsCampaign.module.css";
 
 declare global {
@@ -245,6 +246,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
 
       setSubmitState("success");
       form.reset();
+      trackMetaEvent("Lead", { content_name: "Free spec ads application" });
     } catch (error) {
       setSubmitState("error");
       setSubmitError(error instanceof Error ? error.message : "We couldn't send your application. Please try again.");
