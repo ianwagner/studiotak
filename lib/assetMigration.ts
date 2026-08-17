@@ -1,7 +1,12 @@
 import { getAuth } from "firebase/auth";
 import { collection, doc, getDoc, getDocs, getFirestore, setDoc, updateDoc } from "firebase/firestore";
-import { getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
-import { prepareImageDataUrl, prepareImageFileForUpload } from "./clientImageUpload";
+import { getDownloadURL, getMetadata, getStorage, ref, updateMetadata, uploadBytes } from "firebase/storage";
+import {
+  getPublicMediaUploadMetadata,
+  prepareImageDataUrl,
+  prepareImageFileForUpload,
+  PUBLIC_MEDIA_CACHE_CONTROL
+} from "./clientImageUpload";
 import { ensureFirebaseDevAuth, getFirebaseApp } from "./firebaseClient";
 import { localAuthBypassEnabled } from "./localAuthBypass";
 
@@ -38,6 +43,8 @@ export type AssetMigrationSummary = {
   migratedStorageAssets: number;
   skippedStorageAssets: number;
   failedStorageAssets: number;
+  cacheMetadataUpdated: number;
+  cacheMetadataFailed: number;
   convertedNavigationIcons: number;
   updatedDocuments: DocumentUpdateCounts;
   failures: string[];
@@ -298,12 +305,29 @@ export async function migrateUploadedAssetsToWebp(options: MigrationOptions = {}
   let migratedStorageAssets = 0;
   let skippedStorageAssets = 0;
   let failedStorageAssets = 0;
+  let cacheMetadataUpdated = 0;
+  let cacheMetadataFailed = 0;
 
   const storageCandidates = Array.from(candidates.values());
 
   for (let index = 0; index < storageCandidates.length; index += 1) {
     const candidate = storageCandidates[index];
     report(`Migrating storage asset ${index + 1}/${storageCandidates.length}: ${candidate.fullPath}`);
+
+    // The files are named with a timestamp, so each version is immutable. Set
+    // caching metadata even when the source file is already WebP or must retain
+    // its original format (such as a favicon).
+    try {
+      const currentRef = ref(storage, candidate.fullPath);
+      const metadata = await getMetadata(currentRef);
+      if (metadata.cacheControl !== PUBLIC_MEDIA_CACHE_CONTROL) {
+        await updateMetadata(currentRef, { cacheControl: PUBLIC_MEDIA_CACHE_CONTROL });
+        cacheMetadataUpdated += 1;
+      }
+    } catch (error: any) {
+      cacheMetadataFailed += 1;
+      failures.push(`${candidate.fullPath}: unable to update cache metadata (${error?.message ?? "Unknown error"})`);
+    }
 
     if (candidate.preserveOriginal) {
       skippedStorageAssets += 1;
@@ -345,8 +369,7 @@ export async function migrateUploadedAssetsToWebp(options: MigrationOptions = {}
       const nextPath = buildWebpPath(candidate.fullPath);
       const nextRef = ref(storage, nextPath);
       await uploadBytes(nextRef, uploadFile, {
-        contentType: uploadFile.type,
-        cacheControl: metadata.cacheControl ?? undefined,
+        ...getPublicMediaUploadMetadata(uploadFile),
         customMetadata: metadata.customMetadata ?? undefined
       });
       const nextUrl = await getDownloadURL(nextRef);
@@ -444,6 +467,8 @@ export async function migrateUploadedAssetsToWebp(options: MigrationOptions = {}
     migratedStorageAssets,
     skippedStorageAssets,
     failedStorageAssets,
+    cacheMetadataUpdated,
+    cacheMetadataFailed,
     convertedNavigationIcons,
     updatedDocuments,
     failures

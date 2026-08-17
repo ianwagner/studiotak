@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { motion, useInView, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import type { MotionValue } from "framer-motion";
@@ -31,14 +32,17 @@ import { AnimatedSection, SectionHeading, Pill } from "./AnimatedSection";
 import { AnimatedHeadline } from "./AnimatedHeadline";
 import { animationPresets, defaultAnimationPreset } from "./animationPresets";
 import { useDarkModeShift } from "./useDarkModeShift";
-import { getFirebaseApp } from "@/lib/firebaseClient";
-import { collection, getDocs, getFirestore, limit, query, where, type QueryConstraint } from "firebase/firestore";
+import type { QueryConstraint } from "firebase/firestore";
 import Script from "next/script";
 import Head from "next/head";
 import Link from "next/link";
-import AdReviewDemo from "@/components/demos/AdReviewDemo";
-import { ResendContactBlockSection } from "./ResendContactBlock";
 import { trackMetaEvent } from "@/lib/cookieConsent";
+import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
+
+const AdReviewDemo = dynamic(() => import("@/components/demos/AdReviewDemo"));
+const ResendContactBlockSection = dynamic(() =>
+  import("./ResendContactBlock").then((module) => module.ResendContactBlockSection)
+);
 
 const viewportWidthVar = "var(--full-bleed-width, 100vw)";
 const viewportShiftVar = "var(--full-bleed-shift, calc(50% - 50vw))";
@@ -484,7 +488,7 @@ const useViewportWidth = () => {
   return width;
 };
 
-const renderMedia = (media?: HeroBlock["media"]) => {
+const renderMedia = (media?: HeroBlock["media"], priority = false) => {
   if (!media?.url) return null;
   const isVideo = media.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(media.url);
   const frameStyle: CSSProperties = {
@@ -499,6 +503,7 @@ const renderMedia = (media?: HeroBlock["media"]) => {
     return (
       <video
         controls
+        preload={priority ? "auto" : "metadata"}
         style={{ ...frameStyle, height: "auto", objectFit: "contain" }}
         src={media.url}
       >
@@ -511,6 +516,9 @@ const renderMedia = (media?: HeroBlock["media"]) => {
       src={media.url}
       alt={media.alt ?? ""}
       style={frameStyle}
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      fetchPriority={priority ? "high" : "auto"}
     />
   );
 };
@@ -633,6 +641,8 @@ const FeatureCard = ({
               <img
                 src={item.icon.url}
                 alt={item.icon.alt ?? ""}
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: "100%",
                   height: "auto",
@@ -678,6 +688,8 @@ const FeatureCard = ({
               <img
                 src={item.icon.url}
                 alt={item.icon.alt ?? ""}
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: 40,
                   height: 40,
@@ -899,6 +911,10 @@ const DynamicHeroColumns = ({
       }
       try {
         setLoading(true);
+        const [{ collection, getDocs, getFirestore, limit, query, where }, { getFirebaseApp }] = await Promise.all([
+          import("firebase/firestore"),
+          import("@/lib/firebaseClient")
+        ]);
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
 
@@ -971,7 +987,10 @@ const DynamicHeroColumns = ({
   }, [industryTag, typeTag, maxItems]);
 
   const fallbackItems = useMemo(() => buildHeroPlaceholderMedia(maxItems, block.media), [block.media, maxItems]);
-  const resolvedItems = items.length ? items : loading ? [] : fallbackItems;
+  const resolvedItems = useMemo(
+    () => (items.length ? items : loading ? [] : fallbackItems),
+    [fallbackItems, items, loading]
+  );
   const columns = useMemo(() => {
     const buckets: HeroMediaItem[][] = [[], [], []];
     resolvedItems.forEach((item, idx) => {
@@ -1199,7 +1218,7 @@ const renderHeroBlock = (
   const heroMode = block.mode ?? "static";
   const isDynamicHero = block.type === "hero" && heroMode === "dynamic";
   const hasMedia = !isDynamicHero && Boolean(block.media?.url);
-  const media = hasMedia ? renderMedia(block.media) : null;
+  const media = hasMedia ? renderMedia(block.media, index === 0) : null;
   const hasBackground = Boolean(block.background?.url);
   const backgroundIsVideo =
     block.background?.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(block.background?.url ?? "");
@@ -1698,6 +1717,7 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
           <video
             src={block.media.url}
             controls
+            preload={index === 0 ? "auto" : "metadata"}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           >
             Your browser does not support the video tag.
@@ -1707,6 +1727,9 @@ const renderSplitBlock = (block: SplitBlock, index: number) => {
             src={block.media.url}
             alt={block.media.alt ?? ""}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            loading={index === 0 ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={index === 0 ? "high" : "auto"}
           />
         )}
       </div>
@@ -1896,6 +1919,10 @@ const ProductDemoBlockSection = ({
       }
 
       try {
+        const [{ collection, getDocs, getFirestore, limit, query, where }, { getFirebaseApp }] = await Promise.all([
+          import("firebase/firestore"),
+          import("@/lib/firebaseClient")
+        ]);
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
         const toItem = (doc: any): ProductDemoMediaItem => {
@@ -2089,6 +2116,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
         <video
           src={block.media?.url}
           controls
+          preload={index === 0 ? "auto" : "metadata"}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         >
           Your browser does not support the video tag.
@@ -2098,6 +2126,9 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
           src={block.media?.url ?? ""}
           alt={block.media?.alt ?? ""}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          loading={index === 0 ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={index === 0 ? "high" : "auto"}
         />
       )}
     </div>
@@ -2281,8 +2312,8 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
       <Head>
         <link rel="stylesheet" href="https://sibforms.com/forms/end-form/build/sib-styles.css" />
       </Head>
-      <Script id="brevo-form-main" src="https://sibforms.com/forms/end-form/build/main.js" strategy="afterInteractive" />
-      <Script id="brevo-form-recaptcha" src="https://www.google.com/recaptcha/api.js?hl=en" strategy="afterInteractive" />
+      <Script id="brevo-form-main" src="https://sibforms.com/forms/end-form/build/main.js" strategy="lazyOnload" />
+      <Script id="brevo-form-recaptcha" src="https://www.google.com/recaptcha/api.js?hl=en" strategy="lazyOnload" />
       <div data-contact-block style={{ position: "relative" }}>
         <style suppressHydrationWarning>{`
           [data-contact-block] {
@@ -2787,6 +2818,8 @@ const FeaturesBlockSection = ({
                   <img
                     src={item.icon.url}
                     alt={item.icon.alt ?? ""}
+                    loading="lazy"
+                    decoding="async"
                     style={{
                       width: 40,
                       height: 40,
@@ -3011,6 +3044,8 @@ const FeatureSpotlightBlockSection = ({
                 <img
                   src={activeItem.icon.url}
                   alt={activeItem.icon.alt ?? ""}
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: "100%",
                     maxWidth: 520,
@@ -3928,6 +3963,10 @@ export const LogosBlockSection = ({
       }
       try {
         setLoading(true);
+        const [{ collection, getDocs, getFirestore, limit, query, where }, { getFirebaseApp }] = await Promise.all([
+          import("firebase/firestore"),
+          import("@/lib/firebaseClient")
+        ]);
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
         const baseConstraints: QueryConstraint[] = [where("status", "==", "published"), where("type", "in", ["Logo", "logo"])];
@@ -4161,6 +4200,8 @@ export const LogosBlockSection = ({
                       style={{ ...imgStyle, filter: logoFilter, mixBlendMode: logoBlendMode }}
                       width={logo.width}
                       height={logo.height}
+                      loading="lazy"
+                      decoding="async"
                       data-logos-img
                     />
                   </div>
@@ -4195,6 +4236,8 @@ export const LogosBlockSection = ({
                         style={{ ...imgStyle, filter: logoFilter, mixBlendMode: logoBlendMode }}
                         width={logo.width}
                         height={logo.height}
+                        loading="lazy"
+                        decoding="async"
                         data-logos-img
                       />
                     </div>
@@ -4351,6 +4394,10 @@ const ShowcaseBlockSection = ({
       }
       try {
         setLoading(true);
+        const [{ collection, getDocs, getFirestore, limit, query, where }, { getFirebaseApp }] = await Promise.all([
+          import("firebase/firestore"),
+          import("@/lib/firebaseClient")
+        ]);
         const db = getFirestore(getFirebaseApp());
         const mediaRef = collection(db, "media");
 
@@ -4780,6 +4827,8 @@ const ArticleFeaturedBlockSection = ({ block }: { block: ArticleFeaturedBlock })
   const post = block.posts?.[0];
   if (!post) return null;
   const published = formatDate(post.published_at);
+  const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 1200) : null;
+  const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
   return (
     <section className="container learn-shell learn-featured-section" style={{ display: "grid", gap: 24 }}>
       <Link href={`/learn/${post.slug}`} className="learn-featured-link">
@@ -4793,8 +4842,15 @@ const ArticleFeaturedBlockSection = ({ block }: { block: ArticleFeaturedBlock })
             <span className="btn learn-featured-cta">Read more</span>
           </div>
           <div className="learn-featured-media">
-            {post.feature_image ? (
-              <img src={post.feature_image} alt={post.feature_image_alt ?? post.title} />
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                srcSet={imageSrcSet}
+                sizes="(max-width: 720px) 100vw, 50vw"
+                alt={post.feature_image_alt ?? post.title}
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <div className="learn-media-placeholder">Studio Tak</div>
             )}
@@ -4817,12 +4873,21 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
           <div className="learn-recent-grid">
             {recentPosts.map((post) => {
               const published = formatDate(post.published_at);
+              const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
+              const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
               return (
                 <Link key={post.id} href={`/learn/${post.slug}`} className="learn-recent-link">
                   <article className="learn-recent-card">
                     <div className="learn-media-link">
-                      {post.feature_image ? (
-                        <img src={post.feature_image} alt={post.feature_image_alt ?? post.title} />
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          srcSet={imageSrcSet}
+                          sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                          alt={post.feature_image_alt ?? post.title}
+                          loading="lazy"
+                          decoding="async"
+                        />
                       ) : (
                         <div className="learn-media-placeholder">Studio Tak</div>
                       )}
@@ -4842,11 +4907,20 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
         <div className="grid learn-posts-grid">
           {gridPosts.map((post) => {
             const published = formatDate(post.published_at);
+            const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
+            const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
             return (
               <article key={post.id} className="card learn-post-card">
                 <Link href={`/learn/${post.slug}`} className="learn-media-link">
-                  {post.feature_image ? (
-                    <img src={post.feature_image} alt={post.feature_image_alt ?? post.title} />
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      srcSet={imageSrcSet}
+                      sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                      alt={post.feature_image_alt ?? post.title}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <div className="learn-media-placeholder">Studio Tak</div>
                   )}

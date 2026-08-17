@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { migrateUploadedAssetsToWebp, type AssetMigrationSummary } from "@/lib/assetMigration";
-import { prepareImageFileForUpload } from "@/lib/clientImageUpload";
+import { getPublicMediaUploadMetadata, prepareImageFileForUpload } from "@/lib/clientImageUpload";
 import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import {
   getSiteSettings,
@@ -81,7 +81,7 @@ export function SiteSettingsForm() {
         preserveOriginalFormat: key === "faviconUrl" || key === "touchIconUrl"
       });
       const storageRef = ref(storage, `site-settings/${key}-${Date.now()}-${uploadFile.name}`);
-      await uploadBytes(storageRef, uploadFile);
+      await uploadBytes(storageRef, uploadFile, getPublicMediaUploadMetadata(uploadFile));
       const url = await getDownloadURL(storageRef);
       const saved = await saveSiteSettings({ ...form, [key]: url });
       setForm(saved);
@@ -219,8 +219,8 @@ export function SiteSettingsForm() {
         <div>
           <h2 style={{ margin: "0 0 6px" }}>Backfill existing uploads to WebP</h2>
           <p style={{ margin: 0, color: "var(--muted)" }}>
-            Rewrites existing Firebase-hosted images uploaded through the admin, updates Firestore references, and leaves favicon /
-            touch icon files alone for compatibility.
+            Sets long-lived cache headers on existing Firebase-hosted assets, rewrites convertible images to WebP, updates Firestore
+            references, and leaves favicon / touch icon formats alone for compatibility.
           </p>
         </div>
 
@@ -238,6 +238,9 @@ export function SiteSettingsForm() {
             <div style={{ color: "var(--muted)", fontSize: 13 }}>
               Storage assets scanned: {migrationSummary.scannedStorageAssets} | migrated: {migrationSummary.migratedStorageAssets} |
               skipped: {migrationSummary.skippedStorageAssets} | failed: {migrationSummary.failedStorageAssets}
+            </div>
+            <div style={{ color: "var(--muted)", fontSize: 13 }}>
+              Cache headers updated: {migrationSummary.cacheMetadataUpdated} | failed: {migrationSummary.cacheMetadataFailed}
             </div>
             <div style={{ color: "var(--muted)", fontSize: 13 }}>
               Documents updated: site settings {migrationSummary.updatedDocuments.siteSettings}, media{" "}

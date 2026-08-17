@@ -1,5 +1,8 @@
 const WEBP_MIME_TYPE = "image/webp";
 const DEFAULT_WEBP_QUALITY = 0.82;
+// Uploaded media uses timestamped paths, so it is safe to keep each immutable
+// version in browser and CDN caches for a year.
+export const PUBLIC_MEDIA_CACHE_CONTROL = "public,max-age=31536000,immutable";
 const CONVERTIBLE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/bmp"]);
 
 type PrepareUploadOptions = {
@@ -86,3 +89,8 @@ export async function prepareImageDataUrl(file: File, options: PrepareUploadOpti
   const preparedFile = await prepareImageFileForUpload(file, options);
   return readFileAsDataUrl(preparedFile);
 }
+
+export const getPublicMediaUploadMetadata = (file: Blob) => ({
+  cacheControl: PUBLIC_MEDIA_CACHE_CONTROL,
+  ...(file.type ? { contentType: file.type } : {})
+});
