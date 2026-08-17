@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { addDoc, collection, getDocs, getFirestore, limit, query, serverTimestamp } from "firebase/firestore";
-import { prepareImageFileForUpload } from "@/lib/clientImageUpload";
+import { getPublicMediaUploadMetadata, prepareImageFileForUpload } from "@/lib/clientImageUpload";
 import { ensureFirebaseDevAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import type { ComponentRecord } from "@/lib/admin/components";
 import type { Route } from "next";
@@ -102,7 +102,7 @@ export function ComponentForm({
       const uploadFile = await prepareImageFileForUpload(file);
       const path = `component-icons/${Date.now()}-${uploadFile.name}`;
       const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, uploadFile);
+      await uploadBytes(storageRef, uploadFile, getPublicMediaUploadMetadata(uploadFile));
       const url = await getDownloadURL(storageRef);
       const mediaPayload = { url, alt: file.name, type: "image" as const };
       setFormState((prev) => ({ ...prev, icon: mediaPayload }));

@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getNavigationItems } from "@/lib/navigation";
 import { getGhostPostBySlug, getGhostPosts, type GhostPost } from "@/lib/ghost";
+import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -193,9 +194,13 @@ export default async function LearnPostPage({ params }: PageParams) {
         {post.feature_image ? (
           <figure className="learn-hero-media">
             <img
-              src={post.feature_image}
+              src={getOptimizedGhostImageUrl(post.feature_image, 1600)}
+              srcSet={getGhostImageSrcSet(post.feature_image)}
+              sizes="(max-width: 1200px) 100vw, 1200px"
               alt={post.feature_image_alt ?? post.title}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              fetchPriority="high"
+              decoding="async"
             />
           </figure>
         ) : null}
@@ -220,12 +225,21 @@ export default async function LearnPostPage({ params }: PageParams) {
               <div className="learn-recent-grid">
                 {relatedPosts.map((related) => {
                   const relPublished = formatDate(related.published_at);
+                  const imageUrl = related.feature_image ? getOptimizedGhostImageUrl(related.feature_image, 720) : null;
+                  const imageSrcSet = related.feature_image ? getGhostImageSrcSet(related.feature_image) : undefined;
                   return (
                     <Link key={related.id} href={`/learn/${related.slug}`} className="learn-recent-link">
                       <article className="learn-recent-card">
                         <div className="learn-media-link">
-                          {related.feature_image ? (
-                            <img src={related.feature_image} alt={related.feature_image_alt ?? related.title} />
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              srcSet={imageSrcSet}
+                              sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                              alt={related.feature_image_alt ?? related.title}
+                              loading="lazy"
+                              decoding="async"
+                            />
                           ) : (
                             <div className="learn-media-placeholder">Studio Tak</div>
                           )}

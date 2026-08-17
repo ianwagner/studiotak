@@ -7,6 +7,7 @@ import type { ArticleFeaturedBlock, ArticleGridBlock, BlockRecord } from "@/lib/
 import { getNavigationItems } from "@/lib/navigation";
 import { getPublishedPageBySlug } from "@/lib/pageContent";
 import { getGhostPosts } from "@/lib/ghost";
+import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -39,6 +40,8 @@ const ArticleFeaturedBlockSection = ({ block }: { block: ArticleFeaturedBlock })
   const post = block.posts?.[0];
   if (!post) return null;
   const published = formatDate(post.published_at);
+  const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 1200) : null;
+  const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
   return (
     <section className="container learn-shell learn-featured-section" style={{ display: "grid", gap: 24 }}>
       <Link href={`/learn/${post.slug}`} className="learn-featured-link">
@@ -52,8 +55,15 @@ const ArticleFeaturedBlockSection = ({ block }: { block: ArticleFeaturedBlock })
             <span className="btn learn-featured-cta">Read more</span>
           </div>
           <div className="learn-featured-media">
-            {post.feature_image ? (
-              <img src={post.feature_image} alt={post.feature_image_alt ?? post.title} />
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                srcSet={imageSrcSet}
+                sizes="(max-width: 720px) 100vw, 50vw"
+                alt={post.feature_image_alt ?? post.title}
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <div className="learn-media-placeholder">Studio Tak</div>
             )}
@@ -76,12 +86,21 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
           <div className="learn-recent-grid">
             {recentPosts.map((post) => {
               const published = formatDate(post.published_at);
+              const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
+              const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
               return (
                 <Link key={post.id} href={`/learn/${post.slug}`} className="learn-recent-link">
                   <article className="learn-recent-card">
                     <div className="learn-media-link">
-                      {post.feature_image ? (
-                        <img src={post.feature_image} alt={post.feature_image_alt ?? post.title} />
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          srcSet={imageSrcSet}
+                          sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                          alt={post.feature_image_alt ?? post.title}
+                          loading="lazy"
+                          decoding="async"
+                        />
                       ) : (
                         <div className="learn-media-placeholder">Studio Tak</div>
                       )}
@@ -101,11 +120,20 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
         <div className="grid learn-posts-grid">
           {gridPosts.map((post) => {
             const published = formatDate(post.published_at);
+            const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
+            const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
             return (
               <article key={post.id} className="card learn-post-card">
                 <Link href={`/learn/${post.slug}`} className="learn-media-link">
-                  {post.feature_image ? (
-                    <img src={post.feature_image} alt={post.feature_image_alt ?? post.title} />
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      srcSet={imageSrcSet}
+                      sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                      alt={post.feature_image_alt ?? post.title}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <div className="learn-media-placeholder">Studio Tak</div>
                   )}
