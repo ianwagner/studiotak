@@ -1181,9 +1181,6 @@ const DynamicHeroColumns = ({
                 );
               })}
             </div>
-            {loading ? (
-              <span style={{ color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>Loading tagged media…</span>
-            ) : null}
             {statusText ? <span style={{ color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>{statusText}</span> : null}
           </div>
         ) : null}
