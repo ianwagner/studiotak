@@ -251,6 +251,26 @@ export type ProductDemoBlock = {
   enableDarkModeOnScroll?: boolean;
 };
 
+export type AdFrameworkItem = {
+  label: string;
+  title: string;
+  description?: string;
+  examples?: string[];
+};
+
+export type AdFrameworkBlock = {
+  id: string;
+  type: "ad_framework";
+  adminLabel?: string;
+  anchor?: string;
+  eyebrow?: string;
+  heading?: string;
+  body?: string;
+  principles?: string[];
+  items: AdFrameworkItem[];
+  enableDarkModeOnScroll?: boolean;
+};
+
 export type StatItem = {
   value: string;
   label: string;
@@ -329,6 +349,7 @@ export type BlockRecord = (
   | ArticleFeaturedBlock
   | ArticleGridBlock
   | ProductDemoBlock
+  | AdFrameworkBlock
   | StatsBlock
   | ComparisonBlock
 ) & {
@@ -1161,6 +1182,41 @@ export const seedPages: PageRecord[] = [
             body: "Review your ads from a single link \u2014 no account needed. Approve, reject, or request edits on each piece. Your feedback flows back to us in real time.",
           },
         ],
+      },
+      {
+        id: "cf-ad-framework",
+        type: "ad_framework",
+        anchor: "ad-framework",
+        eyebrow: "The framework",
+        heading: "The building blocks for great ads",
+        body: "Campfire ads learn. They’re built from an intelligent framework that makes every creative easier to test, improve, and scale.",
+        principles: ["Persona-led", "Diverse", "Testable", "Intelligent"],
+        items: [
+          {
+            label: "Persona",
+            title: "Audience",
+            description: "Define the exact person the ad needs to move.",
+            examples: ["New customers", "High-intent buyers"]
+          },
+          {
+            label: "Pain point",
+            title: "Problem",
+            description: "Lead with the friction, desire, or objection that matters most.",
+            examples: ["No time", "Too expensive"]
+          },
+          {
+            label: "Creative",
+            title: "Creative format",
+            description: "Choose the creative structure that brings the message to life.",
+            examples: ["Use vs. Them", "Founder POV", "Problem / solution"]
+          },
+          {
+            label: "Delivery",
+            title: "Delivery format",
+            description: "Build the concept for the formats where it will run.",
+            examples: ["Static", "Video", "Carousel"]
+          }
+        ]
       },
       {
         id: "cf-ad-review-demo",
