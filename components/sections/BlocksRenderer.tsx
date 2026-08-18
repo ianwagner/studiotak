@@ -34,7 +34,6 @@ import { animationPresets, defaultAnimationPreset } from "./animationPresets";
 import { useDarkModeShift } from "./useDarkModeShift";
 import type { QueryConstraint } from "firebase/firestore";
 import Script from "next/script";
-import Head from "next/head";
 import Link from "next/link";
 import { trackMetaEvent } from "@/lib/cookieConsent";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
@@ -83,13 +82,6 @@ declare global {
     };
     AUTOHIDE?: boolean;
     handleCaptchaResponse?: () => void;
-    grecaptcha?: {
-      render?: (
-        container: HTMLElement | string,
-        params: { sitekey: string; callback?: () => void; theme?: string }
-      ) => void;
-      reset?: (widgetId?: number | string) => void;
-    };
   }
 }
 
@@ -2108,7 +2100,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
   const [formSuccess, setFormSuccess] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const hasTrackedFormStart = useRef(false);
-  const recaptchaSiteKey = "6Ld_MyksAAAAAMwJusVI9I7wpyxKjnM5i8X9VFpL";
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
   const media = hasMedia ? (
     <div
       data-contact-media
@@ -2145,64 +2137,19 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
   const preset = animationPresets[defaultAnimationPreset];
 
   useEffect(() => {
-    window.REQUIRED_CODE_ERROR_MESSAGE = "Please choose a country code";
-    window.LOCALE = "en";
-    window.EMAIL_INVALID_MESSAGE =
-      "The information provided is invalid. Please review the field format and try again.";
-    window.SMS_INVALID_MESSAGE = window.EMAIL_INVALID_MESSAGE;
-    window.REQUIRED_ERROR_MESSAGE = "This field cannot be left blank.";
-    window.GENERIC_INVALID_MESSAGE =
-      "The information provided is invalid. Please review the field format and try again.";
-    window.translation = {
-      common: {
-        selectedList: "{quantity} list selected",
-        selectedLists: "{quantity} lists selected",
-        selectedOption: "{quantity} selected",
-        selectedOptions: "{quantity} selected"
-      }
-    };
-    window.AUTOHIDE = false;
-    window.handleCaptchaResponse = () => {
-      const captcha = document.getElementById("sib-captcha");
-      if (!captcha) return;
-      const event = new Event("captchaChange");
-      captcha.dispatchEvent(event);
-    };
-  }, []);
-
-  useEffect(() => {
-    const container = document.getElementById("sib-captcha");
-    if (!container) return;
-
-    const markRenderedIfIframe = () => {
-      if (container.querySelector("iframe")) {
-        container.dataset.rendered = "true";
-        return true;
-      }
-      return false;
-    };
+    const container = document.getElementById("newsletter-turnstile");
+    if (!container || !turnstileSiteKey) return;
 
     const renderCaptcha = () => {
-      if (container.dataset.rendered === "true") return true;
-      if (markRenderedIfIframe()) return true;
-      if (window.grecaptcha?.render) {
-        try {
-          window.grecaptcha.render(container, {
-            sitekey: recaptchaSiteKey,
-            callback: window.handleCaptchaResponse,
-            theme: "light"
-          });
-          container.dataset.rendered = "true";
-          return true;
-        } catch (err) {
-          // If already rendered, just mark and continue.
-          if (String(err).toLowerCase().includes("already been rendered")) {
-            container.dataset.rendered = "true";
-            return true;
-          }
-        }
+      if (container.dataset.rendered === "true" || !window.turnstile?.render) return container.dataset.rendered === "true";
+      try {
+        const widgetId = window.turnstile.render(container, { sitekey: turnstileSiteKey, theme: "light" });
+        container.dataset.widgetId = String(widgetId);
+        container.dataset.rendered = "true";
+        return true;
+      } catch {
+        return false;
       }
-      return false;
     };
 
     let timer: number | null = null;
@@ -2215,7 +2162,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
     return () => {
       if (timer) window.clearTimeout(timer);
     };
-  }, [recaptchaSiteKey]);
+  }, [turnstileSiteKey]);
 
   useEffect(() => {
     const emailInput = document.getElementById("EMAIL") as HTMLInputElement | null;
@@ -2249,13 +2196,13 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
       if (evt.stopImmediatePropagation) evt.stopImmediatePropagation();
       validateEmail();
       const captchaError = form?.querySelector<HTMLElement>(".sib-captcha .entry__error");
-      const recaptchaValue =
-        (form?.querySelector<HTMLTextAreaElement>('textarea[name="g-recaptcha-response"]')?.value || "").trim();
+      const turnstileValue =
+        (form?.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]')?.value || "").trim();
       if (emailInput && !emailInput.checkValidity()) {
         emailInput.reportValidity();
         return;
       }
-      if (!recaptchaValue) {
+      if (!turnstileValue) {
         if (captchaError) captchaError.textContent = "Please complete the captcha.";
         return;
       }
@@ -2265,22 +2212,24 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
       try {
         setFormSubmitting(true);
         const formData = new FormData(form);
-        await fetch(form.action, {
+        formData.set("signup_path", window.location.pathname);
+        const response = await fetch("/api/newsletter", {
           method: "POST",
-          body: formData,
-          mode: "no-cors"
+          body: formData
         });
+        if (!response.ok) throw new Error("Newsletter subscription was rejected.");
         setFormSuccess(true);
         trackGaEvent("generate_lead", {
           form_id: "sib-form",
-          method: "brevo_embed",
+          method: "newsletter",
           section: block.anchor ?? "contact"
         });
         trackMetaEvent("Lead", { content_name: "Newsletter form" });
         form.reset();
         const errorEls = form.querySelectorAll<HTMLElement>(".entry__error");
         errorEls.forEach((el) => (el.textContent = ""));
-        window.grecaptcha?.reset?.();
+        const widgetId = form.querySelector<HTMLElement>("#newsletter-turnstile")?.dataset.widgetId;
+        if (widgetId) window.turnstile?.reset?.(widgetId);
         window.scrollTo({ top: currentScroll, behavior: "instant" as ScrollBehavior });
       } catch (err) {
         if (captchaError) captchaError.textContent = "Something went wrong. Please try again.";
@@ -2298,7 +2247,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
       hasTrackedFormStart.current = true;
       trackGaEvent("form_start", {
         form_id: "sib-form",
-        method: "brevo_embed",
+        method: "newsletter",
         section: block.anchor ?? "contact"
       });
     };
@@ -2318,11 +2267,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
 
   return (
     <AnimatedSection key={block.id ?? index} index={index} variant="plain" animated={false}>
-      <Head>
-        <link rel="stylesheet" href="https://sibforms.com/forms/end-form/build/sib-styles.css" />
-      </Head>
-      <Script id="brevo-form-main" src="https://sibforms.com/forms/end-form/build/main.js" strategy="lazyOnload" />
-      <Script id="brevo-form-recaptcha" src="https://www.google.com/recaptcha/api.js?hl=en" strategy="lazyOnload" />
+      <Script id="studio-tak-turnstile" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="lazyOnload" />
       <div data-contact-block style={{ position: "relative" }}>
         <style suppressHydrationWarning>{`
           [data-contact-block] {
@@ -2344,87 +2289,87 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             align-items: center;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           }
-          [data-brevo-form] * {
+          [data-newsletter-form] * {
             font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
           }
-          [data-brevo-form] {
+          [data-newsletter-form] {
             padding: 16px;
             border-radius: 12px;
             border: 1px solid var(--border-strong);
             background: var(--input-bg);
             box-shadow: none;
           }
-          [data-brevo-form] .sib-form {
+          [data-newsletter-form] .sib-form {
             text-align: left;
           }
-          [data-brevo-form] .sib-form-container {
+          [data-newsletter-form] .sib-form-container {
             display: grid;
             gap: 12px;
           }
-          [data-brevo-form] .sib-form-message-panel {
+          [data-newsletter-form] .sib-form-message-panel {
             display: none;
             border-radius: 12px;
             padding: 10px 12px;
             border: 1px solid transparent;
             font-size: var(--font-size-label);
           }
-          [data-brevo-form] .sib-form-message-panel svg {
+          [data-newsletter-form] .sib-form-message-panel svg {
             width: 18px;
             height: 18px;
           }
-          [data-brevo-form] #error-message {
+          [data-newsletter-form] #error-message {
             color: var(--danger);
             background: rgba(214, 54, 54, 0.08);
             border-color: rgba(214, 54, 54, 0.28);
           }
-          [data-brevo-form] #success-message {
+          [data-newsletter-form] #success-message {
             color: var(--text);
             background: var(--accent-soft);
             border-color: var(--accent);
           }
-          [data-brevo-form] .sib-form-message-panel.sib-form-message-panel--visible {
+          [data-newsletter-form] .sib-form-message-panel.sib-form-message-panel--visible {
             display: block;
           }
-          [data-brevo-form] .sib-container--large {
+          [data-newsletter-form] .sib-container--large {
             border: none;
             background: transparent;
             padding: 0;
           }
-          [data-brevo-form] form {
+          [data-newsletter-form] form {
             display: grid;
             gap: 14px;
           }
-          [data-brevo-form] .sib-form-block {
+          [data-newsletter-form] .sib-form-block {
             width: 100%;
           }
-          [data-brevo-form] .sib-form-block + .sib-form-block {
+          [data-newsletter-form] .sib-form-block + .sib-form-block {
             margin-top: 4px;
           }
-          [data-brevo-form] [data-name-row] {
+          [data-newsletter-form] [data-name-row] {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 12px;
           }
-          [data-brevo-form] [data-name-row] .sib-form-block {
+          [data-newsletter-form] [data-name-row] .sib-form-block {
             margin-top: 0;
           }
-          [data-brevo-form] .sib-input .form__entry,
-          [data-brevo-form] .sib-optin .form__entry,
-          [data-brevo-form] .sib-captcha .form__entry {
+          [data-newsletter-form] .sib-input .form__entry,
+          [data-newsletter-form] .sib-optin .form__entry,
+          [data-newsletter-form] .sib-captcha .form__entry {
             display: grid;
             gap: 6px;
           }
-          [data-brevo-form] .entry__label {
+          [data-newsletter-form] .entry__label {
             font-weight: 700;
             font-size: var(--font-size-label);
             color: var(--muted);
           }
-          [data-brevo-form] .entry__field,
-          [data-brevo-form] .entry__choice {
+          [data-newsletter-form] .entry__field,
+          [data-newsletter-form] .entry__choice {
             display: grid;
             gap: 6px;
           }
-          [data-brevo-form] .entry__error {
+          [data-newsletter-form] .entry__error {
             color: var(--danger);
             background: rgba(214, 54, 54, 0.08);
             border: 1px solid rgba(214, 54, 54, 0.28);
@@ -2435,17 +2380,17 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             display: block !important;
             opacity: 1 !important;
           }
-          [data-brevo-form] .entry__error:empty {
+          [data-newsletter-form] .entry__error:empty {
             display: none !important;
           }
-          [data-brevo-form] .entry__specification {
+          [data-newsletter-form] .entry__specification {
             color: var(--muted);
             font-size: var(--font-size-xs);
             margin: 0;
           }
-          [data-brevo-form] .input,
-          [data-brevo-form] textarea,
-          [data-brevo-form] select {
+          [data-newsletter-form] .input,
+          [data-newsletter-form] textarea,
+          [data-newsletter-form] select {
             width: 100%;
             background: var(--input-bg);
             color: var(--text);
@@ -2453,25 +2398,25 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             border-radius: 12px;
             padding: 10px 12px;
           }
-          [data-brevo-form] .input:focus,
-          [data-brevo-form] textarea:focus,
-          [data-brevo-form] select:focus {
+          [data-newsletter-form] .input:focus,
+          [data-newsletter-form] textarea:focus,
+          [data-newsletter-form] select:focus {
             border-color: var(--accent);
             outline: none;
             box-shadow: 0 0 0 2px rgba(255, 112, 11, 0.16);
           }
-          [data-brevo-form] textarea {
+          [data-newsletter-form] textarea {
             min-height: 120px;
             resize: vertical;
           }
-          [data-brevo-form] .sib-optin label {
+          [data-newsletter-form] .sib-optin label {
             display: flex;
             align-items: center;
             gap: 10px;
             font-size: var(--font-size-label);
             color: var(--text);
           }
-          [data-brevo-form] .sib-optin input[type="checkbox"] {
+          [data-newsletter-form] .sib-optin input[type="checkbox"] {
             width: 18px;
             height: 18px;
             appearance: none;
@@ -2484,12 +2429,12 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             place-content: center;
             transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
           }
-          [data-brevo-form] .sib-optin input[type="checkbox"]:checked {
+          [data-newsletter-form] .sib-optin input[type="checkbox"]:checked {
             background: var(--accent);
             border-color: var(--accent);
             box-shadow: 0 0 0 2px rgba(255, 112, 11, 0.16);
           }
-          [data-brevo-form] .sib-optin input[type="checkbox"]:checked::after {
+          [data-newsletter-form] .sib-optin input[type="checkbox"]:checked::after {
             content: "";
             position: absolute;
             inset: 0;
@@ -2498,7 +2443,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             background-size: 12px 12px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 13 9 17 19 7'/%3E%3C/svg%3E");
           }
-          [data-brevo-form] .sib-form-block__button {
+          [data-newsletter-form] .sib-form-block__button {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -2515,19 +2460,19 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
             box-shadow: 0 6px 16px rgba(0,0,0,0.12);
           }
-          [data-brevo-form] .sib-form-block__button:hover {
+          [data-newsletter-form] .sib-form-block__button:hover {
             transform: translateY(-1px);
             box-shadow: 0 8px 18px rgba(0,0,0,0.16);
             background: var(--accent-strong);
           }
-          [data-brevo-form] .sib-form-block__button:focus {
+          [data-newsletter-form] .sib-form-block__button:focus {
             outline: 2px solid var(--accent);
             outline-offset: 2px;
           }
-          [data-brevo-form] .progress-indicator__icon {
+          [data-newsletter-form] .progress-indicator__icon {
             display: none;
           }
-          [data-brevo-success] {
+          [data-newsletter-success] {
             padding: 18px;
             border-radius: 14px;
             border: 1px solid var(--border-strong);
@@ -2537,9 +2482,9 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             line-height: 1.6;
             font-weight: 600;
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-            animation: brevoSuccessFade 300ms ease;
+            animation: newsletterSuccessFade 300ms ease;
           }
-          @keyframes brevoSuccessFade {
+          @keyframes newsletterSuccessFade {
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
           }
@@ -2578,10 +2523,10 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
               <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} />
               <div
                 data-contact-form
-                data-brevo-form
+                data-newsletter-form
               >
                 {formSuccess ? (
-                  <div data-brevo-success aria-live="polite">Thank you! We&apos;ll reach out soon.</div>
+                  <div data-newsletter-success aria-live="polite">You&apos;re subscribed—watch your inbox for Studio Tak updates.</div>
                 ) : (
                   <div className="sib-form" data-type="subscription">
                     <div id="sib-form-container" className="sib-form-container">
@@ -2609,7 +2554,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
                       <form
                         id="sib-form"
                         method="POST"
-                        action="https://bd3a921f.sibforms.com/serve/MUIFAHM-9ERG7aYtvQaKLgylvX7RO_ew2aPPC9v8M5QsEKgnSYunibbCbINAijwJdD-UUk4scmuXwqt11zysNEc4WIoCfb-PE3WTUnLw8ltAF2rq5bGjQLCoRQZ7yC5zAu8399v1xnGYK0rbWLrgm2u9pY6qZoke25S2n4GtQc4vnGY5qWEkj4Tk-u99e_uKQQ_wAyzrE2Led8NM6w=="
+                        action="/api/newsletter"
                         data-type="subscription"
                         noValidate
                       >
@@ -2687,10 +2632,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
                           <div className="form__entry entry_block">
                             <div className="form__label-row">
                               <div
-                                className="g-recaptcha sib-visible-recaptcha"
-                                id="sib-captcha"
-                                data-sitekey="6Ld_MyksAAAAAMwJusVI9I7wpyxKjnM5i8X9VFpL"
-                                data-callback="handleCaptchaResponse"
+                                id="newsletter-turnstile"
                                 style={{ direction: "ltr" }}
                               />
                             </div>
