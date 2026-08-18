@@ -30,9 +30,10 @@
 .heroLead { max-width: 490px; margin: 34px 0 28px; color: #423d37; font-size: 18px; line-height: 1.55; }
 .heroActions { display: flex; flex-wrap: wrap; gap: 10px; }
 .primaryButton, .secondaryButton, .submitButton { display: inline-flex; align-items: center; justify-content: center; min-height: 2.7rem; gap: 9px; padding: 10px 15px; border: 1px solid var(--orange); border-radius: var(--radius-md); background: var(--orange); box-shadow: var(--shadow-sm); color: #fff; font: inherit; font-size: var(--font-size-button); font-weight: 600; letter-spacing: 0; text-decoration: none; text-transform: none; transition: background 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
-.primaryButton:hover, .submitButton:not(:disabled):hover { background: var(--orange-dark); border-color: var(--orange-dark); box-shadow: var(--shadow-md); transform: translateY(-1px); }
-.secondaryButton { background: transparent; box-shadow: none; color: var(--orange); }
-.secondaryButton:hover { background: var(--orange); box-shadow: var(--shadow-md); color: #fff; transform: translateY(-1px); }
+.page a.primaryButton:hover { color: #fff; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.submitButton:not(:disabled):hover { background: var(--orange-dark); border-color: var(--orange-dark); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.secondaryButton { border-color: var(--border-strong); background: var(--surface-card); color: var(--text-body); }
+.page a.secondaryButton:hover { box-shadow: var(--shadow-sm); color: var(--text-body); transform: translateY(-1px); }
 .primaryButton span, .secondaryButton span, .submitButton span { font-size: 16px; }
 .noCommitment { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
 
