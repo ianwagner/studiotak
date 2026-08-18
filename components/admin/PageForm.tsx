@@ -27,6 +27,7 @@ import type {
   ProductDemoBlock,
   AdFrameworkBlock,
   AdFrameworkItem,
+  SlackIntegrationBlock,
   StatsBlock,
   ComparisonBlock,
   ComparisonTableFooter,
@@ -132,6 +133,7 @@ const isContactBlock = (block: EditableBlock): block is ContactBlock => block.ty
 const isDividerBlock = (block: EditableBlock): block is DividerBlock => block.type === "divider";
 const isProductDemoBlock = (block: EditableBlock): block is ProductDemoBlock => block.type === "product_demo";
 const isAdFrameworkBlock = (block: EditableBlock): block is AdFrameworkBlock => block.type === "ad_framework";
+const isSlackIntegrationBlock = (block: EditableBlock): block is SlackIntegrationBlock => block.type === "slack_integration";
 const isArticleFeaturedBlock = (block: EditableBlock): block is ArticleFeaturedBlock => block.type === "article_featured";
 const isArticleGridBlock = (block: EditableBlock): block is ArticleGridBlock => block.type === "article_grid";
 const isFeatureSpotlightBlock = (block: EditableBlock): block is FeatureSpotlightBlock => block.type === "feature_spotlight";
@@ -427,6 +429,17 @@ const newAdFrameworkBlock = (): AdFrameworkBlock => ({
   enableDarkModeOnScroll: false
 });
 
+const newSlackIntegrationBlock = (): SlackIntegrationBlock => ({
+  id: crypto.randomUUID(),
+  type: "slack_integration",
+  adminLabel: "Slack connection",
+  anchor: "slack",
+  eyebrow: "Campfire in Slack",
+  heading: "Your ad production operating system, right in Slack.",
+  body: "Campfire joins the workspace your team already calls home, so every update feels close at hand.",
+  enableDarkModeOnScroll: false
+});
+
 const newComparisonBlock = (): ComparisonBlock => ({
   id: crypto.randomUUID(),
   type: "comparison",
@@ -677,6 +690,8 @@ export function PageForm({
           return newProductDemoBlock();
         case "ad_framework":
           return newAdFrameworkBlock();
+        case "slack_integration":
+          return newSlackIntegrationBlock();
         case "comparison":
           return newComparisonBlock();
         default:
@@ -1390,6 +1405,8 @@ export function PageForm({
         ? "Product demo"
         : block.type === "ad_framework"
         ? "Ad framework"
+        : block.type === "slack_integration"
+        ? "Slack connection"
         : block.type === "stats"
         ? "Stats block"
         : block.type === "comparison"
@@ -1496,6 +1513,7 @@ export function PageForm({
                 <option value="article_grid">Article grid</option>
                 <option value="product_demo">Product demo</option>
                 <option value="ad_framework">Ad framework</option>
+                <option value="slack_integration">Slack connection</option>
                 <option value="stats">Stats</option>
                 <option value="comparison">Comparison</option>
               </select>
@@ -2888,6 +2906,52 @@ export function PageForm({
                 </p>
               </div>
             </div>
+          ) : isSlackIntegrationBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => updateBlock(idx, (b) => isSlackIntegrationBlock(b) ? { ...b, eyebrow: e.target.value } : b)}
+                    placeholder="Campfire in Slack"
+                  />
+                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => updateBlock(idx, (b) => isSlackIntegrationBlock(b) ? { ...b, anchor: value } : b)}
+                  placeholder={block.anchor || "slack"}
+                />
+              </div>
+              <div className="field-group">
+                <label>Heading</label>
+                <input
+                  className="input"
+                  value={block.heading}
+                  onChange={(e) => updateBlock(idx, (b) => isSlackIntegrationBlock(b) ? { ...b, heading: e.target.value } : b)}
+                  placeholder="Your ad production operating system, right in Slack."
+                />
+              </div>
+              <div className="field-group">
+                <label>Supporting copy</label>
+                <textarea
+                  className="input"
+                  rows={3}
+                  value={block.body}
+                  onChange={(e) => updateBlock(idx, (b) => isSlackIntegrationBlock(b) ? { ...b, body: e.target.value } : b)}
+                  placeholder="Describe how Campfire works in the team's Slack workspace."
+                />
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!block.enableDarkModeOnScroll}
+                  onChange={(e) => updateBlock(idx, (b) => isSlackIntegrationBlock(b) ? { ...b, enableDarkModeOnScroll: e.target.checked } : b)}
+                />
+                <span>Trigger dark mode while this section is in view</span>
+              </label>
+            </div>
           ) : isAdFrameworkBlock(block) ? (
             <div className="grid" style={{ gap: 12, padding: 12 }}>
               <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
@@ -3031,7 +3095,6 @@ export function PageForm({
                 ))}
               </div>
             </div>
-
           ) : block.type === "product_demo" ? (
             <div className="grid" style={{ gap: 12, padding: 12 }}>
               <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>

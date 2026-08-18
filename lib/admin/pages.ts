@@ -271,6 +271,17 @@ export type AdFrameworkBlock = {
   enableDarkModeOnScroll?: boolean;
 };
 
+export type SlackIntegrationBlock = {
+  id: string;
+  type: "slack_integration";
+  adminLabel?: string;
+  anchor?: string;
+  eyebrow?: string;
+  heading: string;
+  body: string;
+  enableDarkModeOnScroll?: boolean;
+};
+
 export type StatItem = {
   value: string;
   label: string;
@@ -350,6 +361,7 @@ export type BlockRecord = (
   | ArticleGridBlock
   | ProductDemoBlock
   | AdFrameworkBlock
+  | SlackIntegrationBlock
   | StatsBlock
   | ComparisonBlock
 ) & {
@@ -1249,6 +1261,15 @@ export const seedPages: PageRecord[] = [
             description: "Designed to Stand Out",
           },
         },
+      },
+      {
+        id: "cf-slack-connection",
+        type: "slack_integration",
+        adminLabel: "Slack connection",
+        anchor: "slack",
+        eyebrow: "Campfire in Slack",
+        heading: "Your ad production operating system, right in Slack.",
+        body: "Campfire joins the workspace your team already calls home, so every update feels close at hand.",
       },
       {
         id: "cf-platform",

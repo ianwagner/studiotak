@@ -43,6 +43,9 @@ const AdReviewDemo = dynamic(() => import("@/components/demos/AdReviewDemo"));
 const AdFrameworkBlockSection = dynamic(() =>
   import("./AdFrameworkBlock").then((module) => module.AdFrameworkBlockSection)
 );
+const SlackIntegrationBlockSection = dynamic(() =>
+  import("./SlackIntegrationBlock").then((module) => module.SlackIntegrationBlockSection)
+);
 const ResendContactBlockSection = dynamic(() =>
   import("./ResendContactBlock").then((module) => module.ResendContactBlockSection)
 );
@@ -5094,6 +5097,8 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
             element = <ProductDemoBlockSection key={key} block={block} index={index} audienceFilter={audienceFilter} />;
           } else if (block.type === "ad_framework") {
             element = <AdFrameworkBlockSection key={key} block={block} index={index} />;
+          } else if (block.type === "slack_integration") {
+            element = <SlackIntegrationBlockSection key={key} block={block} index={index} />;
           } else if (block.type === "divider") {
             element = renderDividerBlock(block, index);
           } else if (block.type === "stats") {
