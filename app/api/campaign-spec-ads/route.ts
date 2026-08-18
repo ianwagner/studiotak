@@ -351,7 +351,24 @@ export async function POST(request: Request) {
     });
   }
 
-  await syncAttioPerson({ email, firstName, lastName });
+  await syncAttioPerson({
+    email,
+    firstName,
+    lastName,
+    attributes: {
+      lead_source: "Free spec ads",
+      submitted_business_name: businessName,
+      product_to_feature: productToFeature,
+      monthly_meta_spend: monthlyMetaSpend,
+      creative_setup: creativeSetup,
+      creative_challenge: creativeChallenge,
+      marketing_consent: marketingConsent ? "Yes" : "No",
+      signup_path: signupPath,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign
+    }
+  });
 
   await sendSlackFormNotification({
     formName: "Campfire spec ads application",

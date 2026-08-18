@@ -4,13 +4,14 @@ type AttioPerson = {
   email: string;
   firstName: string;
   lastName: string;
+  attributes?: Record<string, string | undefined>;
 };
 
 /**
  * Creates or updates a person using Attio's unique email-address attribute.
  * CRM availability must not prevent a verified form submission from being delivered.
  */
-export async function syncAttioPerson({ email, firstName, lastName }: AttioPerson) {
+export async function syncAttioPerson({ email, firstName, lastName, attributes }: AttioPerson) {
   const apiKey = process.env.ATTIO_API_KEY?.trim();
   if (!apiKey) {
     console.warn("Attio sync skipped: ATTIO_API_KEY is not configured.");
@@ -35,7 +36,10 @@ export async function syncAttioPerson({ email, firstName, lastName }: AttioPerso
                 last_name: lastName,
                 full_name: `${firstName} ${lastName}`
               }
-            ]
+            ],
+            ...Object.fromEntries(
+              Object.entries(attributes ?? {}).filter(([, value]) => Boolean(value))
+            )
           }
         }
       }),
