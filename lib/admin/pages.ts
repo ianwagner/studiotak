@@ -1199,10 +1199,10 @@ export const seedPages: PageRecord[] = [
         id: "cf-ad-framework",
         type: "ad_framework",
         anchor: "ad-framework",
-        eyebrow: "The framework",
-        heading: "The building blocks for great ads",
-        body: "Campfire ads learn. They’re built from an intelligent framework that makes every creative easier to test, improve, and scale.",
-        principles: ["Persona-led", "Diverse", "Testable", "Intelligent"],
+        eyebrow: "The plan",
+        heading: "High-performing ads start with a testable framework",
+        body: "Every batch of ads starts with a plan. Campfire ads learn. They’re built from an intelligent framework that makes every creative easier to test, improve, and scale.",
+        principles: [],
         items: [
           {
             label: "Persona",
