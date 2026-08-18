@@ -24,6 +24,7 @@ export const SlackIntegrationBlockSection = ({ block, index }: { block: SlackInt
   <motion.section
     key={block.id ?? index}
     data-slack-integration-section
+    data-slack-integration-theme={block.enableDarkModeOnScroll ? "dark" : undefined}
     initial={{ opacity: 0, y: 22 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, amount: 0.18 }}
@@ -45,9 +46,9 @@ export const SlackIntegrationBlockSection = ({ block, index }: { block: SlackInt
         max-width: 920px;
         margin: 0 auto;
         padding: clamp(28px, 5vw, 52px);
-        border: 1px solid #e2dedb;
+        border: 1px solid var(--border-color-default);
         border-radius: 24px;
-        background: #fff;
+        background: var(--surface-card);
         box-shadow: 0 18px 46px rgba(27, 24, 23, .08);
         text-align: center;
       }
@@ -80,6 +81,20 @@ export const SlackIntegrationBlockSection = ({ block, index }: { block: SlackInt
       }
       [data-slack-integration-mark] svg {
         display: block;
+      }
+      [data-slack-integration-section][data-slack-integration-theme="dark"] [data-slack-integration-content] {
+        border-color: rgba(255, 255, 255, .14);
+        background: #121218;
+        box-shadow: 0 18px 46px rgba(0, 0, 0, .32);
+      }
+      [data-slack-integration-section][data-slack-integration-theme="dark"] [data-slack-integration-content] h2 {
+        color: #f6f6f1;
+      }
+      [data-slack-integration-section][data-slack-integration-theme="dark"] [data-slack-integration-content] p {
+        color: #b3b3c2;
+      }
+      :root[data-theme="dark"] [data-slack-integration-content] {
+        box-shadow: 0 18px 46px rgba(0, 0, 0, .32);
       }
     `}</style>
     <div data-slack-integration-content>
