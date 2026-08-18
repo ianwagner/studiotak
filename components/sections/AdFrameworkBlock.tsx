@@ -6,6 +6,7 @@ import { collection, getDocs, getFirestore, limit, query, where } from "firebase
 import type { CSSProperties } from "react";
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import type { AdFrameworkBlock, AdFrameworkItem } from "@/lib/admin/pages";
+import { ProductDemoFrame } from "@/components/demos/ProductDemoFrame";
 
 const frameworkAccents = [
   { color: "var(--ai-color)", soft: "var(--ai-color-15)" },
@@ -241,10 +242,9 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
         }
         [data-ad-framework-plan] {
           overflow: hidden;
-          border: 1px solid var(--border-strong);
-          border-radius: var(--radius-xl);
+          border: 1px solid var(--border);
+          border-radius: 12px;
           background: color-mix(in srgb, var(--surface) 90%, var(--muted-surface));
-          box-shadow: var(--shadow-sm);
         }
         [data-ad-framework-plan-top] {
           display: flex;
@@ -527,13 +527,14 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           ) : null}
         </div>
 
-        <motion.div
-          data-ad-framework-plan
-          variants={{
-            hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 16 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.48, ease: "easeOut" } }
-          }}
-        >
+        <ProductDemoFrame className="ad-framework-plan-frame">
+          <motion.div
+            data-ad-framework-plan
+            variants={{
+              hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 16 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.48, ease: "easeOut" } }
+            }}
+          >
           <div data-ad-framework-plan-top>
             <span data-ad-framework-plan-title>Brief Plan</span>
             <div data-ad-framework-plan-actions>
@@ -615,7 +616,8 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
               </tbody>
             </table>
           </div>
-        </motion.div>
+          </motion.div>
+        </ProductDemoFrame>
 
         <div data-ad-framework-bridge>
           <p>With four building blocks, Campfire makes every ad easier to test, learn from, and improve.</p>

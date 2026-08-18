@@ -38,6 +38,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { trackMetaEvent } from "@/lib/cookieConsent";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
+import { ProductDemoFrame } from "@/components/demos/ProductDemoFrame";
 
 const AdReviewDemo = dynamic(() => import("@/components/demos/AdReviewDemo"));
 const AdFrameworkBlockSection = dynamic(() =>
@@ -2091,7 +2092,11 @@ const ProductDemoBlockSection = ({
             </div>
           )}
           <AnimatedSection variant="plain" index={0} className="product-demo-card" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-            {block.demoId === "ad_review" ? <AdReviewDemo block={demoBlock} /> : null}
+            <div style={{ width: "100%", maxWidth: 710 }}>
+              <ProductDemoFrame>
+                {block.demoId === "ad_review" ? <AdReviewDemo block={demoBlock} /> : null}
+              </ProductDemoFrame>
+            </div>
           </AnimatedSection>
         </div>
       </section>

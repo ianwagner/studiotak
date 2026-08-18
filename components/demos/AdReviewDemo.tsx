@@ -158,7 +158,6 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
   // Dark-mode-aware palette
   const card = isDark ? "var(--surface)" : "#ffffff";
   const cardBorder = isDark ? "var(--border)" : "rgba(10, 15, 26, 0.08)";
-  const cardShadow = isDark ? "0 4px 24px rgba(0,0,0,0.24)" : "0 4px 24px rgba(0,0,0,0.06)";
   const fg = isDark ? "var(--text)" : "#0b0c10";
   const fgSecondary = isDark ? "var(--muted)" : "#4b5563";
   const fgTertiary = isDark ? "rgba(255,255,255,0.4)" : "#6b7280";
@@ -282,15 +281,12 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
     <div
       style={{
         background: card,
-        borderRadius: 16,
         border: `1px solid ${cardBorder}`,
-        boxShadow: cardShadow,
+        borderRadius: 12,
         padding: "20px 24px",
-        maxWidth: 710,
         width: "100%",
         fontFamily: "var(--font-body, system-ui, -apple-system, sans-serif)",
         position: "relative",
-        transition: "background 0.3s, border-color 0.3s, box-shadow 0.3s",
       }}
     >
       {/* Header: index + version badge */}
