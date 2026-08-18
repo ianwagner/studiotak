@@ -25,6 +25,8 @@ import type {
   ArticleGridBlock,
   BlockMedia,
   ProductDemoBlock,
+  AdFrameworkBlock,
+  AdFrameworkItem,
   StatsBlock,
   ComparisonBlock,
   ComparisonTableFooter,
@@ -129,6 +131,7 @@ const isLogosBlock = (block: EditableBlock): block is LogosBlock => block.type =
 const isContactBlock = (block: EditableBlock): block is ContactBlock => block.type === "contact";
 const isDividerBlock = (block: EditableBlock): block is DividerBlock => block.type === "divider";
 const isProductDemoBlock = (block: EditableBlock): block is ProductDemoBlock => block.type === "product_demo";
+const isAdFrameworkBlock = (block: EditableBlock): block is AdFrameworkBlock => block.type === "ad_framework";
 const isArticleFeaturedBlock = (block: EditableBlock): block is ArticleFeaturedBlock => block.type === "article_featured";
 const isArticleGridBlock = (block: EditableBlock): block is ArticleGridBlock => block.type === "article_grid";
 const isFeatureSpotlightBlock = (block: EditableBlock): block is FeatureSpotlightBlock => block.type === "feature_spotlight";
@@ -386,6 +389,44 @@ const newProductDemoBlock = (): ProductDemoBlock => ({
   enableDarkModeOnScroll: false,
 });
 
+const newAdFrameworkBlock = (): AdFrameworkBlock => ({
+  id: crypto.randomUUID(),
+  type: "ad_framework",
+  adminLabel: "Ad framework",
+  anchor: "ad-framework",
+  eyebrow: "The framework",
+  heading: "The building blocks for great ads",
+  body: "Campfire ads learn. They’re built from an intelligent framework that makes every creative easier to test, improve, and scale.",
+  principles: ["Testable", "Repeatable", "Buildable", "Intelligent"],
+  items: [
+    {
+      label: "Persona",
+      title: "Audience",
+      description: "Define the exact person the ad needs to move.",
+      examples: ["New customers", "High-intent buyers"]
+    },
+    {
+      label: "Pain point",
+      title: "Problem",
+      description: "Lead with the friction, desire, or objection that matters most.",
+      examples: ["No time", "Too expensive"]
+    },
+    {
+      label: "Creative",
+      title: "Creative format",
+      description: "Choose the creative structure that brings the message to life.",
+      examples: ["Use vs. Them", "Founder POV", "Problem / solution"]
+    },
+    {
+      label: "Delivery",
+      title: "Delivery format",
+      description: "Build the concept for the formats where it will run.",
+      examples: ["Static", "Video", "Carousel"]
+    }
+  ],
+  enableDarkModeOnScroll: false
+});
+
 const newComparisonBlock = (): ComparisonBlock => ({
   id: crypto.randomUUID(),
   type: "comparison",
@@ -634,6 +675,8 @@ export function PageForm({
           return newArticleGridBlock();
         case "product_demo":
           return newProductDemoBlock();
+        case "ad_framework":
+          return newAdFrameworkBlock();
         case "comparison":
           return newComparisonBlock();
         default:
@@ -729,6 +772,25 @@ export function PageForm({
         ...block,
         exampleData: { ...(block.exampleData ?? {}), [field]: value },
       };
+    });
+  };
+
+  const updateAdFrameworkItem = (
+    blockIdx: number,
+    itemIdx: number,
+    field: "label" | "title" | "description" | "examples",
+    value: string
+  ) => {
+    updateBlock(blockIdx, (block) => {
+      if (!isAdFrameworkBlock(block)) return block;
+      const items = [...(block.items ?? [])];
+      const item = items[itemIdx];
+      if (!item) return block;
+      items[itemIdx] =
+        field === "examples"
+          ? { ...item, examples: value.split(",").map((example) => example.trim()).filter(Boolean) }
+          : { ...item, [field]: value };
+      return { ...block, items };
     });
   };
 
@@ -1326,6 +1388,8 @@ export function PageForm({
         ? "Article grid"
         : block.type === "product_demo"
         ? "Product demo"
+        : block.type === "ad_framework"
+        ? "Ad framework"
         : block.type === "stats"
         ? "Stats block"
         : block.type === "comparison"
@@ -1431,6 +1495,7 @@ export function PageForm({
                 <option value="article_featured">Featured article</option>
                 <option value="article_grid">Article grid</option>
                 <option value="product_demo">Product demo</option>
+                <option value="ad_framework">Ad framework</option>
                 <option value="stats">Stats</option>
                 <option value="comparison">Comparison</option>
               </select>
@@ -2823,6 +2888,150 @@ export function PageForm({
                 </p>
               </div>
             </div>
+          ) : isAdFrameworkBlock(block) ? (
+            <div className="grid" style={{ gap: 12, padding: 12 }}>
+              <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <div className="field-group">
+                  <label>Eyebrow</label>
+                  <input
+                    className="input"
+                    value={block.eyebrow ?? ""}
+                    onChange={(e) => updateBlock(idx, (b) => isAdFrameworkBlock(b) ? { ...b, eyebrow: e.target.value } : b)}
+                    placeholder="The framework"
+                  />
+                </div>
+                <div className="field-group">
+                  <label>Heading</label>
+                  <input
+                    className="input"
+                    value={block.heading ?? ""}
+                    onChange={(e) => updateBlock(idx, (b) => isAdFrameworkBlock(b) ? { ...b, heading: e.target.value } : b)}
+                    placeholder="A framework for ads that learn"
+                  />
+                </div>
+                <AnchorField
+                  value={block.anchor ?? ""}
+                  onChange={(value) => updateBlock(idx, (b) => isAdFrameworkBlock(b) ? { ...b, anchor: value } : b)}
+                  placeholder={block.anchor || "ad-framework"}
+                />
+              </div>
+              <div className="field-group">
+                <label>Body</label>
+                <textarea
+                  rows={2}
+                  value={block.body ?? ""}
+                  onChange={(e) => updateBlock(idx, (b) => isAdFrameworkBlock(b) ? { ...b, body: e.target.value } : b)}
+                  placeholder="A concise explanation of the framework."
+                />
+              </div>
+              <div className="field-group">
+                <label>Framework principles</label>
+                <input
+                  className="input"
+                  value={(block.principles ?? []).join(", ")}
+                  onChange={(e) =>
+                    updateBlock(idx, (b) =>
+                      isAdFrameworkBlock(b)
+                        ? { ...b, principles: e.target.value.split(",").map((value) => value.trim()).filter(Boolean) }
+                        : b
+                    )
+                  }
+                  placeholder="Testable, Repeatable, Buildable, Intelligent"
+                />
+                <span style={{ color: "var(--muted)", fontSize: 12 }}>Comma-separated labels shown above the framework.</span>
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!block.enableDarkModeOnScroll}
+                  onChange={(e) => updateBlock(idx, (b) => isAdFrameworkBlock(b) ? { ...b, enableDarkModeOnScroll: e.target.checked } : b)}
+                />
+                <span>Trigger dark mode while this section is in view</span>
+              </label>
+              <div className="grid" style={{ gap: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h4 style={{ margin: 0 }}>Framework inputs</h4>
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() =>
+                      updateBlock(idx, (b) =>
+                        isAdFrameworkBlock(b)
+                          ? {
+                              ...b,
+                              items: [
+                                ...(b.items ?? []),
+                                { label: "New input", title: "New framework input", description: "", examples: [] } satisfies AdFrameworkItem
+                              ]
+                            }
+                          : b
+                      )
+                    }
+                  >
+                    + Add input
+                  </button>
+                </div>
+                {(block.items ?? []).map((item, itemIdx) => (
+                  <div key={`${item.title}-${itemIdx}`} className="card" style={{ padding: 12 }}>
+                    <div className="grid" style={{ gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+                      <div className="field-group">
+                        <label>Label</label>
+                        <input
+                          className="input"
+                          value={item.label}
+                          onChange={(e) => updateAdFrameworkItem(idx, itemIdx, "label", e.target.value)}
+                          placeholder="Persona"
+                        />
+                      </div>
+                      <div className="field-group">
+                        <label>Input</label>
+                        <input
+                          className="input"
+                          value={item.title}
+                          onChange={(e) => updateAdFrameworkItem(idx, itemIdx, "title", e.target.value)}
+                          placeholder="Persona"
+                        />
+                      </div>
+                    </div>
+                    <div className="field-group">
+                      <label>Description</label>
+                      <textarea
+                        rows={2}
+                        value={item.description ?? ""}
+                        onChange={(e) => updateAdFrameworkItem(idx, itemIdx, "description", e.target.value)}
+                        placeholder="How this input shapes the ad."
+                      />
+                    </div>
+                    <div className="field-group">
+                      <label>Examples</label>
+                      <input
+                        className="input"
+                        value={(item.examples ?? []).join(", ")}
+                        onChange={(e) => updateAdFrameworkItem(idx, itemIdx, "examples", e.target.value)}
+                        placeholder="Use vs. Them, Founder POV, Static"
+                      />
+                      <span style={{ color: "var(--muted)", fontSize: 12 }}>Comma-separated example tags.</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      style={{ marginTop: 8, fontSize: 12 }}
+                      onClick={() =>
+                        updateBlock(idx, (b) => {
+                          if (!isAdFrameworkBlock(b)) return b;
+                          const items = [...(b.items ?? [])];
+                          items.splice(itemIdx, 1);
+                          return { ...b, items };
+                        })
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           ) : block.type === "product_demo" ? (
             <div className="grid" style={{ gap: 12, padding: 12 }}>
               <div className="grid" style={{ gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>

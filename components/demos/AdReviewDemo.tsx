@@ -144,6 +144,9 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
   const [versionPopoverOpen, setVersionPopoverOpen] = useState(false);
   const [copyPopoverOpen, setCopyPopoverOpen] = useState(false);
   const [statusPopoverOpen, setStatusPopoverOpen] = useState(false);
+  const [showVersionHint, setShowVersionHint] = useState(true);
+  const [showCopyHint, setShowCopyHint] = useState(true);
+  const [showApprovalHint, setShowApprovalHint] = useState(true);
 
   const cfgRaw = STATUS_CONFIG[status];
   const cfg = {
@@ -216,6 +219,65 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
       @media (max-width: 899px) {
         .ad-review-portrait { display: none !important; }
       }
+
+      @keyframes ad-review-hotspot-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255, 112, 11, 0.42); }
+        55% { box-shadow: 0 0 0 8px rgba(255, 112, 11, 0); }
+      }
+
+      @keyframes ad-review-hotspot-nudge {
+        0%, 100% { transform: translateY(-50%); }
+        50% { transform: translate(3px, -50%); }
+      }
+
+      .ad-review-hotspot {
+        border-color: #ff700b !important;
+        animation: ad-review-hotspot-pulse 2.2s ease-out infinite;
+      }
+
+      .ad-review-hotspot-hint {
+        position: absolute;
+        top: 50%;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border: 1px solid rgba(255, 112, 11, 0.42);
+        border-radius: 999px;
+        color: #d85d00;
+        background: #fff7ed;
+        box-shadow: 0 3px 10px rgba(255, 112, 11, 0.12);
+        font-size: 11px;
+        font-weight: 650;
+        line-height: 1;
+        white-space: nowrap;
+        pointer-events: none;
+        transform: translateY(-50%);
+        animation: ad-review-hotspot-nudge 2.2s ease-in-out infinite;
+      }
+
+      .ad-review-hotspot-hint--right {
+        left: calc(100% + 12px);
+      }
+
+      .ad-review-hotspot-hint--left {
+        right: calc(100% + 12px);
+      }
+
+      .ad-review-hotspot-hint-arrow {
+        color: #ff700b;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 0.75;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ad-review-hotspot,
+        .ad-review-hotspot-hint {
+          animation: none;
+        }
+      }
     `}</style>
     <div
       style={{
@@ -237,7 +299,11 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
         <div style={{ position: "relative" }}>
           <button
             type="button"
-            onClick={() => setVersionPopoverOpen((o) => !o)}
+            className={showVersionHint && !versionPopoverOpen ? "ad-review-hotspot" : undefined}
+            onClick={() => {
+              setShowVersionHint(false);
+              setVersionPopoverOpen((o) => !o);
+            }}
             style={{
               fontSize: 11,
               fontWeight: 600,
@@ -261,6 +327,12 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
           >
             {data.version}
           </button>
+          {showVersionHint && !versionPopoverOpen ? (
+            <span className="ad-review-hotspot-hint ad-review-hotspot-hint--right" aria-hidden="true">
+              <span className="ad-review-hotspot-hint-arrow">←</span>
+              Compare versions
+            </span>
+          ) : null}
 
           {/* Version switcher popover */}
           <DemoPopover open={versionPopoverOpen} onClose={() => setVersionPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
@@ -387,40 +459,52 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
 
           {/* Edit platform copy button */}
           <div style={{ ...rightContentStyle, display: "flex", justifyContent: "flex-end", position: "relative" }}>
-            <button
-              type="button"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: 13,
-                fontWeight: 500,
-                color: fgButton,
-                background: btnBg,
-                border: `1px solid ${btnBorder}`,
-                borderRadius: 8,
-                padding: "7px 14px",
-                cursor: "pointer",
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = btnHoverBg)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = btnBg)}
-              onClick={() => setCopyPopoverOpen((o) => !o)}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-              </svg>
-              Edit platform copy
-            </button>
+            <div style={{ position: "relative" }}>
+              {showCopyHint && !copyPopoverOpen ? (
+                <span className="ad-review-hotspot-hint ad-review-hotspot-hint--left" aria-hidden="true">
+                  Edit ad copy
+                  <span className="ad-review-hotspot-hint-arrow">→</span>
+                </span>
+              ) : null}
+              <button
+                type="button"
+                className={showCopyHint && !copyPopoverOpen ? "ad-review-hotspot" : undefined}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: fgButton,
+                  background: btnBg,
+                  border: `1px solid ${btnBorder}`,
+                  borderRadius: 8,
+                  padding: "7px 14px",
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = btnHoverBg)}
+                onMouseLeave={(e) => (e.currentTarget.style.background = btnBg)}
+                onClick={() => {
+                  setShowCopyHint(false);
+                  setCopyPopoverOpen((o) => !o);
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+                Edit platform copy
+              </button>
 
-            {/* Edit copy popover */}
-            <DemoPopover open={copyPopoverOpen} onClose={() => setCopyPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
-              <div style={{ fontSize: 13, color: fgButton, lineHeight: 1.5 }}>
-                Tailor headlines and descriptions for each Meta placement — Feed, Stories, Reels — right from the review link.
-              </div>
-              {demoCta}
-            </DemoPopover>
+              {/* Edit copy popover */}
+              <DemoPopover open={copyPopoverOpen} onClose={() => setCopyPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
+                <div style={{ fontSize: 13, color: fgButton, lineHeight: 1.5 }}>
+                  Tailor headlines and descriptions for each Meta placement — Feed, Stories, Reels — right from the review link.
+                </div>
+                {demoCta}
+              </DemoPopover>
+            </div>
           </div>
         </div>
       </div>
@@ -430,9 +514,21 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
 
       {/* Status selector */}
       <div style={{ position: "relative", display: "inline-block" }}>
+        {showApprovalHint && !dropdownOpen ? (
+          <span className="ad-review-hotspot-hint ad-review-hotspot-hint--right" aria-hidden="true">
+            <span className="ad-review-hotspot-hint-arrow">←</span>
+            Set approval
+          </span>
+        ) : null}
         <button
           type="button"
-          onClick={() => setDropdownOpen((o) => !o)}
+          className={showApprovalHint && !dropdownOpen ? "ad-review-hotspot" : undefined}
+          aria-expanded={dropdownOpen}
+          aria-haspopup="listbox"
+          onClick={() => {
+            setShowApprovalHint(false);
+            setDropdownOpen((o) => !o);
+          }}
           style={{
             display: "inline-flex",
             alignItems: "center",
