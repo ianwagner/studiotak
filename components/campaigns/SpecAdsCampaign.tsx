@@ -296,9 +296,14 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                 Tell us what you want to feature. Campfire takes it from brief to delivery, creating five spec ads built for
                 today&apos;s Meta creative landscape.
               </p>
-              <a className={styles.primaryButton} href="#application">
-                Get your ads <span aria-hidden="true">→</span>
-              </a>
+              <div className={styles.heroActions}>
+                <a className={styles.primaryButton} href="#application">
+                  Get your ads <span aria-hidden="true">→</span>
+                </a>
+                <a className={styles.secondaryButton} href="/campfire">
+                  Learn about Campfire <span aria-hidden="true">→</span>
+                </a>
+              </div>
               <p className={styles.noCommitment}>No commitment. We&apos;ll review every application.</p>
             </div>
 
