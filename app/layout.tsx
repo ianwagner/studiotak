@@ -24,14 +24,29 @@ const sentient = localFont({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
+const companyDescription =
+  "Studio Tak is a marketing technology consultancy building creative production systems, AI-assisted ad tools, and design infrastructure for agencies and brands.";
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Studio Tak",
+  legalName: "Studio Tak LLC",
+  url: siteUrl,
+  email: "info@studiotak.co",
+  description: companyDescription,
+  brand: {
+    "@type": "Brand",
+    name: "Campfire"
+  }
+};
 
 const baseMetadata: Metadata = {
   title: "Studio Tak | Design Systems & Interactive Experiences",
-  description: "Studio Tak is a marketing technology consultancy building creative production systems, AI-assisted ad tools, and design infrastructure for agencies and brands.",
+  description: companyDescription,
   metadataBase: new URL(siteUrl),
   openGraph: {
     title: "Studio Tak",
-    description: "Studio Tak is a marketing technology consultancy building creative production systems, AI-assisted ad tools, and design infrastructure for agencies and brands.",
+    description: companyDescription,
     url: siteUrl,
     siteName: "Studio Tak",
     locale: "en_US",
@@ -59,6 +74,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${rubik.variable} ${sentient.variable}`}>
       <head>
         <link rel="preconnect" href="https://challenges.cloudflare.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
       </head>
       <body className={rubik.className}>
         {children}
