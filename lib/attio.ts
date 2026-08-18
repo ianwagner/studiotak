@@ -1,4 +1,4 @@
-const ATTIO_PEOPLE_ENDPOINT = "https://api.attio.com/v2/objects/people/records";
+const ATTIO_PEOPLE_ENDPOINT = "https://api.attio.com/v2/objects/people/records?matching_attribute=email_addresses";
 
 type AttioPerson = {
   email: string;
