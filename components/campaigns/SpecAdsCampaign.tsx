@@ -1,6 +1,5 @@
 "use client";
 
-import Script from "next/script";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { collection, getDocs, getFirestore, limit, query, where } from "firebase/firestore";
@@ -9,6 +8,7 @@ import { animationPresets, defaultAnimationPreset } from "@/components/sections/
 import { LogosBlockSection } from "@/components/sections/BlocksRenderer";
 import type { LogosBlock } from "@/lib/admin/pages";
 import { trackMetaEvent } from "@/lib/cookieConsent";
+import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
 import styles from "./SpecAdsCampaign.module.css";
 
 declare global {
@@ -22,7 +22,7 @@ declare global {
           theme?: "light" | "dark" | "auto";
           callback?: (token: string) => void;
           "expired-callback"?: () => void;
-          "error-callback"?: () => void;
+          "error-callback"?: (errorCode?: string | number) => void;
         }
       ) => string;
       reset: (widgetId: string) => void;
@@ -96,6 +96,22 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
   const animationPreset = animationPresets[defaultAnimationPreset];
 
   useEffect(() => {
+    let active = true;
+
+    void loadTurnstile()
+      .then(() => {
+        if (active) setTurnstileLoaded(true);
+      })
+      .catch(() => {
+        if (active) setCaptchaError(getTurnstileLoadError());
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!turnstileLoaded || !turnstileSiteKey || !captchaContainerRef.current || !window.turnstile) return;
 
     const container = captchaContainerRef.current;
@@ -108,9 +124,10 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         setCaptchaError("");
       },
       "expired-callback": () => setCaptchaToken(""),
-      "error-callback": () => {
+      "error-callback": (errorCode) => {
         setCaptchaToken("");
-        setCaptchaError("The security check could not load. Please refresh and try again.");
+        console.error("Turnstile widget failed to load", { errorCode });
+        setCaptchaError(getTurnstileLoadError(errorCode));
       }
     });
 
@@ -265,13 +282,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
 
   return (
     <main className={styles.page}>
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-        strategy="afterInteractive"
-        onLoad={() => setTurnstileLoaded(true)}
-        onError={() => setCaptchaError("The security check could not load. Please refresh and try again.")}
-      />
-
       <section className={styles.hero}>
         <div className={styles.shell}>
           <div className={styles.heroGrid}>

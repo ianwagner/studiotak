@@ -2,8 +2,8 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import Script from "next/script";
 import type { ContactBlock } from "@/lib/admin/pages";
+import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
 import { AnimatedSection, SectionHeading } from "./AnimatedSection";
 import { animationPresets, defaultAnimationPreset } from "./animationPresets";
 import { trackMetaEvent } from "@/lib/cookieConsent";
@@ -19,7 +19,7 @@ declare global {
           theme?: "light" | "dark" | "auto";
           callback?: (token: string) => void;
           "expired-callback"?: () => void;
-          "error-callback"?: () => void;
+          "error-callback"?: (errorCode?: string | number) => void;
         }
       ) => string;
       reset: (widgetId: string) => void;
@@ -53,6 +53,22 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
   const preset = animationPresets[defaultAnimationPreset];
 
   useEffect(() => {
+    let active = true;
+
+    void loadTurnstile()
+      .then(() => {
+        if (active) setTurnstileLoaded(true);
+      })
+      .catch(() => {
+        if (active) setCaptchaError(getTurnstileLoadError());
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!turnstileLoaded || !turnstileSiteKey || !captchaContainerRef.current || !window.turnstile) return;
 
     const container = captchaContainerRef.current;
@@ -64,9 +80,10 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
         setCaptchaError("");
       },
       "expired-callback": () => setCaptchaToken(""),
-      "error-callback": () => {
+      "error-callback": (errorCode) => {
         setCaptchaToken("");
-        setCaptchaError("The security check could not load. Please refresh and try again.");
+        console.error("Turnstile widget failed to load", { errorCode });
+        setCaptchaError(getTurnstileLoadError(errorCode));
       }
     });
 
@@ -171,12 +188,6 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
 
   return (
     <AnimatedSection key={block.id ?? index} index={index} variant="plain" animated={false}>
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-        strategy="afterInteractive"
-        onLoad={() => setTurnstileLoaded(true)}
-        onError={() => setCaptchaError("The security check could not load. Please refresh and try again.")}
-      />
       <div data-resend-contact-block>
         <style>{`
           [data-resend-contact-block] {

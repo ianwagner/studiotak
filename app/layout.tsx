@@ -57,6 +57,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${rubik.variable} ${sentient.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://challenges.cloudflare.com" />
+      </head>
       <body className={rubik.className}>
         {children}
         <CookieConsent />
