@@ -58,6 +58,8 @@ Global CSS with custom properties in `app/globals.css` (no Tailwind). Rubik font
 
 **Form notifications**: `SLACK_FORM_SUBMISSIONS_WEBHOOK_URL` (optional Slack Incoming Webhook for contact and Campfire spec-ads submissions)
 
+**Attio / Meta Qualified Leads**: `ATTIO_API_KEY`, `ATTIO_QUALIFIED_LEADS_WEBHOOK_SECRET`, `META_QUALIFIED_LEADS_DATASET_ID`, `META_QUALIFIED_LEADS_ACCESS_TOKEN`, plus the Attio stage-field or List configuration described in [`docs/meta-qualified-leads-attio.md`](docs/meta-qualified-leads-attio.md). The webhook endpoint is `/api/webhooks/attio/meta-qualified-leads`.
+
 **Admin**: `SEED_TOKEN` (for admin API endpoints — optional, if unset all requests are allowed)
 
 ## Content Management API
