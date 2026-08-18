@@ -414,10 +414,10 @@ const newAdFrameworkBlock = (): AdFrameworkBlock => ({
   type: "ad_framework",
   adminLabel: "Ad framework",
   anchor: "ad-framework",
-  eyebrow: "The framework",
-  heading: "The building blocks for great ads",
-  body: "Campfire ads learn. They’re built from an intelligent framework that makes every creative easier to test, improve, and scale.",
-  principles: ["Testable", "Repeatable", "Buildable", "Intelligent"],
+  eyebrow: "The plan",
+  heading: "High-performing ads start with a testable framework",
+  body: "Every batch of ads starts with a plan. Campfire ads learn. They’re built from an intelligent framework that makes every creative easier to test, improve, and scale.",
+  principles: [],
   items: [
     {
       label: "Persona",
@@ -2985,7 +2985,7 @@ export function PageForm({
                     className="input"
                     value={block.eyebrow ?? ""}
                     onChange={(e) => updateBlock(idx, (b) => isAdFrameworkBlock(b) ? { ...b, eyebrow: e.target.value } : b)}
-                    placeholder="The framework"
+                    placeholder="The plan"
                   />
                 </div>
                 <div className="field-group">
