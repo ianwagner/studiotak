@@ -73,6 +73,20 @@ const componentEntries: ComponentEntry[] = [
     summary: "Two-column layout pairing the Resend contact form with optional media.",
     fields: ["Eyebrow + heading + body copy", "Anchor ID for #contact links", "Sitewide Resend lead capture", "Optional media"],
     usage: "Use for lead capture or inquiries. Drop near the end of a page so CTAs can jump visitors into the form."
+  },
+  {
+    id: "ad_framework",
+    title: "Ad framework",
+    summary: "A four-part framework board for explaining a creative or ad strategy.",
+    fields: ["Eyebrow + heading + body copy", "Principle labels", "Framework inputs with examples", "Optional anchor"],
+    usage: "Use the Ad framework template in a page’s Blocks section to add the complete Campfire version, then tailor it for that page."
+  },
+  {
+    id: "slack_integration",
+    title: "Slack connection",
+    summary: "A focused Slack integration callout with the Slack mark and supporting copy.",
+    fields: ["Eyebrow + heading + body copy", "Optional anchor", "Optional dark-mode shift"],
+    usage: "Use the Slack connection template in a page’s Blocks section whenever a page needs the integration message."
   }
 ];
 

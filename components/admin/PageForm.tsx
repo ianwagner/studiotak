@@ -53,6 +53,24 @@ type PendingBlock = {
 
 type EditableBlock = BlockRecord | PendingBlock;
 type HeroLikeBlock = HeroBlock | ThirdsBlock;
+type ReusableBlockTemplateType = "ad_framework" | "slack_integration";
+
+const reusableBlockTemplates: Array<{
+  type: ReusableBlockTemplateType;
+  title: string;
+  description: string;
+}> = [
+  {
+    type: "ad_framework",
+    title: "Ad framework",
+    description: "A complete framework board with the standard Campfire inputs and copy."
+  },
+  {
+    type: "slack_integration",
+    title: "Slack connection",
+    description: "The ready-to-use Slack integration callout, including its default copy."
+  }
+];
 
 export type PageFormState = Omit<PageRecord, "id" | "blocks"> & { id?: string; blocks: EditableBlock[] };
 
@@ -417,7 +435,7 @@ const newAdFrameworkBlock = (): AdFrameworkBlock => ({
       label: "Creative",
       title: "Creative format",
       description: "Choose the creative structure that brings the message to life.",
-      examples: ["Use vs. Them", "Founder POV", "Problem / solution"]
+      examples: ["Us vs. Them", "Founder POV", "Problem / solution"]
     },
     {
       label: "Delivery",
@@ -1071,6 +1089,12 @@ export function PageForm({
 
   const addBlock = () => {
     const block = newPendingBlock();
+    setFormState((prev) => (prev ? { ...prev, blocks: [...prev.blocks, block] } : prev));
+    setOpenBlocks((prev) => new Set(prev).add(block.id));
+  };
+
+  const addReusableBlockTemplate = (type: ReusableBlockTemplateType) => {
+    const block = type === "ad_framework" ? newAdFrameworkBlock() : newSlackIntegrationBlock();
     setFormState((prev) => (prev ? { ...prev, blocks: [...prev.blocks, block] } : prev));
     setOpenBlocks((prev) => new Set(prev).add(block.id));
   };
@@ -3072,7 +3096,7 @@ export function PageForm({
                         className="input"
                         value={(item.examples ?? []).join(", ")}
                         onChange={(e) => updateAdFrameworkItem(idx, itemIdx, "examples", e.target.value)}
-                        placeholder="Use vs. Them, Founder POV, Static"
+                        placeholder="Us vs. Them, Founder POV, Static"
                       />
                       <span style={{ color: "var(--muted)", fontSize: 12 }}>Comma-separated example tags.</span>
                     </div>
@@ -4269,10 +4293,40 @@ export function PageForm({
               </div>
             ) : null}
             {blockFields}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "grid", gap: 10 }}>
               <button type="button" className="btn secondary" onClick={addBlock}>
                 + Add block
               </button>
+              <div
+                className="card"
+                style={{
+                  padding: 12,
+                  display: "grid",
+                  gap: 8,
+                  border: "1px dashed var(--border-strong)",
+                  background: "rgba(255,255,255,0.02)"
+                }}
+              >
+                <div>
+                  <strong style={{ display: "block", fontSize: 14 }}>Reusable block templates</strong>
+                  <span style={{ color: "var(--muted)", fontSize: 13 }}>
+                    Add a complete starting block to this page, then edit this page&apos;s copy without changing other pages.
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {reusableBlockTemplates.map((template) => (
+                    <button
+                      key={template.type}
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => addReusableBlockTemplate(template.type)}
+                      title={template.description}
+                    >
+                      + {template.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </fieldset>

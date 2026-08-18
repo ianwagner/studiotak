@@ -1220,7 +1220,7 @@ export const seedPages: PageRecord[] = [
             label: "Creative",
             title: "Creative format",
             description: "Choose the creative structure that brings the message to life.",
-            examples: ["Use vs. Them", "Founder POV", "Problem / solution"]
+            examples: ["Us vs. Them", "Founder POV", "Problem / solution"]
           },
           {
             label: "Delivery",

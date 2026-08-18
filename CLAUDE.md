@@ -134,12 +134,15 @@ Each block needs `id` + `type`. Full type definitions in `lib/admin/pages.ts`. R
 | `article_grid` | Two-tier article listing: 3-column recent posts grid on top, auto-fit card grid below. Pulls from Ghost CMS. | Blog listing, knowledge base index | `tagFilter`, `offset`, `limit` |
 | `stats` | Row of large numbers with labels. Two variants: plain or bordered cards. | Key metrics, social proof numbers, at-a-glance KPIs | `heading`, `body`, `items[]` ({value, label, prefix, suffix}), `variant` ("default"\|"card") |
 | `comparison` | Two-column side-by-side with check/X icons per item. One column can be highlighted (accent border). | Us vs. them, before/after, competitive comparisons | `heading`, `body`, `columns` (tuple of {heading, items[], highlighted?}) |
+| `ad_framework` | Four-part framework board with labeled inputs, descriptions, and example tags. | Explaining a creative or ad strategy | `eyebrow`, `heading`, `body`, `principles[]`, `items[]` ({label, title, description, examples[]}) |
+| `slack_integration` | Branded Slack callout card. | Explaining how a workflow connects to Slack | `eyebrow`, `heading`, `body`, `anchor` |
 | `divider` | Simple horizontal rule. | Visual separator between sections | `width` ("full"\|"page") |
 
 **Common patterns:**
 - All blocks support `enableDarkModeOnScroll` to toggle dark theme as the user scrolls into view
 - Feature items in `features` and `scroll_gallery` blocks can reference components via `componentId` — the component's data (title, body, icon) overwrites the item at render time
 - `showcase` and `logos` blocks pull media from the Firebase `media` collection, not from inline data
+- The page editor exposes `ad_framework` and `slack_integration` as reusable templates. Adding one creates an editable page-local copy, so adapting its copy or anchor does not affect blocks already used elsewhere.
 
 ### Learn Page SEO & Campfire Linking
 
