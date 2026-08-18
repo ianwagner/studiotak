@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { syncAttioPerson } from "@/lib/attio";
 import { sendSlackFormNotification } from "@/lib/slackFormNotifications";
 
 export const runtime = "nodejs";
@@ -349,6 +350,8 @@ export async function POST(request: Request) {
       utmCampaign
     });
   }
+
+  await syncAttioPerson({ email, firstName, lastName });
 
   await sendSlackFormNotification({
     formName: "Campfire spec ads application",
