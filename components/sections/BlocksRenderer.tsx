@@ -39,6 +39,7 @@ import Link from "next/link";
 import { trackMetaEvent } from "@/lib/cookieConsent";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 import { ProductDemoFrame } from "@/components/demos/ProductDemoFrame";
+import { ResendContactBlockSection } from "./ResendContactBlock";
 
 const AdReviewDemo = dynamic(() => import("@/components/demos/AdReviewDemo"));
 const AdFrameworkBlockSection = dynamic(() =>
@@ -46,9 +47,6 @@ const AdFrameworkBlockSection = dynamic(() =>
 );
 const SlackIntegrationBlockSection = dynamic(() =>
   import("./SlackIntegrationBlock").then((module) => module.SlackIntegrationBlockSection)
-);
-const ResendContactBlockSection = dynamic(() =>
-  import("./ResendContactBlock").then((module) => module.ResendContactBlockSection)
 );
 
 const viewportWidthVar = "var(--full-bleed-width, 100vw)";
