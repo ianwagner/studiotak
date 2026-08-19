@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { syncAttioPerson } from "@/lib/attio";
+import { sendMetaWebsiteLead } from "@/lib/metaWebEvents";
 
 export const runtime = "nodejs";
 
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
   const lastName = getFormValue(formData, "LASTNAME", 100);
   const captchaToken = getFormValue(formData, "cf-turnstile-response", 4_000);
   const signupPath = getFormValue(formData, "signup_path", 2_000);
+  const metaEventId = getFormValue(formData, "meta_event_id", 100);
 
   if (!emailPattern.test(email) || !firstName || !lastName || formData.get("OPT_IN") !== "1" || !captchaToken) {
     return NextResponse.json({ error: "Please complete the newsletter form." }, { status: 400 });
@@ -122,6 +124,21 @@ export async function POST(request: Request) {
       signup_path: signupPath
     }
   });
+
+  try {
+    await sendMetaWebsiteLead(request, {
+      email,
+      firstName,
+      lastName,
+      eventId: metaEventId,
+      signupPath,
+      contentName: "Newsletter form"
+    });
+  } catch (error) {
+    console.error("Unable to send Meta website Lead", {
+      message: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
 
   return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }

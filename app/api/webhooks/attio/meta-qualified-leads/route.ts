@@ -9,6 +9,7 @@ import {
   type AttioRecord
 } from "@/lib/attio";
 import { sendMetaQualifiedLead } from "@/lib/metaQualifiedLeads";
+import { isMetaWebEventsConfigured } from "@/lib/metaWebEvents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -146,6 +147,14 @@ async function handleStageUpdate(stageUpdate: StageUpdate, idempotencyKey: strin
   const stageName = getAttioValueString(stageValue, ["status.title", "option.title", "value"]);
   if (!stageName) return "skipped" as const;
 
+  const contact = getLeadContact(stageUpdate.record);
+  const initialLeadStage = setting("ATTIO_QUALIFIED_LEADS_INITIAL_STAGE") || "Lead";
+  // A consented website submission has already sent the raw Lead through the
+  // browser Pixel and website CAPI with one shared event ID. Do not count its
+  // later Attio stage update as a second raw lead. Native Meta lead-form rows
+  // retain their lead_id and continue through this CRM path.
+  if (stageName === initialLeadStage && isMetaWebEventsConfigured() && !contact.leadId) return "skipped" as const;
+
   const eventName = getEventName(stageName);
   // A configured map intentionally limits reporting to the CRM stages that
   // matter to Meta. An unmapped stage is acknowledged but not uploaded.
@@ -158,7 +167,7 @@ async function handleStageUpdate(stageUpdate: StageUpdate, idempotencyKey: strin
     // Attio supplies a retry-stable key. Add record/stage data so a future
     // batched delivery still gives each CRM event its own Meta event ID.
     eventId: `attio:${idempotencyKey}:${stageUpdate.recordId}:${stageChangedAt}`,
-    contact: getLeadContact(stageUpdate.record)
+    contact
   }, 2_000);
 
   if (result.status === "skipped") {

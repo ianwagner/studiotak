@@ -6,7 +6,7 @@ import type { ContactBlock } from "@/lib/admin/pages";
 import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
 import { AnimatedSection, SectionHeading } from "./AnimatedSection";
 import { animationPresets, defaultAnimationPreset } from "./animationPresets";
-import { trackMetaEvent } from "@/lib/cookieConsent";
+import { createMetaEventId, trackMetaEvent } from "@/lib/cookieConsent";
 
 declare global {
   interface Window {
@@ -116,6 +116,7 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
 
     const fields = Object.fromEntries(new FormData(form).entries());
     const searchParams = new URLSearchParams(window.location.search);
+    const metaEventId = createMetaEventId();
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
@@ -127,7 +128,8 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
           signupPath: window.location.pathname,
           utmSource: searchParams.get("utm_source") ?? "",
           utmMedium: searchParams.get("utm_medium") ?? "",
-          utmCampaign: searchParams.get("utm_campaign") ?? ""
+          utmCampaign: searchParams.get("utm_campaign") ?? "",
+          metaEventId
         })
       });
       const payload = (await response.json().catch(() => null)) as { error?: string; code?: string } | null;
@@ -147,7 +149,7 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
         method: "resend",
         section: block.anchor ?? "contact"
       });
-      trackMetaEvent("Lead", { content_name: "Contact form" });
+      trackMetaEvent("Lead", { content_name: "Contact form" }, metaEventId);
     } catch (error) {
       setSubmitState("error");
       setSubmitError(error instanceof Error ? error.message : "We couldn't send your message. Please try again.");

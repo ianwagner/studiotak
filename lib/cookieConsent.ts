@@ -31,7 +31,14 @@ export function hasMarketingConsent() {
   return typeof window !== "undefined" && window.__studioTakCookiePreferences?.marketing === true;
 }
 
-export function trackMetaEvent(eventName: string, parameters: Record<string, unknown> = {}) {
+export function createMetaEventId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `web_lead_${crypto.randomUUID()}`;
+  }
+  return `web_lead_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+export function trackMetaEvent(eventName: string, parameters: Record<string, unknown> = {}, eventId?: string) {
   if (!hasMarketingConsent() || typeof window.fbq !== "function") return;
-  window.fbq("track", eventName, parameters);
+  window.fbq("track", eventName, parameters, eventId ? { eventID: eventId } : undefined);
 }

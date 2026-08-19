@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { syncAttioPerson } from "@/lib/attio";
+import { sendMetaWebsiteLead } from "@/lib/metaWebEvents";
 import { sendSlackFormNotification } from "@/lib/slackFormNotifications";
 
 export const runtime = "nodejs";
@@ -21,6 +22,7 @@ type FormPayload = {
   utmSource?: unknown;
   utmMedium?: unknown;
   utmCampaign?: unknown;
+  metaEventId?: unknown;
   website?: unknown;
   captchaToken?: unknown;
   formStartedAt?: unknown;
@@ -212,6 +214,7 @@ export async function POST(request: Request) {
   const utmSource = getString(payload.utmSource, fieldLimits.utm);
   const utmMedium = getString(payload.utmMedium, fieldLimits.utm);
   const utmCampaign = getString(payload.utmCampaign, fieldLimits.utm);
+  const metaEventId = getString(payload.metaEventId, 100);
   const captchaToken = getString(payload.captchaToken, 2048);
 
   if (!firstName || !lastName || !email || !businessName || !productToFeature || !monthlyMetaSpend || !creativeSetup || !creativeChallenge || !emailPattern.test(email)) {
@@ -369,6 +372,21 @@ export async function POST(request: Request) {
       utm_campaign: utmCampaign
     }
   });
+
+  try {
+    await sendMetaWebsiteLead(request, {
+      email,
+      firstName,
+      lastName,
+      eventId: metaEventId,
+      signupPath,
+      contentName: "Free spec ads application"
+    });
+  } catch (error) {
+    console.error("Unable to send Meta website Lead", {
+      message: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
 
   await sendSlackFormNotification({
     formName: "Campfire spec ads application",

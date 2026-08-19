@@ -7,7 +7,7 @@ import { getFirebaseApp } from "@/lib/firebaseClient";
 import { animationPresets, defaultAnimationPreset } from "@/components/sections/animationPresets";
 import { LogosBlockSection } from "@/components/sections/BlocksRenderer";
 import type { LogosBlock } from "@/lib/admin/pages";
-import { trackMetaEvent } from "@/lib/cookieConsent";
+import { createMetaEventId, trackMetaEvent } from "@/lib/cookieConsent";
 import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
 import styles from "./SpecAdsCampaign.module.css";
 
@@ -235,6 +235,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
 
     const fields = Object.fromEntries(new FormData(form).entries());
     const searchParams = new URLSearchParams(window.location.search);
+    const metaEventId = createMetaEventId();
 
     try {
       const response = await fetch("/api/campaign-spec-ads", {
@@ -247,7 +248,8 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
           signupPath: window.location.pathname,
           utmSource: searchParams.get("utm_source") ?? "",
           utmMedium: searchParams.get("utm_medium") ?? "",
-          utmCampaign: searchParams.get("utm_campaign") ?? ""
+          utmCampaign: searchParams.get("utm_campaign") ?? "",
+          metaEventId
         })
       });
 
@@ -263,7 +265,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
 
       setSubmitState("success");
       form.reset();
-      trackMetaEvent("Lead", { content_name: "Free spec ads application" });
+      trackMetaEvent("Lead", { content_name: "Free spec ads application" }, metaEventId);
     } catch (error) {
       setSubmitState("error");
       setSubmitError(error instanceof Error ? error.message : "We couldn't send your application. Please try again.");

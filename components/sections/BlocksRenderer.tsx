@@ -35,7 +35,7 @@ import { useDarkModeShift } from "./useDarkModeShift";
 import type { QueryConstraint } from "firebase/firestore";
 import Script from "next/script";
 import Link from "next/link";
-import { trackMetaEvent } from "@/lib/cookieConsent";
+import { createMetaEventId, trackMetaEvent } from "@/lib/cookieConsent";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 import { ProductDemoFrame } from "@/components/demos/ProductDemoFrame";
 import { ResendContactBlockSection } from "./ResendContactBlock";
@@ -2213,6 +2213,8 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
         setFormSubmitting(true);
         const formData = new FormData(form);
         formData.set("signup_path", window.location.pathname);
+        const metaEventId = createMetaEventId();
+        formData.set("meta_event_id", metaEventId);
         const response = await fetch("/api/newsletter", {
           method: "POST",
           body: formData
@@ -2224,7 +2226,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
           method: "newsletter",
           section: block.anchor ?? "contact"
         });
-        trackMetaEvent("Lead", { content_name: "Newsletter form" });
+        trackMetaEvent("Lead", { content_name: "Newsletter form" }, metaEventId);
         form.reset();
         const errorEls = form.querySelectorAll<HTMLElement>(".entry__error");
         errorEls.forEach((el) => (el.textContent = ""));
