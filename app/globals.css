@@ -304,7 +304,7 @@
   position: relative;
   isolation: isolate;
   width: 100%;
-  padding: 15px;
+  padding: 10px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -313,6 +313,11 @@
   -webkit-backdrop-filter: blur(16px) saturate(112%);
   backdrop-filter: blur(16px) saturate(112%);
   transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+/* Ad-review callouts and popovers deliberately extend beyond their controls. */
+.product-demo-frame--allow-overflow {
+  overflow: visible;
 }
 
 @media (min-width: 1024px) {

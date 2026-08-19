@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ProductDemoBlock } from "@/lib/admin/pages";
 
 type Status = "pending" | "approved" | "rejected" | "edit_requested";
@@ -86,30 +87,41 @@ function DemoPopover({
   border?: string;
   shadow?: string;
 }) {
-  if (!open) return null;
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <>
-      <div
-        style={{ position: "fixed", inset: 0, zIndex: 19 }}
-        onClick={onClose}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "calc(100% + 8px)",
-          left: 0,
-          background: bg ?? "#ffffff",
-          border: `1px solid ${border ?? "rgba(10,15,26,0.10)"}`,
-          borderRadius: 12,
-          boxShadow: shadow ?? "0 8px 28px rgba(0,0,0,0.14)",
-          padding: "14px 16px",
-          zIndex: 20,
-          minWidth: 220,
-          maxWidth: 280,
-        }}
-      >
-        {children}
-      </div>
+      {open ? (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 19 }}
+          onClick={onClose}
+        />
+      ) : null}
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 5 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
+            style={{
+              position: "absolute",
+              bottom: "calc(100% + 8px)",
+              left: 0,
+              background: bg ?? "#ffffff",
+              border: `1px solid ${border ?? "rgba(10,15,26,0.10)"}`,
+              borderRadius: 12,
+              boxShadow: shadow ?? "0 8px 28px rgba(0,0,0,0.14)",
+              padding: "14px 16px",
+              zIndex: 20,
+              minWidth: 220,
+              maxWidth: 280,
+            }}
+          >
+            {children}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </>
   );
 }

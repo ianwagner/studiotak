@@ -2083,7 +2083,7 @@ const ProductDemoBlockSection = ({
           )}
           <AnimatedSection variant="plain" index={0} className="product-demo-card" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
             <div style={{ width: "100%", maxWidth: 710 }}>
-              <ProductDemoFrame>
+              <ProductDemoFrame className="product-demo-frame--allow-overflow">
                 {block.demoId === "ad_review" ? <AdReviewDemo block={demoBlock} /> : null}
               </ProductDemoFrame>
             </div>

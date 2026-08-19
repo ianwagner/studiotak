@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { collection, getDocs, getFirestore, limit, query, where } from "firebase/firestore";
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import type { AdFrameworkBlock, AdFrameworkItem } from "@/lib/admin/pages";
 import { ProductDemoFrame } from "@/components/demos/ProductDemoFrame";
@@ -27,9 +28,26 @@ const planValue = (item: AdFrameworkItem | undefined) => item?.examples?.[0] || 
 
 export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBlock; index: number }) => {
   const [inspirationMedia, setInspirationMedia] = useState<InspirationMedia[]>([]);
+  const [inspirationTooltip, setInspirationTooltip] = useState({ open: false, x: 0, y: 0 });
+  const [planActionPopoverOpen, setPlanActionPopoverOpen] = useState(false);
+  const [showPlanActionHint, setShowPlanActionHint] = useState(true);
   const shouldReduceMotion = useReducedMotion();
   const principles = block.principles?.filter(Boolean) ?? [];
   const items = block.items ?? [];
+
+  const updateInspirationTooltip = (event: ReactMouseEvent<HTMLDivElement>) => {
+    const tooltipWidth = 280;
+    const tooltipHeight = 76;
+    const offset = 18;
+    const x = event.clientX + offset + tooltipWidth > window.innerWidth
+      ? event.clientX - tooltipWidth - offset
+      : event.clientX + offset;
+    const y = event.clientY + offset + tooltipHeight > window.innerHeight
+      ? event.clientY - tooltipHeight - offset
+      : event.clientY + offset;
+
+    setInspirationTooltip({ open: true, x, y });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +135,10 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           font-size: 15px;
           font-weight: 700;
           line-height: .75;
+        }
+        @keyframes ad-framework-hotspot-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255, 112, 11, .42); }
+          55% { box-shadow: 0 0 0 8px rgba(255, 112, 11, 0); }
         }
         [data-ad-framework-heading] {
           display: grid;
@@ -288,6 +310,14 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           font-weight: 500;
           line-height: 1.25;
           box-shadow: var(--shadow-sm);
+          cursor: pointer;
+        }
+        [data-ad-framework-plan-action].is-hotspot {
+          border-color: #ff700b;
+          animation: ad-framework-hotspot-pulse 2.2s ease-out infinite;
+        }
+        [data-ad-framework-plan-status].is-hotspot {
+          box-shadow: 0 0 0 0 rgba(255, 112, 11, .42);
         }
         [data-ad-framework-request-edits] {
           display: inline-flex;
@@ -303,11 +333,33 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           font-size: 12px;
           font-weight: 600;
           line-height: 1;
+          cursor: pointer;
         }
         [data-ad-framework-request-edits] svg {
           width: 14px;
           height: 14px;
           color: var(--muted);
+        }
+        [data-ad-framework-plan-popover] {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          z-index: 5;
+          min-width: 220px;
+          max-width: 280px;
+          padding: 14px 16px;
+          border: 1px solid var(--border-strong);
+          border-radius: 12px;
+          background: var(--surface);
+          box-shadow: 0 8px 28px rgba(0, 0, 0, .14);
+          color: var(--text);
+          font-family: var(--font-primary, system-ui, sans-serif);
+          font-size: 13px;
+          font-weight: 500;
+          line-height: 1.5;
+        }
+        [data-ad-framework-plan-popover] p {
+          margin: 0;
         }
         [data-ad-framework-inspiration] {
           padding: 14px 15px 16px;
@@ -379,6 +431,33 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           text-overflow: ellipsis;
           text-transform: uppercase;
           white-space: nowrap;
+        }
+        [data-ad-framework-inspiration-tooltip] {
+          position: fixed;
+          z-index: 100;
+          width: min(280px, calc(100vw - 32px));
+          padding: 14px 16px;
+          border: 1px solid var(--border-strong);
+          border-radius: 12px;
+          background: var(--surface);
+          box-shadow: 0 8px 28px rgba(0, 0, 0, .14);
+          color: var(--text);
+          font-family: var(--font-primary, system-ui, sans-serif);
+          line-height: 1.5;
+          pointer-events: none;
+        }
+        [data-ad-framework-inspiration-tooltip] strong {
+          display: block;
+          color: var(--text);
+          font-size: 13px;
+          font-weight: 500;
+        }
+        [data-ad-framework-inspiration-tooltip] span {
+          display: block;
+          margin-top: 3px;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 500;
         }
         [data-ad-framework-table-wrap] {
           position: relative;
@@ -538,18 +617,53 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           <div data-ad-framework-plan-top>
             <span data-ad-framework-plan-title>Brief Plan</span>
             <div data-ad-framework-plan-actions>
-              <span className="ad-review-hotspot-hint ad-review-hotspot-hint--left" aria-hidden="true">
-                Approve or request edits
-                <span className="ad-review-hotspot-hint-arrow">→</span>
-              </span>
-              <span data-ad-framework-request-edits>
+              {showPlanActionHint && !planActionPopoverOpen ? (
+                <span className="ad-review-hotspot-hint ad-review-hotspot-hint--left" aria-hidden="true">
+                  Approve or request edits
+                  <span className="ad-review-hotspot-hint-arrow">→</span>
+                </span>
+              ) : null}
+              <button
+                type="button"
+                data-ad-framework-request-edits
+                data-ad-framework-plan-action
+                className={showPlanActionHint && !planActionPopoverOpen ? "is-hotspot" : undefined}
+                onClick={() => {
+                  setShowPlanActionHint(false);
+                  setPlanActionPopoverOpen((open) => !open);
+                }}
+              >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                 </svg>
                 Request edits
-              </span>
-              <span data-ad-framework-plan-status>Approve</span>
+              </button>
+              <button
+                type="button"
+                data-ad-framework-plan-status
+                data-ad-framework-plan-action
+                className={showPlanActionHint && !planActionPopoverOpen ? "is-hotspot" : undefined}
+                onClick={() => {
+                  setShowPlanActionHint(false);
+                  setPlanActionPopoverOpen((open) => !open);
+                }}
+              >
+                Approve
+              </button>
+              <AnimatePresence>
+                {planActionPopoverOpen ? (
+                  <motion.div
+                    data-ad-framework-plan-popover
+                    initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+                    animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                    exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 5 }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
+                  >
+                    <p>Request any changes to your plan, or approve it when it feels right. Once you’re happy, we’ll start bringing your ads to life.</p>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </div>
           </div>
           <div data-ad-framework-inspiration>
@@ -557,7 +671,13 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
               <span>Inspiration</span>
               <span>Shared creative references</span>
             </div>
-            <div data-ad-framework-inspiration-grid aria-label="Inspiration media examples">
+            <div
+              data-ad-framework-inspiration-grid
+              aria-label="Inspiration media examples"
+              onMouseEnter={updateInspirationTooltip}
+              onMouseMove={updateInspirationTooltip}
+              onMouseLeave={() => setInspirationTooltip((tooltip) => ({ ...tooltip, open: false }))}
+            >
               {Array.from({ length: 6 }, (_, mediaIndex) => {
                 const media = inspirationMedia[mediaIndex];
                 return (
@@ -568,6 +688,26 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
                 );
               })}
             </div>
+            {typeof document !== "undefined"
+              ? createPortal(
+                  <AnimatePresence>
+                    {inspirationTooltip.open ? (
+                      <motion.div
+                        data-ad-framework-inspiration-tooltip
+                        aria-hidden="true"
+                        style={{ left: inspirationTooltip.x, top: inspirationTooltip.y }}
+                        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+                        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 5 }}
+                        transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
+                      >
+                        <strong>See what’s happening in your market as you review the plan.</strong>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>,
+                  document.body
+                )
+              : null}
           </div>
           <div data-ad-framework-table-wrap>
             <span data-ad-framework-table-title>Creative plan</span>
