@@ -21,6 +21,7 @@ declare global {
     __studioTakGaConfiguredId?: string;
     __studioTakMetaPixelInitializedId?: string;
     dataLayer?: unknown[];
+    _uxa?: unknown[][];
     fbq?: MetaPixelFunction;
     _fbq?: MetaPixelFunction;
     gtag?: (...args: unknown[]) => void;

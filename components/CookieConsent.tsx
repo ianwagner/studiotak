@@ -19,7 +19,8 @@ const defaultPreferences: CookiePreferences = { analytics: false, marketing: fal
 const consentLifetimeSeconds = 60 * 60 * 24 * 365;
 const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
 const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
-const hasOptionalTracking = Boolean(googleAnalyticsId || metaPixelId);
+const contentsquareTagId = process.env.NEXT_PUBLIC_CONTENTSQUARE_TAG_ID?.trim() || "5382551060185";
+const hasOptionalTracking = Boolean(googleAnalyticsId || metaPixelId || contentsquareTagId);
 type MetaPixel = NonNullable<Window["fbq"]>;
 
 function getCookieValue(name: string) {
@@ -170,6 +171,26 @@ function disableMetaPixel() {
   clearTrackingCookies("_fb");
 }
 
+async function enableContentsquare(tagId: string, isCancelled: () => boolean) {
+  if (document.getElementById("studio-tak-contentsquare")) {
+    if (getCookieValue("_cs_optout")) {
+      deleteCookie("_cs_optout");
+      window.location.reload();
+    }
+    return;
+  }
+
+  const { injectContentsquareScript } = await import("@contentsquare/tag-sdk");
+  if (isCancelled()) return;
+  const script = injectContentsquareScript({ clientId: tagId });
+  if (script) script.id = "studio-tak-contentsquare";
+}
+
+function disableContentsquare() {
+  window._uxa = window._uxa || [];
+  window._uxa.push(["optout"]);
+}
+
 export function CookieConsent() {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/admin") ?? false;
@@ -214,6 +235,20 @@ export function CookieConsent() {
     }
     enableMetaPixel(metaPixelId);
   }, [hasMadeChoice, isAdminRoute, pathname, preferences.marketing]);
+
+  useEffect(() => {
+    if (isAdminRoute || !hasMadeChoice || !contentsquareTagId) return;
+    if (!preferences.analytics) {
+      disableContentsquare();
+      return;
+    }
+
+    let cancelled = false;
+    void enableContentsquare(contentsquareTagId, () => cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, [hasMadeChoice, isAdminRoute, preferences.analytics]);
 
   if (isAdminRoute || !hasOptionalTracking) return null;
 
@@ -270,7 +305,7 @@ export function CookieConsent() {
               <div className={styles.category}>
                 <div>
                   <label className={styles.categoryTitle} htmlFor="cookie-analytics">Analytics</label>
-                  <span className={styles.categoryCopy}>Google Analytics helps us understand aggregate site usage and improve the site.</span>
+                  <span className={styles.categoryCopy}>Google Analytics and Contentsquare help us understand aggregate usage, page interaction, and scrolling so we can improve the site.</span>
                 </div>
                 <input id="cookie-analytics" className={styles.switch} type="checkbox" checked={preferences.analytics} onChange={(event) => setPreferences((current) => ({ ...current, analytics: event.target.checked }))} />
               </div>

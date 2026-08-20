@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@contentsquare/tag-sdk": "^1.1.0",
     "@refinedev/core": "^4.53.2",
     "@refinedev/nextjs-router": "^6.0.0",
     "firebase": "^12.6.0",

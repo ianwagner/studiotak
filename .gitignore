@@ -17,6 +17,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Contentsquare verification reports
+.cs-wizard/
+
 # env
 .env.local
 .env.*.local
