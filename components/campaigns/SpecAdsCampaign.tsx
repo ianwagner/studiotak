@@ -342,49 +342,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         </div>
       </section>
 
-      {logoBlock ? (
-        <section className={styles.campfireLogos} aria-label={logoBlock.heading ?? "Campfire clients"}>
-          <p className={styles.logosEyebrow}>Your favorite brands are growing faster with Campfire</p>
-          <LogosBlockSection block={logoBlock} index={0} hideHeading />
-        </section>
-      ) : null}
-
-      <section className={styles.intro}>
-        <div className={styles.shell}>
-          <div className={styles.introGrid}>
-            <div>
-              {whyExamples.length ? (
-                <motion.div
-                  className={styles.whyAds}
-                  variants={animationPreset.container}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.2 }}
-                >
-                  {whyExamples.map((ad, index) => (
-                    <motion.figure
-                      key={ad.id}
-                      className={`${styles.whyAd} ${heroCardTransforms[index % heroCardTransforms.length]}`}
-                      variants={animationPreset.item}
-                      custom={index}
-                    >
-                      <img src={ad.url} alt={ad.alt} />
-                    </motion.figure>
-                  ))}
-                </motion.div>
-              ) : null}
-            </div>
-            <div>
-              <h2>Launch more ads, without slowing your team down.</h2>
-              <p>
-                Campfire is an Andromeda-optimized creative workflow for teams that need a steady stream of fresh ads. You
-                share the product and the context; we handle the brief, concepts, production, and delivery.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className={styles.applicationSection} id="application">
         <div className={styles.shell}>
           <div className={styles.formGrid}>
@@ -488,6 +445,49 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                   </button>
                 </form>
               )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {logoBlock ? (
+        <section className={styles.campfireLogos} aria-label={logoBlock.heading ?? "Campfire clients"}>
+          <p className={styles.logosEyebrow}>Your favorite brands are growing faster with Campfire</p>
+          <LogosBlockSection block={logoBlock} index={0} hideHeading />
+        </section>
+      ) : null}
+
+      <section className={styles.intro}>
+        <div className={styles.shell}>
+          <div className={styles.introGrid}>
+            <div>
+              {whyExamples.length ? (
+                <motion.div
+                  className={styles.whyAds}
+                  variants={animationPreset.container}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.2 }}
+                >
+                  {whyExamples.map((ad, index) => (
+                    <motion.figure
+                      key={ad.id}
+                      className={`${styles.whyAd} ${heroCardTransforms[index % heroCardTransforms.length]}`}
+                      variants={animationPreset.item}
+                      custom={index}
+                    >
+                      <img src={ad.url} alt={ad.alt} />
+                    </motion.figure>
+                  ))}
+                </motion.div>
+              ) : null}
+            </div>
+            <div>
+              <h2>Launch more ads, without slowing your team down.</h2>
+              <p>
+                Campfire is an Andromeda-optimized creative workflow for teams that need a steady stream of fresh ads. You
+                share the product and the context; we handle the brief, concepts, production, and delivery.
+              </p>
             </div>
           </div>
         </div>
