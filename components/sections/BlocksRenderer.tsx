@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { motion, useInView, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
@@ -50,6 +50,7 @@ const SlackIntegrationBlockSection = dynamic(() =>
 
 const viewportWidthVar = "var(--full-bleed-width, 100vw)";
 const viewportShiftVar = "var(--full-bleed-shift, calc(50% - 50vw))";
+const deferredAnchorNavigationEvent = "studio-tak:deferred-anchor-navigation";
 
 const formatDate = (value?: string | null): string | null => {
   if (!value) return null;
@@ -113,14 +114,23 @@ const AnchorAwareLink = ({
   const isExternal = /^https?:\/\//i.test(href);
   const isAnchor = href.startsWith("#");
   const eventName = trackingName ?? (className?.includes("btn") ? "cta_click" : undefined);
-  const handleClick = () => {
-    if (!eventName) return;
-    const text = typeof children === "string" ? children : undefined;
-    trackGaEvent(eventName, {
-      link_url: href,
-      link_text: text,
-      section: trackingSection ?? "unknown"
-    });
+  const handleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    if (eventName) {
+      const text = typeof children === "string" ? children : undefined;
+      trackGaEvent(eventName, {
+        link_url: href,
+        link_text: text,
+        section: trackingSection ?? "unknown"
+      });
+    }
+
+    // Later sections may not yet exist while deferred blocks are loading. Handle
+    // in-page links explicitly so the renderer can load the destination first.
+    if (isAnchor && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      if (window.location.hash !== href) window.history.pushState(null, "", href);
+      window.dispatchEvent(new CustomEvent(deferredAnchorNavigationEvent, { detail: href }));
+    }
   };
 
   if (isExternal) {
@@ -4922,6 +4932,8 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
   const lazyLoadRef = useRef<HTMLDivElement | null>(null);
   const lazyInView = useInView(lazyLoadRef, { once: true, margin: "35% 0px" });
   const [renderRest, setRenderRest] = useState(!shouldLazyLoadRest);
+  const pendingAnchorRef = useRef<string | null>(null);
+  const [anchorNavigationVersion, setAnchorNavigationVersion] = useState(0);
   const blockRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const glowRange = useMemo(() => {
     const first = blocks.findIndex((block) => block.backgroundStyle === "glow");
@@ -4953,6 +4965,35 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
       setRenderRest(true);
     }
   }, [lazyInView, shouldLazyLoadRest]);
+  useEffect(() => {
+    const queueAnchorNavigation = (href: string) => {
+      if (!href.startsWith("#") || href.length < 2) return;
+      pendingAnchorRef.current = href.slice(1);
+      setRenderRest(true);
+      setAnchorNavigationVersion((version) => version + 1);
+    };
+
+    const handleDeferredAnchorNavigation = (event: Event) => {
+      const href = (event as CustomEvent<string>).detail;
+      if (typeof href === "string") queueAnchorNavigation(href);
+    };
+
+    if (window.location.hash) queueAnchorNavigation(window.location.hash);
+    window.addEventListener(deferredAnchorNavigationEvent, handleDeferredAnchorNavigation);
+    return () => window.removeEventListener(deferredAnchorNavigationEvent, handleDeferredAnchorNavigation);
+  }, []);
+  useEffect(() => {
+    const anchorId = pendingAnchorRef.current;
+    if (!anchorId || !renderRest) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(anchorId);
+      if (!target) return;
+      pendingAnchorRef.current = null;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [anchorNavigationVersion, renderRest]);
   useEffect(() => {
     if (!glowRange) {
       setGlowActive(false);
