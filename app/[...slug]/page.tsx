@@ -111,7 +111,7 @@ export default async function MarketingPage({ params }: PageParams) {
           gap: 32
         }}
       >
-        <BlocksRenderer blocks={blocks} />
+        <BlocksRenderer blocks={blocks} deferOffscreenRendering={slugPath === "/campfire"} />
         {jsonLd ? (
           <script
             type="application/ld+json"

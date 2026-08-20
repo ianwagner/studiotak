@@ -719,6 +719,83 @@ main {
   flex-direction: column;
 }
 
+/*
+ * Campfire keeps all blocks in the initial document to avoid late layout
+ * insertion. For lower sections, let capable browsers defer layout and paint
+ * work until the section is nearby. Intrinsic-size fallbacks retain a stable
+ * scroll range before the browser lays out the real section.
+ */
+[data-offscreen-rendering="auto"] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 680px;
+}
+
+[data-offscreen-rendering="auto"][data-block-type="animated_headline"] {
+  contain-intrinsic-size: auto calc(140svh - var(--header-height) - 30px);
+}
+
+[data-offscreen-rendering="auto"][data-block-type="scroll_gallery"],
+[data-offscreen-rendering="auto"][data-block-type="features"],
+[data-offscreen-rendering="auto"][data-block-type="feature_spotlight"] {
+  contain-intrinsic-size: auto 720px;
+}
+
+[data-offscreen-rendering="auto"][data-block-type="story"] {
+  contain-intrinsic-size: auto 640px;
+}
+
+[data-offscreen-rendering="auto"][data-block-type="split"] {
+  contain-intrinsic-size: auto 360px;
+}
+
+[data-offscreen-rendering="auto"][data-block-type="ad_framework"],
+[data-offscreen-rendering="auto"][data-block-type="product_demo"],
+[data-offscreen-rendering="auto"][data-block-type="contact"] {
+  contain-intrinsic-size: auto 840px;
+}
+
+[data-offscreen-rendering="auto"][data-block-type="comparison"] {
+  contain-intrinsic-size: auto 620px;
+}
+
+[data-offscreen-rendering="auto"][data-block-type="comparison"][data-block-variant="feature_table"] {
+  contain-intrinsic-size: auto 1080px;
+}
+
+[data-offscreen-rendering="auto"][data-block-type="slack_integration"] {
+  contain-intrinsic-size: auto 440px;
+}
+
+@media (max-width: 680px) {
+  [data-offscreen-rendering="auto"][data-block-type="scroll_gallery"],
+  [data-offscreen-rendering="auto"][data-block-type="features"],
+  [data-offscreen-rendering="auto"][data-block-type="feature_spotlight"] {
+    contain-intrinsic-size: auto 860px;
+  }
+
+  [data-offscreen-rendering="auto"][data-block-type="story"] {
+    contain-intrinsic-size: auto 820px;
+  }
+
+  [data-offscreen-rendering="auto"][data-block-type="split"] {
+    contain-intrinsic-size: auto 420px;
+  }
+
+  [data-offscreen-rendering="auto"][data-block-type="ad_framework"],
+  [data-offscreen-rendering="auto"][data-block-type="product_demo"],
+  [data-offscreen-rendering="auto"][data-block-type="contact"] {
+    contain-intrinsic-size: auto 1080px;
+  }
+
+  [data-offscreen-rendering="auto"][data-block-type="comparison"] {
+    contain-intrinsic-size: auto 980px;
+  }
+
+  [data-offscreen-rendering="auto"][data-block-type="comparison"][data-block-variant="feature_table"] {
+    contain-intrinsic-size: auto 1680px;
+  }
+}
+
 .container {
   width: 100%;
   max-width: none;

@@ -88,6 +88,11 @@ declare global {
 
 type BlocksRendererProps = {
   blocks: BlockRecord[];
+  /**
+   * Keep the complete document in the initial response while allowing the browser
+   * to skip offscreen layout and paint work for long-form landing pages.
+   */
+  deferOffscreenRendering?: boolean;
 };
 
 const trackGaEvent = (eventName: string, params: Record<string, unknown> = {}) => {
@@ -4919,19 +4924,11 @@ const GlowBackgroundLayer = ({ active }: { active: boolean }) => (
   </div>
 );
 
-function BlocksRendererInner({ blocks }: BlocksRendererProps) {
+function BlocksRendererInner({ blocks, deferOffscreenRendering = false }: BlocksRendererProps) {
   const searchParams = useSearchParams();
   const audienceFilter = searchParams.get("audience") ?? undefined;
   const headerHeight = useHeaderHeight();
   const viewportWidth = useViewportWidth();
-  const initialVisibleCount = 2;
-  // Defer rendering everything after the first two blocks until the user scrolls toward it to reduce initial work.
-  // In non-production environments, disable lazy loading so preview/testing tools can see all blocks.
-  const isDevMode = process.env.NODE_ENV !== "production";
-  const shouldLazyLoadRest = !isDevMode && blocks.length > initialVisibleCount;
-  const lazyLoadRef = useRef<HTMLDivElement | null>(null);
-  const lazyInView = useInView(lazyLoadRef, { once: true, margin: "35% 0px" });
-  const [renderRest, setRenderRest] = useState(!shouldLazyLoadRest);
   const pendingAnchorRef = useRef<string | null>(null);
   const [anchorNavigationVersion, setAnchorNavigationVersion] = useState(0);
   const blockRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -4957,19 +4954,9 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
     return !!first.enableDarkModeOnScroll;
   }, [blocks]);
   useEffect(() => {
-    if (!shouldLazyLoadRest) {
-      setRenderRest(true);
-      return;
-    }
-    if (lazyInView) {
-      setRenderRest(true);
-    }
-  }, [lazyInView, shouldLazyLoadRest]);
-  useEffect(() => {
     const queueAnchorNavigation = (href: string) => {
       if (!href.startsWith("#") || href.length < 2) return;
       pendingAnchorRef.current = href.slice(1);
-      setRenderRest(true);
       setAnchorNavigationVersion((version) => version + 1);
     };
 
@@ -4984,7 +4971,7 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
   }, []);
   useEffect(() => {
     const anchorId = pendingAnchorRef.current;
-    if (!anchorId || !renderRest) return;
+    if (!anchorId) return;
 
     const frame = window.requestAnimationFrame(() => {
       const target = document.getElementById(anchorId);
@@ -4993,7 +4980,7 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [anchorNavigationVersion, renderRest]);
+  }, [anchorNavigationVersion]);
   useEffect(() => {
     if (!glowRange) {
       setGlowActive(false);
@@ -5029,7 +5016,7 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
-  }, [glowRange, renderRest]);
+  }, [glowRange]);
   const initialThemeScript = useMemo(() => {
     const forceDark = shouldForceDarkOnLoad;
     return `(function(){try{var root=document.documentElement;if(!root)return;var base=root.getAttribute("data-base-theme");if(base!=="light"&&base!=="dark"){var prefersDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");var isDark=prefersDark&&prefersDark.matches;root.setAttribute("data-base-theme", isDark ? "dark" : "light");}if(${forceDark ? "true" : "false"} && root.getAttribute("data-theme")!=="dark"){root.setAttribute("data-theme","dark");}}catch(e){}})();`;
@@ -5044,13 +5031,10 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
         {blocks.map((block, index) => {
           const key = block.id ?? index;
           const refKey = String(key);
-          const shouldDelayRender = shouldLazyLoadRest && index >= initialVisibleCount && !renderRest;
-          if (shouldDelayRender) {
-            if (index === initialVisibleCount) {
-              return <div key="lazy-sentinel" ref={lazyLoadRef} style={{ width: "100%", height: 1 }} />;
-            }
-            return null;
-          }
+          // The first two blocks make up the initial viewport. Later blocks remain
+          // in the document for stable layout, but capable browsers can skip their
+          // offscreen layout and paint work until the visitor gets near them.
+          const shouldDeferOffscreenRendering = deferOffscreenRendering && index >= 2;
           let element: JSX.Element;
           if (block.type === "hero" || block.type === "thirds") {
             element = renderHeroBlock(block, index, headerHeight, viewportWidth, audienceFilter);
@@ -5114,6 +5098,11 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
                   blockRefs.current[refKey] = node;
                 }}
                 data-background-style={block.backgroundStyle ?? "blank"}
+                data-offscreen-rendering={shouldDeferOffscreenRendering ? "auto" : undefined}
+                data-block-type={shouldDeferOffscreenRendering ? block.type : undefined}
+                data-block-variant={
+                  shouldDeferOffscreenRendering && block.type === "comparison" ? block.variant : undefined
+                }
                 style={{ width: "100%" }}
               >
                 <ThemeShiftRegion enabled>
@@ -5129,6 +5118,11 @@ function BlocksRendererInner({ blocks }: BlocksRendererProps) {
                 blockRefs.current[refKey] = node;
               }}
               data-background-style={block.backgroundStyle ?? "blank"}
+              data-offscreen-rendering={shouldDeferOffscreenRendering ? "auto" : undefined}
+              data-block-type={shouldDeferOffscreenRendering ? block.type : undefined}
+              data-block-variant={
+                shouldDeferOffscreenRendering && block.type === "comparison" ? block.variant : undefined
+              }
               style={{ width: "100%" }}
             >
               {anchoredElement}
