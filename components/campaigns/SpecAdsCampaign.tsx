@@ -387,7 +387,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                   </label>
                   <label>
                     <span className={styles.srOnly}>Website</span>
-                    <input name="website" type="url" autoComplete="url" placeholder="Website" required maxLength={2048} />
+                    <input name="website" type="text" inputMode="url" autoComplete="url" placeholder="Website" required maxLength={2048} />
                   </label>
                   <label>
                     <span className={styles.srOnly}>Average monthly spend on Meta</span>

@@ -196,7 +196,8 @@ export async function POST(request: Request) {
   const firstName = getString(payload.firstName, fieldLimits.firstName);
   const lastName = getString(payload.lastName, fieldLimits.lastName);
   const email = getString(payload.email, fieldLimits.email).toLowerCase();
-  const website = getString(payload.website, fieldLimits.website);
+  const submittedWebsite = getString(payload.website, fieldLimits.website);
+  const website = submittedWebsite && !/^https?:\/\//i.test(submittedWebsite) ? `https://${submittedWebsite}` : submittedWebsite;
   const monthlyMetaSpend = getString(payload.monthlyMetaSpend, fieldLimits.monthlyMetaSpend);
   const marketingConsent = getString(payload.marketingConsent, 10) === "yes";
   const signupPath = getString(payload.signupPath, fieldLimits.signupPath);
