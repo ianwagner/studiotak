@@ -9,7 +9,7 @@ import type { LogosBlock } from "@/lib/admin/pages";
 export const metadata: Metadata = {
   title: "Claim 5 Free Spec Ads | Campfire by Studio Tak",
   description:
-    "Tell us what you want to feature and Campfire will create five free spec ads for selected brands."
+    "For selected brands, Campfire creates 5 free Meta ads with no commitment, delivered in 5 days."
 };
 
 export default async function FreeSpecAdsPage() {

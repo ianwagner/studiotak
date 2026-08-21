@@ -35,7 +35,7 @@
 .secondaryButton { border-color: var(--border-strong); background: var(--surface-card); color: var(--text-body); }
 .page a.secondaryButton:hover { box-shadow: var(--shadow-sm); color: var(--text-body); transform: translateY(-1px); }
 .primaryButton span, .secondaryButton span, .submitButton span { font-size: 16px; }
-.noCommitment { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+.noCommitment { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
 
 .heroArtwork { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: min(100%, 500px); min-height: 536px; margin: 0 auto; align-content: center; }
 .heroCardPair { display: contents; }

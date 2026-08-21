@@ -43,7 +43,6 @@ type HeroExampleAd = {
 const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 const spendOptions = ["Under $10k", "$10k–$50k", "$50k–$150k", "$150k–$500k", "$500k+"];
-const creativeSetupOptions = ["In-house team", "Creative agency", "Freelancers", "A mix of in-house and external partners", "Other"];
 const heroCardTransforms = [styles.adCardOne, styles.adCardTwo, styles.adCardThree];
 const messageCardTransforms = [styles.messageCardOne, styles.messageCardTwo, styles.messageCardThree];
 const heroMessageCards = [
@@ -295,9 +294,9 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                 spec ads.
               </h1>
               <p className={styles.heroLead}>
-                Tell us what you want to feature. Campfire takes it from brief to delivery, creating five spec ads built for
-                today&apos;s Meta creative landscape.
+                Tell us about your brand. Campfire creates five spec ads built for today&apos;s Meta creative landscape.
               </p>
+              <p className={styles.noCommitment}>For selected brands. We create 5 free ads for meta; no commitment. Delivered in 5 days.</p>
               <div className={styles.heroActions}>
                 <a className={styles.primaryButton} href="#application">
                   Get your ads <span aria-hidden="true">→</span>
@@ -306,7 +305,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                   Learn about Campfire <span aria-hidden="true">→</span>
                 </a>
               </div>
-              <p className={styles.noCommitment}>No commitment. We&apos;ll review every application.</p>
             </div>
 
             <div ref={heroArtworkRef} className={styles.heroArtwork} aria-label="Featured Campfire example ads">
@@ -342,14 +340,19 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         </div>
       </section>
 
+      {logoBlock ? (
+        <section className={styles.campfireLogos} aria-label={logoBlock.heading ?? "Campfire clients"}>
+          <p className={styles.logosEyebrow}>Your favorite brands are growing faster with Campfire</p>
+          <LogosBlockSection block={logoBlock} index={0} hideHeading />
+        </section>
+      ) : null}
+
       <section className={styles.applicationSection} id="application">
         <div className={styles.shell}>
           <div className={styles.formGrid}>
             <div className={styles.formIntro}>
-              <h2>What should we make?</h2>
-              <p>
-                A little context helps us choose the right products and create work that feels useful to your team.
-              </p>
+              <h2>Let&apos;s get started.</h2>
+              <p>Share a few details about you and your brand, and we&apos;ll take it from there.</p>
               <div className={styles.disclaimer}>
                 <strong>A note on selection</strong>
                 <p>
@@ -370,8 +373,8 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                 <form onSubmit={handleSubmit}>
                   <div className={styles.fieldGrid}>
                     <label>
-                      <span className={styles.srOnly}>First name</span>
-                      <input name="firstName" type="text" autoComplete="given-name" placeholder="First name" required maxLength={100} />
+                      <span className={styles.srOnly}>Name</span>
+                      <input name="firstName" type="text" autoComplete="given-name" placeholder="Name" required maxLength={100} />
                     </label>
                     <label>
                       <span className={styles.srOnly}>Last name</span>
@@ -383,18 +386,14 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                     <input name="email" type="email" autoComplete="email" placeholder="Work email" required maxLength={254} />
                   </label>
                   <label>
-                    <span className={styles.srOnly}>Business name</span>
-                    <input name="businessName" type="text" autoComplete="organization" placeholder="Business name" required maxLength={200} />
-                  </label>
-                  <label>
-                    <span className={styles.srOnly}>What product would you like us to feature?</span>
-                    <textarea name="productToFeature" placeholder="What product would you like us to feature?" required maxLength={2000} rows={4} />
+                    <span className={styles.srOnly}>Website</span>
+                    <input name="website" type="url" autoComplete="url" placeholder="Website" required maxLength={2048} />
                   </label>
                   <label>
                     <span className={styles.srOnly}>Average monthly spend on Meta</span>
                     <select name="monthlyMetaSpend" required defaultValue="">
                       <option value="" disabled>
-                        Average monthly Meta spend
+                        Monthly Meta spend
                       </option>
                       {spendOptions.map((option) => (
                         <option key={option} value={option}>
@@ -402,23 +401,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                         </option>
                       ))}
                     </select>
-                  </label>
-                  <label>
-                    <span className={styles.srOnly}>How is your creative currently produced?</span>
-                    <select name="creativeSetup" required defaultValue="">
-                      <option value="" disabled>
-                        How is your creative currently produced?
-                      </option>
-                      {creativeSetupOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    <span className={styles.srOnly}>What would make your creative more effective right now?</span>
-                    <textarea name="creativeChallenge" placeholder="What would make your creative more effective right now?" required maxLength={3000} rows={5} />
                   </label>
                   <div className={styles.formLegal}>
                     <p>
@@ -431,8 +413,8 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                     </label>
                   </div>
                   <div className={styles.honeypot} aria-hidden="true">
-                    <label htmlFor="website">Leave this field blank</label>
-                    <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+                    <label htmlFor="companyNameConfirm">Leave this field blank</label>
+                    <input id="companyNameConfirm" name="companyNameConfirm" type="text" tabIndex={-1} autoComplete="off" />
                   </div>
                   <div className={styles.captchaWrap}>
                     <span className={styles.captchaLabel}>Security check</span>
@@ -449,13 +431,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
           </div>
         </div>
       </section>
-
-      {logoBlock ? (
-        <section className={styles.campfireLogos} aria-label={logoBlock.heading ?? "Campfire clients"}>
-          <p className={styles.logosEyebrow}>Your favorite brands are growing faster with Campfire</p>
-          <LogosBlockSection block={logoBlock} index={0} hideHeading />
-        </section>
-      ) : null}
 
       <section className={styles.intro}>
         <div className={styles.shell}>

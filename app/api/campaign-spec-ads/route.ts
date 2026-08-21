@@ -12,18 +12,15 @@ type FormPayload = {
   firstName?: unknown;
   lastName?: unknown;
   email?: unknown;
-  businessName?: unknown;
-  productToFeature?: unknown;
+  website?: unknown;
   monthlyMetaSpend?: unknown;
-  creativeSetup?: unknown;
-  creativeChallenge?: unknown;
   marketingConsent?: unknown;
   signupPath?: unknown;
   utmSource?: unknown;
   utmMedium?: unknown;
   utmCampaign?: unknown;
   metaEventId?: unknown;
-  website?: unknown;
+  companyNameConfirm?: unknown;
   captchaToken?: unknown;
   formStartedAt?: unknown;
 };
@@ -32,11 +29,8 @@ const fieldLimits = {
   firstName: 100,
   lastName: 100,
   email: 254,
-  businessName: 200,
-  productToFeature: 2000,
+  website: 2_048,
   monthlyMetaSpend: 100,
-  creativeSetup: 150,
-  creativeChallenge: 3000,
   signupPath: 2_000,
   utm: 255
 } as const;
@@ -50,9 +44,8 @@ type MarketingContactDetails = {
   email: string;
   firstName: string;
   lastName: string;
-  businessName: string;
+  website: string;
   monthlyMetaSpend: string;
-  creativeSetup: string;
   signupPath: string;
   utmSource: string;
   utmMedium: string;
@@ -62,7 +55,7 @@ type MarketingContactDetails = {
 const MARKETING_CONSENT_VERSION = "website_marketing_v1";
 
 async function addMarketingContact(apiKey: string, details: MarketingContactDetails) {
-  const { email, firstName, lastName, businessName, monthlyMetaSpend, creativeSetup, signupPath, utmSource, utmMedium, utmCampaign } = details;
+  const { email, firstName, lastName, website, monthlyMetaSpend, signupPath, utmSource, utmMedium, utmCampaign } = details;
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
@@ -76,9 +69,8 @@ async function addMarketingContact(apiKey: string, details: MarketingContactDeta
     marketing_consent_at: new Date().toISOString(),
     marketing_consent_version: MARKETING_CONSENT_VERSION,
     signup_path: signupPath,
-    business_name: businessName,
+    website,
     monthly_meta_spend: monthlyMetaSpend,
-    creative_setup: creativeSetup,
     ...(utmSource ? { utm_source: utmSource } : {}),
     ...(utmMedium ? { utm_medium: utmMedium } : {}),
     ...(utmCampaign ? { utm_campaign: utmCampaign } : {})
@@ -190,7 +182,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please complete the form and try again." }, { status: 400 });
   }
 
-  if (getString(payload.website, 200)) {
+  if (getString(payload.companyNameConfirm, 200)) {
     // Return a normal response so automated submissions receive no signal.
     return NextResponse.json({ ok: true });
   }
@@ -204,11 +196,8 @@ export async function POST(request: Request) {
   const firstName = getString(payload.firstName, fieldLimits.firstName);
   const lastName = getString(payload.lastName, fieldLimits.lastName);
   const email = getString(payload.email, fieldLimits.email).toLowerCase();
-  const businessName = getString(payload.businessName, fieldLimits.businessName);
-  const productToFeature = getString(payload.productToFeature, fieldLimits.productToFeature);
+  const website = getString(payload.website, fieldLimits.website);
   const monthlyMetaSpend = getString(payload.monthlyMetaSpend, fieldLimits.monthlyMetaSpend);
-  const creativeSetup = getString(payload.creativeSetup, fieldLimits.creativeSetup);
-  const creativeChallenge = getString(payload.creativeChallenge, fieldLimits.creativeChallenge);
   const marketingConsent = getString(payload.marketingConsent, 10) === "yes";
   const signupPath = getString(payload.signupPath, fieldLimits.signupPath);
   const utmSource = getString(payload.utmSource, fieldLimits.utm);
@@ -217,8 +206,17 @@ export async function POST(request: Request) {
   const metaEventId = getString(payload.metaEventId, 100);
   const captchaToken = getString(payload.captchaToken, 2048);
 
-  if (!firstName || !lastName || !email || !businessName || !productToFeature || !monthlyMetaSpend || !creativeSetup || !creativeChallenge || !emailPattern.test(email)) {
-    return NextResponse.json({ error: "Please complete each field with a valid email address." }, { status: 400 });
+  const isValidWebsite = (() => {
+    try {
+      const url = new URL(website);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  })();
+
+  if (!firstName || !lastName || !email || !monthlyMetaSpend || !emailPattern.test(email) || !isValidWebsite) {
+    return NextResponse.json({ error: "Please complete every field with a valid work email and website." }, { status: 400 });
   }
 
   const turnstile = await verifyTurnstile(captchaToken);
@@ -243,11 +241,8 @@ export async function POST(request: Request) {
     ["First name", firstName],
     ["Last name", lastName],
     ["Email", email],
-    ["Business", businessName],
-    ["Product to feature", productToFeature],
-    ["Average monthly Meta spend", monthlyMetaSpend],
-    ["Current creative setup", creativeSetup],
-    ["Creative opportunity", creativeChallenge],
+    ["Website", website],
+    ["Monthly Meta spend", monthlyMetaSpend],
     ["Marketing email opt-in", marketingConsent ? "Yes" : "No"]
   ];
   const text = entries.map(([label, value]) => `${label}:\n${value}`).join("\n\n");
@@ -296,7 +291,7 @@ export async function POST(request: Request) {
       from: fromEmail,
       to: ["info@studiotak.co"],
       reply_to: email,
-      subject: `Spec ads application — ${businessName}`,
+      subject: `Spec ads application — ${website}`,
       text: `New Campfire spec ads application\n\n${text}`,
       html: `<h2 style="font-family:Arial,sans-serif">New Campfire spec ads application</h2><table style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45">${html}</table>`
     }),
@@ -344,9 +339,8 @@ export async function POST(request: Request) {
       email,
       firstName,
       lastName,
-      businessName,
+      website,
       monthlyMetaSpend,
-      creativeSetup,
       signupPath,
       utmSource,
       utmMedium,
@@ -360,11 +354,8 @@ export async function POST(request: Request) {
     lastName,
     attributes: {
       lead_source: "Free spec ads",
-      submitted_business_name: businessName,
-      product_to_feature: productToFeature,
+      website,
       monthly_meta_spend: monthlyMetaSpend,
-      creative_setup: creativeSetup,
-      creative_challenge: creativeChallenge,
       marketing_consent: marketingConsent ? "Yes" : "No",
       signup_path: signupPath,
       utm_source: utmSource,
@@ -393,11 +384,8 @@ export async function POST(request: Request) {
     fields: [
       { label: "Name", value: `${firstName} ${lastName}` },
       { label: "Email", value: email },
-      { label: "Business", value: businessName },
-      { label: "Product to feature", value: productToFeature },
+      { label: "Website", value: website },
       { label: "Monthly Meta spend", value: monthlyMetaSpend },
-      { label: "Creative setup", value: creativeSetup },
-      { label: "Creative opportunity", value: creativeChallenge },
       { label: "Marketing email opt-in", value: marketingConsent ? "Yes" : "No" },
       { label: "Signup path", value: signupPath },
       { label: "UTM source", value: utmSource },
