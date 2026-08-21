@@ -6,6 +6,7 @@ type AttioPerson = {
   firstName: string;
   lastName: string;
   attributes?: Record<string, string | undefined>;
+  list?: string;
 };
 
 export type AttioRecord = {
@@ -33,6 +34,40 @@ function getAttioApiKey() {
   const apiKey = process.env.ATTIO_API_KEY?.trim();
   if (!apiKey) throw new Error("ATTIO_API_KEY is not configured.");
   return apiKey;
+}
+
+function getAttioRecordId(value: unknown) {
+  const record = asRecord(value);
+  const id = asRecord(record?.id);
+  return typeof id?.record_id === "string" ? id.record_id : "";
+}
+
+async function addPersonToAttioList(apiKey: string, list: string, recordId: string) {
+  try {
+    const response = await fetch(`https://api.attio.com/v2/lists/${encodeURIComponent(list)}/entries`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "User-Agent": "studio-tak-website/forms"
+      },
+      body: JSON.stringify({
+        data: {
+          parent_record_id: recordId,
+          parent_object: "people",
+          entry_values: {}
+        }
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000)
+    });
+
+    if (!response.ok) {
+      console.error("Unable to add person to Attio list", { status: response.status });
+    }
+  } catch {
+    console.error("Unable to add person to Attio list");
+  }
 }
 
 /**
@@ -135,8 +170,9 @@ export function getAttioValueDate(value: unknown) {
  * Creates or updates a person using Attio's unique email-address attribute.
  * CRM availability must not prevent a verified form submission from being delivered.
  */
-export async function syncAttioPerson({ email, firstName, lastName, attributes }: AttioPerson) {
+export async function syncAttioPerson({ email, firstName, lastName, attributes, list }: AttioPerson) {
   const apiKey = process.env.ATTIO_API_KEY?.trim();
+  const listName = list ?? process.env.ATTIO_WEBSITE_LEADS_LIST?.trim() ?? "leads";
   if (!apiKey) {
     console.warn("Attio sync skipped: ATTIO_API_KEY is not configured.");
     return;
@@ -179,7 +215,17 @@ export async function syncAttioPerson({ email, firstName, lastName, attributes }
 
     if (!response.ok) {
       console.error("Unable to sync person to Attio", { status: response.status });
+      return;
     }
+
+    const payload = await response.json().catch(() => null);
+    const recordId = getAttioRecordId(payload?.data);
+    if (!recordId) {
+      console.error("Unable to add person to Attio list: record ID was missing.");
+      return;
+    }
+
+    await addPersonToAttioList(apiKey, listName, recordId);
   } catch {
     console.error("Unable to sync person to Attio");
   }
