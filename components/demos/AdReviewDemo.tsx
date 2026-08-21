@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ProductDemoBlock } from "@/lib/admin/pages";
 
@@ -88,8 +89,47 @@ function DemoPopover({
   shadow?: string;
 }) {
   const shouldReduceMotion = useReducedMotion();
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ left: 16, top: 16 });
 
-  return (
+  useLayoutEffect(() => {
+    if (!open || !anchorRef?.current) return;
+
+    const updatePosition = () => {
+      const anchor = anchorRef.current;
+      const popover = popoverRef.current;
+      if (!anchor || !popover) return;
+
+      const anchorRect = anchor.getBoundingClientRect();
+      const popoverRect = popover.getBoundingClientRect();
+      const viewportPadding = 16;
+      const gap = 8;
+      const left = Math.min(
+        Math.max(anchorRect.left, viewportPadding),
+        window.innerWidth - popoverRect.width - viewportPadding
+      );
+      const spaceBelow = window.innerHeight - anchorRect.bottom - viewportPadding;
+      const spaceAbove = anchorRect.top - viewportPadding;
+      const openBelow = spaceBelow >= popoverRect.height || spaceBelow >= spaceAbove;
+      const top = openBelow
+        ? Math.min(anchorRect.bottom + gap, window.innerHeight - popoverRect.height - viewportPadding)
+        : Math.max(viewportPadding, anchorRect.top - popoverRect.height - gap);
+
+      setPosition({ left, top });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, anchorRef]);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <>
       {open ? (
         <div
@@ -100,14 +140,15 @@ function DemoPopover({
       <AnimatePresence>
         {open ? (
           <motion.div
+            ref={popoverRef}
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 5 }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
             style={{
-              position: "absolute",
-              bottom: "calc(100% + 8px)",
-              left: 0,
+              position: "fixed",
+              top: position.top,
+              left: position.left,
               background: bg ?? "#ffffff",
               border: `1px solid ${border ?? "rgba(10,15,26,0.10)"}`,
               borderRadius: 12,
@@ -122,7 +163,8 @@ function DemoPopover({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -159,6 +201,9 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
   const [showVersionHint, setShowVersionHint] = useState(true);
   const [showCopyHint, setShowCopyHint] = useState(true);
   const [showApprovalHint, setShowApprovalHint] = useState(true);
+  const versionAnchorRef = useRef<HTMLDivElement>(null);
+  const copyAnchorRef = useRef<HTMLDivElement>(null);
+  const statusAnchorRef = useRef<HTMLDivElement>(null);
 
   const cfgRaw = STATUS_CONFIG[status];
   const cfg = {
@@ -304,7 +349,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
       {/* Header: index + version badge */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <span style={{ fontSize: 20, fontWeight: 700, color: fg }}>{data.index}</span>
-        <div style={{ position: "relative" }}>
+        <div ref={versionAnchorRef} style={{ position: "relative" }}>
           <button
             type="button"
             className={showVersionHint && !versionPopoverOpen ? "ad-review-hotspot" : undefined}
@@ -343,7 +388,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
           ) : null}
 
           {/* Version switcher popover */}
-          <DemoPopover open={versionPopoverOpen} onClose={() => setVersionPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
+          <DemoPopover open={versionPopoverOpen} onClose={() => setVersionPopoverOpen(false)} anchorRef={versionAnchorRef} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
             <div style={{ fontSize: 12, fontWeight: 600, color: fgTertiary, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
               Versions
             </div>
@@ -467,7 +512,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
 
           {/* Edit platform copy button */}
           <div style={{ ...rightContentStyle, display: "flex", justifyContent: "flex-end", position: "relative" }}>
-            <div style={{ position: "relative" }}>
+            <div ref={copyAnchorRef} style={{ position: "relative" }}>
               {showCopyHint && !copyPopoverOpen ? (
                 <span className="ad-review-hotspot-hint ad-review-hotspot-hint--left" aria-hidden="true">
                   Edit ad copy
@@ -506,7 +551,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
               </button>
 
               {/* Edit copy popover */}
-              <DemoPopover open={copyPopoverOpen} onClose={() => setCopyPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
+              <DemoPopover open={copyPopoverOpen} onClose={() => setCopyPopoverOpen(false)} anchorRef={copyAnchorRef} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
                 <div style={{ fontSize: 13, color: fgButton, lineHeight: 1.5 }}>
                   Tailor headlines and descriptions for each Meta placement — Feed, Stories, Reels — right from the review link.
                 </div>
@@ -521,7 +566,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
       <div style={{ borderTop: `1px solid ${dividerColor}`, margin: "16px 0 12px" }} />
 
       {/* Status selector */}
-      <div style={{ position: "relative", display: "inline-block" }}>
+      <div ref={statusAnchorRef} style={{ position: "relative", display: "inline-block" }}>
         {showApprovalHint && !dropdownOpen ? (
           <span className="ad-review-hotspot-hint ad-review-hotspot-hint--right" aria-hidden="true">
             <span className="ad-review-hotspot-hint-arrow">←</span>
@@ -647,7 +692,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
         )}
 
         {/* Status change popover */}
-        <DemoPopover open={statusPopoverOpen} onClose={() => setStatusPopoverOpen(false)} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
+        <DemoPopover open={statusPopoverOpen} onClose={() => setStatusPopoverOpen(false)} anchorRef={statusAnchorRef} bg={popoverBg} border={popoverBorder} shadow={popoverShadow}>
           <div style={{ fontSize: 13, color: fgButton, lineHeight: 1.5 }}>
             Your feedback flows back to us in real time. Approve, request edits, or reject — we act on it immediately.
           </div>

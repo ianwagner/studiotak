@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { collection, getDocs, getFirestore, limit, query, where } from "firebase/firestore";
-import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
+import { Info } from "lucide-react";
+import type { CSSProperties, FocusEvent as ReactFocusEvent, MouseEvent as ReactMouseEvent } from "react";
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import type { AdFrameworkBlock, AdFrameworkItem } from "@/lib/admin/pages";
 import { ProductDemoFrame } from "@/components/demos/ProductDemoFrame";
@@ -16,7 +17,6 @@ const frameworkAccents = [
   { color: "var(--approve-color)", soft: "var(--approve-color-10)" }
 ];
 
-const planColumns = ["Persona", "Pain point", "Creative format", "Delivery format"];
 const mediaFallbacks = ["Warm editorial", "Product close-up", "Creator POV", "Detail study", "In-use moment", "Brand world"];
 
 type InspirationMedia = {
@@ -24,30 +24,142 @@ type InspirationMedia = {
   url: string;
 };
 
+type FrameworkPreview = {
+  item: AdFrameworkItem;
+  index: number;
+  placement: "above" | "below" | "inline";
+  x: number;
+  y: number;
+  anchorTop: number;
+  anchorBottom: number;
+};
+
 const planValue = (item: AdFrameworkItem | undefined) => item?.examples?.[0] || item?.title || "Selected";
+const planLabel = (item: AdFrameworkItem, index: number) => item.label || item.title || `Framework input ${index + 1}`;
+
+const FrameworkPreviewCard = ({ item, index, framed = true }: { item: AdFrameworkItem; index: number; framed?: boolean }) => {
+  const accent = frameworkAccents[index % frameworkAccents.length];
+  const card = (
+    <article
+      data-ad-framework-card
+      data-ad-framework-inspector-card
+      style={{ "--framework-accent": accent.color, "--framework-accent-soft": accent.soft } as CSSProperties}
+    >
+      <div data-ad-framework-card-top><span data-ad-framework-label>{item.label}</span></div>
+      <h3>{item.title}</h3>
+      {item.description ? <p>{item.description}</p> : null}
+      {item.examples?.length ? (
+        <div data-ad-framework-examples>
+          {item.examples.map((example, exampleIndex) => (
+            <span key={`${example}-${exampleIndex}`} data-ad-framework-example>{example}</span>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+
+  return framed ? <ProductDemoFrame className="ad-framework-inspector-frame">{card}</ProductDemoFrame> : card;
+};
 
 export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBlock; index: number }) => {
   const [inspirationMedia, setInspirationMedia] = useState<InspirationMedia[]>([]);
-  const [inspirationTooltip, setInspirationTooltip] = useState({ open: false, x: 0, y: 0 });
+  const [inspirationPopoverOpen, setInspirationPopoverOpen] = useState(false);
+  const inspirationRef = useRef<HTMLDivElement>(null);
+  const [frameworkPreview, setFrameworkPreview] = useState<FrameworkPreview | null>(null);
+  const frameworkPreviewRef = useRef<HTMLDivElement>(null);
   const [planActionPopoverOpen, setPlanActionPopoverOpen] = useState(false);
+  const planActionRef = useRef<HTMLDivElement>(null);
   const [showPlanActionHint, setShowPlanActionHint] = useState(true);
+  const [showInspirationHint, setShowInspirationHint] = useState(true);
   const shouldReduceMotion = useReducedMotion();
   const principles = block.principles?.filter(Boolean) ?? [];
   const items = block.items ?? [];
+  const planItems = items.filter((item) => item.label || item.title || item.description || item.examples?.length);
 
-  const updateInspirationTooltip = (event: ReactMouseEvent<HTMLDivElement>) => {
-    const tooltipWidth = 280;
-    const tooltipHeight = 76;
-    const offset = 18;
-    const x = event.clientX + offset + tooltipWidth > window.innerWidth
-      ? event.clientX - tooltipWidth - offset
-      : event.clientX + offset;
-    const y = event.clientY + offset + tooltipHeight > window.innerHeight
-      ? event.clientY - tooltipHeight - offset
-      : event.clientY + offset;
+  const showFrameworkPreview = (
+    event: ReactMouseEvent<HTMLTableCellElement> | ReactFocusEvent<HTMLTableCellElement>,
+    item: AdFrameworkItem,
+    itemIndex: number
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const isCompactViewport = window.matchMedia("(max-width: 700px)").matches;
+    if (isCompactViewport) {
+      setFrameworkPreview({ item, index: itemIndex, placement: "inline", x: 0, y: 0, anchorTop: 0, anchorBottom: 0 });
+      return;
+    }
 
-    setInspirationTooltip({ open: true, x, y });
+    const previewWidth = 326;
+    const previewHeight = 220;
+    const viewportPadding = 16;
+    const gap = 12;
+    const roomAbove = rect.top - viewportPadding;
+    const roomBelow = window.innerHeight - rect.bottom - viewportPadding;
+    const placement = roomBelow >= previewHeight || roomBelow >= roomAbove ? "below" : "above";
+    const x = Math.min(
+      Math.max(rect.left + rect.width / 2 - previewWidth / 2, viewportPadding),
+      window.innerWidth - previewWidth - viewportPadding
+    );
+    const maxY = Math.max(viewportPadding, window.innerHeight - previewHeight - viewportPadding);
+    const preferredY = placement === "below" ? rect.bottom + gap : rect.top - previewHeight - gap;
+    const y = Math.min(Math.max(preferredY, viewportPadding), maxY);
+
+    setFrameworkPreview({ item, index: itemIndex, placement, x, y, anchorTop: rect.top, anchorBottom: rect.bottom });
   };
+
+  const hideFrameworkPreview = () => {
+    setFrameworkPreview((preview) => preview?.placement === "inline" ? preview : null);
+  };
+
+  useEffect(() => {
+    if (!inspirationPopoverOpen) return;
+
+    const closePopover = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && !inspirationRef.current?.contains(target)) {
+        setInspirationPopoverOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setInspirationPopoverOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closePopover);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closePopover);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [inspirationPopoverOpen]);
+
+  useEffect(() => {
+    if (!planActionPopoverOpen) return;
+
+    const closePopover = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && !planActionRef.current?.contains(target)) {
+        setPlanActionPopoverOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closePopover);
+    return () => document.removeEventListener("pointerdown", closePopover);
+  }, [planActionPopoverOpen]);
+
+  useLayoutEffect(() => {
+    if (!frameworkPreview || frameworkPreview.placement === "inline" || !frameworkPreviewRef.current) return;
+
+    const previewRect = frameworkPreviewRef.current.getBoundingClientRect();
+    const viewportPadding = 16;
+    const maxY = Math.max(viewportPadding, window.innerHeight - previewRect.height - viewportPadding);
+    const gap = 12;
+    const preferredY = frameworkPreview.placement === "below"
+      ? frameworkPreview.anchorBottom + gap
+      : frameworkPreview.anchorTop - previewRect.height - gap;
+    const y = Math.min(Math.max(preferredY, viewportPadding), maxY);
+
+    if (Math.abs(y - frameworkPreview.y) < 1) return;
+    setFrameworkPreview((preview) => preview ? { ...preview, y } : preview);
+  }, [frameworkPreview]);
 
   useEffect(() => {
     let cancelled = false;
@@ -358,17 +470,41 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           font-weight: 500;
           line-height: 1.5;
         }
-        [data-ad-framework-plan-popover] p {
+        [data-ad-framework-plan-popover] p,
+        [data-ad-framework-inspiration-popover] p {
           margin: 0;
         }
+        [data-ad-framework-plan-popover] a,
+        [data-ad-framework-inspiration-popover] a {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 10px;
+          color: #ff700b;
+          font-size: 13px;
+          font-weight: 600;
+          line-height: 1.25;
+          text-decoration: none;
+          transition: opacity 150ms ease;
+        }
+        [data-ad-framework-plan-popover] a:hover,
+        [data-ad-framework-inspiration-popover] a:hover {
+          opacity: .8;
+        }
+        [data-ad-framework-plan-popover] a svg,
+        [data-ad-framework-inspiration-popover] a svg {
+          width: 14px;
+          height: 14px;
+        }
         [data-ad-framework-inspiration] {
+          position: relative;
           padding: 14px 15px 16px;
           border-bottom: 1px solid var(--border);
         }
         [data-ad-framework-inspiration-heading] {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-start;
           gap: 10px;
           margin-bottom: 9px;
           color: var(--text);
@@ -376,15 +512,85 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           font-size: 14px;
           font-weight: 700;
         }
-        [data-ad-framework-inspiration-heading] span:last-child {
-          color: var(--muted);
+        [data-ad-framework-inspiration-heading-group] {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        [data-ad-framework-inspiration-callout] {
+          position: relative;
+          min-width: 150px;
+          min-height: 27px;
+        }
+        [data-ad-framework-inspiration-title] {
+          padding: 0;
+          border: 0;
+          color: inherit;
+          background: transparent;
+          font: inherit;
+          cursor: pointer;
+        }
+        [data-ad-framework-inspiration-title]:focus-visible,
+        [data-ad-framework-inspiration-grid]:focus-visible {
+          outline: 2px solid var(--accent-color);
+          outline-offset: 3px;
+        }
+        @keyframes ad-framework-inspiration-pointer {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-3px); }
+        }
+        [data-ad-framework-inspiration-hotspot] {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 8px;
+          border: 1px solid rgba(255, 112, 11, 0.42);
+          border-radius: 999px;
+          color: #d85d00;
+          background: #fff7ed;
+          box-shadow: 0 3px 10px rgba(255, 112, 11, 0.12);
+          font-family: var(--font-primary, system-ui, sans-serif);
           font-size: 11px;
-          font-weight: 600;
+          font-weight: 650;
+          line-height: 1;
+          cursor: pointer;
+          animation: ad-framework-inspiration-pointer 2.2s ease-in-out infinite;
+          transition: border-color 150ms ease, box-shadow 150ms ease;
+        }
+        [data-ad-framework-inspiration-hotspot]:hover {
+          border-color: #ff700b;
+          box-shadow: 0 4px 14px rgba(255, 112, 11, 0.18);
+          animation-play-state: paused;
+        }
+        [data-ad-framework-inspiration-hotspot] span {
+          color: #ff700b;
+          font-size: 15px;
+          font-weight: 700;
+          line-height: .75;
+        }
+        [data-ad-framework-inspiration-popover] {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          z-index: 6;
+          min-width: 220px;
+          max-width: 280px;
+          padding: 14px 16px;
+          border: 1px solid var(--border-strong);
+          border-radius: 12px;
+          background: var(--surface);
+          box-shadow: 0 8px 28px rgba(0, 0, 0, .14);
+          color: var(--text);
+          font-family: var(--font-primary, system-ui, sans-serif);
+          font-size: 13px;
+          font-weight: 500;
+          line-height: 1.5;
         }
         [data-ad-framework-inspiration-grid] {
           display: grid;
           grid-template-columns: repeat(6, minmax(0, 1fr));
           gap: 6px;
+          cursor: pointer;
         }
         [data-ad-framework-media-slot] {
           position: relative;
@@ -432,33 +638,6 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           text-transform: uppercase;
           white-space: nowrap;
         }
-        [data-ad-framework-inspiration-tooltip] {
-          position: fixed;
-          z-index: 100;
-          width: min(280px, calc(100vw - 32px));
-          padding: 14px 16px;
-          border: 1px solid var(--border-strong);
-          border-radius: 12px;
-          background: var(--surface);
-          box-shadow: 0 8px 28px rgba(0, 0, 0, .14);
-          color: var(--text);
-          font-family: var(--font-primary, system-ui, sans-serif);
-          line-height: 1.5;
-          pointer-events: none;
-        }
-        [data-ad-framework-inspiration-tooltip] strong {
-          display: block;
-          color: var(--text);
-          font-size: 13px;
-          font-weight: 500;
-        }
-        [data-ad-framework-inspiration-tooltip] span {
-          display: block;
-          margin-top: 3px;
-          color: var(--muted);
-          font-size: 13px;
-          font-weight: 500;
-        }
         [data-ad-framework-table-wrap] {
           position: relative;
           overflow-x: auto;
@@ -477,7 +656,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
         }
         [data-ad-framework-table] {
           width: 100%;
-          min-width: 820px;
+          min-width: max(820px, calc(240px + (var(--framework-input-count, 4) * 150px)));
           border-collapse: collapse;
           table-layout: fixed;
           color: var(--text);
@@ -512,23 +691,47 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
         }
         [data-ad-framework-table] th:nth-child(1), [data-ad-framework-table] td:nth-child(1) { width: 34px; text-align: center; }
         [data-ad-framework-table] th:nth-child(2), [data-ad-framework-table] td:nth-child(2) { width: 112px; }
-        [data-ad-framework-table] th:nth-child(3), [data-ad-framework-table] td:nth-child(3) { width: 144px; }
-        [data-ad-framework-table] th:nth-child(4), [data-ad-framework-table] td:nth-child(4) { width: 144px; }
-        [data-ad-framework-table] th:nth-child(5), [data-ad-framework-table] td:nth-child(5) { width: 158px; }
-        [data-ad-framework-table] th:nth-child(6), [data-ad-framework-table] td:nth-child(6) { width: 150px; }
         [data-ad-framework-plan-cell] {
           color: var(--framework-accent) !important;
           background: color-mix(in srgb, var(--framework-accent-soft) 76%, var(--surface));
           box-shadow: inset 0 2px 0 var(--framework-accent);
+          transition: background-color 160ms ease, box-shadow 160ms ease;
+        }
+        [data-ad-framework-plan-cell]:hover,
+        [data-ad-framework-plan-cell].is-active {
+          background: var(--surface);
+          box-shadow: inset 0 3px 0 var(--framework-accent), inset 0 0 0 1px color-mix(in srgb, var(--framework-accent) 26%, transparent);
+        }
+        [data-ad-framework-plan-cell]:focus-visible {
+          outline: 2px solid var(--framework-accent);
+          outline-offset: -3px;
         }
         [data-ad-framework-cell-label] {
-          display: block;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
           margin-bottom: 3px;
           color: var(--framework-accent);
           font-size: 10px;
           font-weight: 700;
           letter-spacing: .04em;
           text-transform: uppercase;
+        }
+        [data-ad-framework-cell-info] {
+          display: inline-flex;
+          width: 14px;
+          height: 14px;
+          flex: 0 0 auto;
+          align-items: center;
+          justify-content: center;
+          color: var(--framework-accent);
+          opacity: .84;
+        }
+        [data-ad-framework-cell-info] svg {
+          width: 14px;
+          height: 14px;
+          stroke-width: 1.8;
         }
         [data-ad-framework-cell-placeholder] {
           display: block;
@@ -537,8 +740,37 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           border-radius: 3px;
           background: var(--framework-accent);
         }
+        [data-ad-framework-cell-preview] {
+          position: fixed;
+          z-index: 100;
+          width: 326px;
+          max-width: calc(100vw - 32px);
+          pointer-events: none;
+        }
+        .ad-framework-inspector-frame {
+          padding: 7px;
+          overflow: hidden;
+          box-shadow: var(--product-demo-frame-shadow);
+          will-change: backdrop-filter;
+        }
+        [data-ad-framework-inspector-card] {
+          min-height: 0;
+          border-color: color-mix(in srgb, var(--framework-accent) 44%, var(--border));
+          background: var(--surface-card);
+          box-shadow: var(--shadow-xs);
+        }
+        [data-ad-framework-mobile-inspector] {
+          display: none;
+        }
         [data-ad-framework-plan-row-faded] {
           opacity: .26;
+        }
+        [data-ad-framework-plan-row-faded] [data-ad-framework-cell-placeholder] {
+          background: var(--framework-accent);
+        }
+        [data-ad-framework-plan-placeholder-cell] {
+          background: color-mix(in srgb, var(--framework-accent-soft) 76%, var(--surface));
+          box-shadow: inset 0 2px 0 var(--framework-accent);
         }
         [data-ad-framework-bridge] {
           display: grid;
@@ -590,6 +822,19 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
             display: none;
           }
         }
+        @media (max-width: 700px) {
+          [data-ad-framework-plan-cell] {
+            cursor: pointer;
+          }
+          [data-ad-framework-mobile-inspector] {
+            display: block;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-ad-framework-inspiration-hotspot] {
+            animation: none;
+          }
+        }
       `}</style>
 
       <div className="grid" style={{ gap: 22 }}>
@@ -616,7 +861,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           >
           <div data-ad-framework-plan-top>
             <span data-ad-framework-plan-title>Brief Plan</span>
-            <div data-ad-framework-plan-actions>
+            <div ref={planActionRef} data-ad-framework-plan-actions>
               {showPlanActionHint && !planActionPopoverOpen ? (
                 <span className="ad-review-hotspot-hint ad-review-hotspot-hint--left" aria-hidden="true">
                   Approve or request edits
@@ -661,22 +906,78 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
                     transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
                   >
                     <p>Request any changes to your plan, or approve it when it feels right. Once you’re happy, we’ll start bringing your ads to life.</p>
+                    <a href="#contact">
+                      Contact us for a full demo
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14" />
+                        <path d="m12 5 7 7-7 7" />
+                      </svg>
+                    </a>
                   </motion.div>
                 ) : null}
               </AnimatePresence>
             </div>
           </div>
-          <div data-ad-framework-inspiration>
+          <div ref={inspirationRef} data-ad-framework-inspiration>
             <div data-ad-framework-inspiration-heading>
-              <span>Inspiration</span>
-              <span>Shared creative references</span>
+              <div data-ad-framework-inspiration-heading-group>
+                <button
+                  type="button"
+                  data-ad-framework-inspiration-title
+                  aria-expanded={inspirationPopoverOpen}
+                  onClick={() => setInspirationPopoverOpen((open) => !open)}
+                >
+                  Inspiration
+                </button>
+                <div data-ad-framework-inspiration-callout>
+                  {showInspirationHint && !inspirationPopoverOpen ? (
+                    <button
+                      type="button"
+                      data-ad-framework-inspiration-hotspot
+                      onClick={() => {
+                        setShowInspirationHint(false);
+                        setInspirationPopoverOpen(true);
+                      }}
+                    >
+                      <span aria-hidden="true">←</span>
+                      Competitor research
+                    </button>
+                  ) : null}
+                  <AnimatePresence>
+                    {inspirationPopoverOpen ? (
+                      <motion.div
+                        data-ad-framework-inspiration-popover
+                        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+                        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 5 }}
+                        transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
+                      >
+                        <p>See how competitors are showing up in your category before production begins. Your plan includes a curated set of competitor ads to review and approve, giving our team clear references for the creative we produce for your brand.</p>
+                        <a href="#contact">
+                          Contact us for a full demo
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M5 12h14" />
+                            <path d="m12 5 7 7-7 7" />
+                          </svg>
+                        </a>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
             <div
               data-ad-framework-inspiration-grid
-              aria-label="Inspiration media examples"
-              onMouseEnter={updateInspirationTooltip}
-              onMouseMove={updateInspirationTooltip}
-              onMouseLeave={() => setInspirationTooltip((tooltip) => ({ ...tooltip, open: false }))}
+              role="button"
+              tabIndex={0}
+              aria-label="Open competitor research details"
+              aria-expanded={inspirationPopoverOpen}
+              onClick={() => setInspirationPopoverOpen((open) => !open)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                setInspirationPopoverOpen((open) => !open);
+              }}
             >
               {Array.from({ length: 6 }, (_, mediaIndex) => {
                 const media = inspirationMedia[mediaIndex];
@@ -688,51 +989,46 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
                 );
               })}
             </div>
-            {typeof document !== "undefined"
-              ? createPortal(
-                  <AnimatePresence>
-                    {inspirationTooltip.open ? (
-                      <motion.div
-                        data-ad-framework-inspiration-tooltip
-                        aria-hidden="true"
-                        style={{ left: inspirationTooltip.x, top: inspirationTooltip.y }}
-                        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
-                        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
-                        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 5 }}
-                        transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
-                      >
-                        <strong>See what’s happening in your market as you review the plan.</strong>
-                      </motion.div>
-                    ) : null}
-                  </AnimatePresence>,
-                  document.body
-                )
-              : null}
           </div>
           <div data-ad-framework-table-wrap>
             <span data-ad-framework-table-title>Creative plan</span>
-            <table data-ad-framework-table>
+            <table
+              data-ad-framework-table
+              style={{ "--framework-input-count": planItems.length } as CSSProperties}
+            >
               <thead>
                 <tr>
                   <th>#</th>
                   <th>Product</th>
-                  {planColumns.map((column) => <th key={column}>{column}</th>)}
+                  {planItems.map((item, itemIndex) => <th key={`${planLabel(item, itemIndex)}-${itemIndex}`}>{planLabel(item, itemIndex)}</th>)}
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>01</td>
                   <td>Product</td>
-                  {planColumns.map((column, itemIndex) => {
+                  {planItems.map((item, itemIndex) => {
                     const accent = frameworkAccents[itemIndex % frameworkAccents.length];
+                    const label = planLabel(item, itemIndex);
                     return (
                       <td
-                        key={column}
+                        key={`${label}-${itemIndex}`}
                         data-ad-framework-plan-cell
+                        className={frameworkPreview?.index === itemIndex ? "is-active" : undefined}
                         style={{ "--framework-accent": accent.color, "--framework-accent-soft": accent.soft } as CSSProperties}
+                        tabIndex={0}
+                        aria-label={`${label}: ${planValue(item)}. Hover or focus for framework details.`}
+                        onMouseEnter={(event) => showFrameworkPreview(event, item, itemIndex)}
+                        onFocus={(event) => showFrameworkPreview(event, item, itemIndex)}
+                        onClick={(event) => showFrameworkPreview(event, item, itemIndex)}
+                        onMouseLeave={hideFrameworkPreview}
+                        onBlur={hideFrameworkPreview}
                       >
-                        <span data-ad-framework-cell-label>{column}</span>
-                        {planValue(items[itemIndex])}
+                        <span data-ad-framework-cell-label>
+                          {label}
+                          <span data-ad-framework-cell-info aria-hidden="true"><Info /></span>
+                        </span>
+                        {planValue(item)}
                       </td>
                     );
                   })}
@@ -740,12 +1036,13 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
                 <tr data-ad-framework-plan-row-faded aria-hidden="true">
                   <td>02</td>
                   <td>Product</td>
-                  {planColumns.map((column, itemIndex) => {
+                  {planItems.map((item, itemIndex) => {
                     const accent = frameworkAccents[itemIndex % frameworkAccents.length];
+                    const label = planLabel(item, itemIndex);
                     return (
                       <td
-                        key={column}
-                        data-ad-framework-plan-cell
+                        key={`${label}-${itemIndex}`}
+                        data-ad-framework-plan-placeholder-cell
                         style={{ "--framework-accent": accent.color, "--framework-accent-soft": accent.soft } as CSSProperties}
                       >
                         <span data-ad-framework-cell-placeholder />
@@ -755,41 +1052,50 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
                 </tr>
               </tbody>
             </table>
+            {typeof document !== "undefined"
+              ? createPortal(
+                  <AnimatePresence>
+                    {frameworkPreview && frameworkPreview.placement !== "inline" ? (
+                      <motion.div
+                        ref={frameworkPreviewRef}
+                        data-ad-framework-cell-preview
+                        data-placement={frameworkPreview.placement}
+                        aria-label={`${frameworkPreview.item.title} framework details`}
+                        initial={{ left: frameworkPreview.x, top: frameworkPreview.y }}
+                        animate={{ left: frameworkPreview.x, top: frameworkPreview.y }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 360, damping: 28, mass: 0.72 }}
+                      >
+                        <motion.div
+                          key={`${frameworkPreview.item.title}-${frameworkPreview.index}`}
+                          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.98, y: frameworkPreview.placement === "above" ? 8 : -8 }}
+                          animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.18, ease: "easeOut" }}
+                        >
+                          <FrameworkPreviewCard item={frameworkPreview.item} index={frameworkPreview.index} />
+                        </motion.div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>,
+                  document.body
+                )
+              : null}
           </div>
           </motion.div>
         </ProductDemoFrame>
 
-        <div data-ad-framework-bridge>
-          <p>With four building blocks, Campfire makes every ad easier to test, learn from, and improve.</p>
-        </div>
-
-        <div data-ad-framework-board>
-          <div data-ad-framework-grid>
-            {items.map((item, itemIndex) => {
-              const accent = frameworkAccents[itemIndex % frameworkAccents.length];
-              return (
-                <motion.article
-                  key={`${item.title}-${itemIndex}`}
-                  data-ad-framework-card
-                  style={{ "--framework-accent": accent.color, "--framework-accent-soft": accent.soft } as CSSProperties}
-                  variants={{
-                    hidden: { opacity: 0, y: 16 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: "easeOut" } }
-                  }}
-                >
-                  <div data-ad-framework-card-top><span data-ad-framework-label>{item.label}</span></div>
-                  <h3>{item.title}</h3>
-                  {item.description ? <p>{item.description}</p> : null}
-                  {item.examples?.length ? (
-                    <div data-ad-framework-examples>
-                      {item.examples.slice(0, 2).map((example) => <span key={example} data-ad-framework-example>{example}</span>)}
-                    </div>
-                  ) : null}
-                </motion.article>
-              );
-            })}
-          </div>
-        </div>
+        <AnimatePresence initial={false}>
+          {frameworkPreview?.placement === "inline" ? (
+            <motion.div
+              data-ad-framework-mobile-inspector
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+              animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
+            >
+              <FrameworkPreviewCard item={frameworkPreview.item} index={frameworkPreview.index} />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         <p data-ad-framework-next-step>
           Once the plan is approved, we make the ads—then present every finished piece in a single review link.
