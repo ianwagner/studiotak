@@ -77,54 +77,17 @@ const ArticleFeaturedBlockSection = ({ block }: { block: ArticleFeaturedBlock })
 const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
   const posts = block.posts ?? [];
   if (!posts.length) return null;
-  const recentPosts = posts.slice(0, 3);
-  const gridPosts = posts.slice(3);
   return (
     <section className="container learn-shell" style={{ display: "grid", gap: 24 }}>
-      {recentPosts.length ? (
-        <div className="learn-recent">
-          <div className="learn-recent-grid">
-            {recentPosts.map((post) => {
-              const published = formatDate(post.published_at);
-              const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
-              const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
-              return (
-                <Link key={post.id} href={`/learn/${post.slug}`} className="learn-recent-link">
-                  <article className="learn-recent-card">
-                    <div className="learn-media-link">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          srcSet={imageSrcSet}
-                          sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
-                          alt={post.feature_image_alt ?? post.title}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <div className="learn-media-placeholder">Studio Tak</div>
-                      )}
-                    </div>
-                    <div className="learn-card-body">
-                      {published ? <span className="learn-date">{published}</span> : null}
-                      <h4 className="learn-card-title">{post.title}</h4>
-                    </div>
-                  </article>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-      {gridPosts.length ? (
-        <div className="grid learn-posts-grid">
-          {gridPosts.map((post) => {
-            const published = formatDate(post.published_at);
-            const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
-            const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
-            return (
-              <article key={post.id} className="card learn-post-card">
-                <Link href={`/learn/${post.slug}`} className="learn-media-link">
+      <div className="learn-recent-grid">
+        {posts.map((post) => {
+          const published = formatDate(post.published_at);
+          const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
+          const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
+          return (
+            <Link key={post.id} href={`/learn/${post.slug}`} className="learn-recent-link">
+              <article className="learn-recent-card">
+                <div className="learn-media-link">
                   {imageUrl ? (
                     <img
                       src={imageUrl}
@@ -137,23 +100,16 @@ const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
                   ) : (
                     <div className="learn-media-placeholder">Studio Tak</div>
                   )}
-                </Link>
+                </div>
                 <div className="learn-card-body">
-                  <h4 className="learn-card-title">
-                    <Link href={`/learn/${post.slug}`} className="learn-card-link">
-                      {post.title}
-                    </Link>
-                  </h4>
-                  {post.excerpt ? <p className="learn-card-excerpt">{post.excerpt}</p> : null}
-                  <div className="learn-card-meta">
-                    {published ? <span className="learn-date">{published}</span> : null}
-                  </div>
+                  {published ? <span className="learn-date">{published}</span> : null}
+                  <h4 className="learn-card-title">{post.title}</h4>
                 </div>
               </article>
-            );
-          })}
-        </div>
-      ) : null}
+            </Link>
+          );
+        })}
+      </div>
     </section>
   );
 };
