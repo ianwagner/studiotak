@@ -100,6 +100,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <Link href="/admin/media" className="nav-link">
                   Media
                 </Link>
+                <Link href="/admin/guilloche" className="nav-link">
+                  Guilloché generator
+                </Link>
                 <Link href="/admin/settings" className="nav-link">
                   Site settings
                 </Link>
