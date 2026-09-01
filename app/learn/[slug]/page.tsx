@@ -319,20 +319,9 @@ export default async function LearnPostPage({ params }: PageParams) {
     });
   };
 
-  const onSubmit = (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLFormElement)) return;
-    if (!content.contains(target)) return;
-    sendEvent("newsletter_signup", {
-      form_id: target.id || "",
-      form_action: target.getAttribute("action") || ""
-    });
-  };
-
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", onScroll);
   document.addEventListener("click", onClick);
-  document.addEventListener("submit", onSubmit, true);
   onScroll();
 })();`}
       </Script>
