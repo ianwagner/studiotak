@@ -3,6 +3,7 @@ import { Rubik } from "next/font/google";
 import localFont from "next/font/local";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { CookieConsent } from "@/components/CookieConsent";
+import { HeaderHeightSync } from "@/components/HeaderHeightSync";
 import "./globals.css";
 
 const rubik = Rubik({
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={rubik.className}>
+        <HeaderHeightSync />
         {children}
         <CookieConsent />
       </body>

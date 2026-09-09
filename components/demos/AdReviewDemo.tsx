@@ -91,6 +91,11 @@ function DemoPopover({
   const shouldReduceMotion = useReducedMotion();
   const popoverRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: 16, top: 16 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useLayoutEffect(() => {
     if (!open || !anchorRef?.current) return;
@@ -127,7 +132,9 @@ function DemoPopover({
     };
   }, [open, anchorRef]);
 
-  if (typeof document === "undefined") return null;
+  // Portals have no server-rendered host. Keeping the first client render null
+  // makes it identical to the server render; the portal mounts after hydration.
+  if (!mounted) return null;
 
   return createPortal(
     <>

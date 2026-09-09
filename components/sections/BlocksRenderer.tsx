@@ -2286,7 +2286,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
     <AnimatedSection key={block.id ?? index} index={index} variant="plain" animated={false}>
       <Script id="studio-tak-turnstile" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="lazyOnload" />
       <div data-contact-block style={{ position: "relative" }}>
-        <style suppressHydrationWarning>{`
+        <style dangerouslySetInnerHTML={{ __html: `
           [data-contact-block] {
             width: 100%;
             max-width: var(--max-width);
@@ -2521,7 +2521,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
               grid-template-columns: 1fr !important;
             }
           }
-        `}</style>
+        ` }} />
         <motion.section
           data-contact-section
           variants={preset.item}
@@ -3717,7 +3717,7 @@ const ComparisonBlockSection = ({ block, index }: { block: ComparisonBlock; inde
             display: block;
             padding-top: 3px;
             color: var(--muted);
-            font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
+            font-family: var(--font-sans, Rubik, system-ui, -apple-system, sans-serif);
             font-size: 10px;
             font-style: normal;
             font-weight: 700;

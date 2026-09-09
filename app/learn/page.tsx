@@ -1,134 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import type { ArticleFeaturedBlock, ArticleGridBlock, BlockRecord } from "@/lib/admin/pages";
+import { LearnLibrary } from "@/components/LearnLibrary";
 import { getNavigationItems } from "@/lib/navigation";
 import { getPublishedPageBySlug } from "@/lib/pageContent";
 import { getGhostPosts } from "@/lib/ghost";
-import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
 
-type LearnPageProps = {
-  searchParams?: { tag?: string | string[] };
-};
-
-const getTagParam = (value?: string | string[]): string | null => {
-  if (!value) return null;
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value;
-};
-
-const isArticleBlock = (block: BlockRecord): block is ArticleFeaturedBlock | ArticleGridBlock =>
-  block.type === "article_featured" || block.type === "article_grid";
-
-const formatDate = (value?: string | null): string | null => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  }).format(date);
-};
-
-const ArticleFeaturedBlockSection = ({ block }: { block: ArticleFeaturedBlock }) => {
-  const post = block.posts?.[0];
-  if (!post) return null;
-  const published = formatDate(post.published_at);
-  const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 1200) : null;
-  const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
-  return (
-    <section className="container learn-shell learn-featured-section" style={{ display: "grid", gap: 24 }}>
-      <Link href={`/learn/${post.slug}`} className="learn-featured-link">
-        <div className="learn-featured">
-          <div className="learn-featured-content">
-            <div className="learn-featured-meta">
-              {published ? <span className="learn-date">{published}</span> : null}
-            </div>
-            <h2 className="learn-featured-title">{post.title}</h2>
-            {post.excerpt ? <p style={{ color: "var(--muted)", margin: 0 }}>{post.excerpt}</p> : null}
-            <span className="btn learn-featured-cta">Read more</span>
-          </div>
-          <div className="learn-featured-media">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                srcSet={imageSrcSet}
-                sizes="(max-width: 720px) 100vw, 50vw"
-                alt={post.feature_image_alt ?? post.title}
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <div className="learn-media-placeholder">Studio Tak</div>
-            )}
-          </div>
-        </div>
-      </Link>
-    </section>
-  );
-};
-
-const ArticleGridBlockSection = ({ block }: { block: ArticleGridBlock }) => {
-  const posts = block.posts ?? [];
-  if (!posts.length) return null;
-  return (
-    <section className="container learn-shell" style={{ display: "grid", gap: 24 }}>
-      <div className="learn-recent-grid">
-        {posts.map((post) => {
-          const published = formatDate(post.published_at);
-          const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
-          const imageSrcSet = post.feature_image ? getGhostImageSrcSet(post.feature_image) : undefined;
-          return (
-            <Link key={post.id} href={`/learn/${post.slug}`} className="learn-recent-link">
-              <article className="learn-recent-card">
-                <div className="learn-media-link">
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      srcSet={imageSrcSet}
-                      sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
-                      alt={post.feature_image_alt ?? post.title}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  ) : (
-                    <div className="learn-media-placeholder">Studio Tak</div>
-                  )}
-                </div>
-                <div className="learn-card-body">
-                  {published ? <span className="learn-date">{published}</span> : null}
-                  <h4 className="learn-card-title">{post.title}</h4>
-                </div>
-              </article>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-};
-
-const LearnArticleBlocks = ({ blocks }: { blocks: BlockRecord[] }) => (
-  <>
-    {blocks.filter(isArticleBlock).map((block) =>
-      block.type === "article_featured" ? (
-        <ArticleFeaturedBlockSection key={block.id} block={block} />
-      ) : (
-        <ArticleGridBlockSection key={block.id} block={block} />
-      )
-    )}
-  </>
-);
-
-const FALLBACK_TITLE = "Learn — Insights & Resources | Studio Tak";
+const FALLBACK_TITLE = "Learn — Guides & Reference";
 const FALLBACK_DESCRIPTION =
-  "Explore design strategy insights, case studies, and practical resources from Studio Tak — helping brands build stronger digital experiences.";
+  "Search guides and Reference articles, organized by topic from Ghost tags.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
@@ -178,15 +62,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function LearnPage({ searchParams }: LearnPageProps) {
-  const navItems = await getNavigationItems();
-  const tagFilter = getTagParam(searchParams?.tag);
-  const pageData = await getPublishedPageBySlug("/learn", { tagFilter });
+export default async function LearnPage() {
+  const [navItems, pageData, posts] = await Promise.all([
+    getNavigationItems(),
+    getPublishedPageBySlug("/learn"),
+    getGhostPosts()
+  ]);
   if (!pageData) return notFound();
-  const blocks = pageData.blocks ?? [];
 
   const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
-  const posts = await getGhostPosts(tagFilter);
   const blogJsonLd = {
     "@context": "https://schema.org",
     "@type": "Blog",
@@ -216,7 +100,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   return (
     <main>
       <SiteHeader navItems={navItems} />
-      {blocks.length ? <LearnArticleBlocks blocks={blocks} /> : null}
+      <LearnLibrary posts={posts} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}

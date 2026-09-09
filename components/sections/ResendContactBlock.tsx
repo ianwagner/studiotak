@@ -214,14 +214,14 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
             border: 1px solid var(--border-strong);
             border-radius: 18px;
             background: var(--input-bg);
-            font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
+            font-family: var(--font-sans, Rubik, system-ui, -apple-system, sans-serif);
           }
           [data-resend-contact-form] form { display: grid; gap: 20px; }
           [data-resend-contact-form] label { display: grid; }
           [data-resend-contact-form] .contact-name-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
           [data-resend-contact-form] .contact-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-          [data-resend-contact-form] input[type="text"],
-          [data-resend-contact-form] input[type="email"],
+          [data-resend-contact-form] input[type=text],
+          [data-resend-contact-form] input[type=email],
           [data-resend-contact-form] textarea {
             width: 100%;
             box-sizing: border-box;

@@ -4,6 +4,10 @@ import Script from "next/script";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { LearnSidebar } from "@/components/LearnSidebar";
+import { LearnTableOfContents } from "@/components/LearnTableOfContents";
+import { getLearnDisplayTitle, getLearnGroupForPost, getLearnTopicForPost, LEARN_GROUPS } from "@/lib/learnTaxonomy";
+import { buildLearnTableOfContents } from "@/lib/learnTableOfContents";
 import { getNavigationItems } from "@/lib/navigation";
 import { getGhostPostBySlug, getGhostPosts, type GhostPost } from "@/lib/ghost";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
@@ -145,9 +149,13 @@ export default async function LearnPostPage({ params }: PageParams) {
     return notFound();
   }
 
-  const published = formatDate(post.published_at);
   const relatedPosts = getRelatedPosts(post, allPosts);
   const campfireLink = getCampfireLink(post.tags);
+  const { content: articleHtml, items: tableOfContents } = buildLearnTableOfContents(post.html);
+  const learnGroup = getLearnGroupForPost(post);
+  const learnTopic = getLearnTopicForPost(post, learnGroup);
+  const learnGroupTitle = LEARN_GROUPS.find((group) => group.key === learnGroup)?.title ?? "Learn";
+  const topicHref = `/learn#group=${learnGroup}&topic=${encodeURIComponent(learnTopic)}`;
 
   const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
   const articleJsonLd = {
@@ -179,96 +187,113 @@ export default async function LearnPostPage({ params }: PageParams) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
-      <article
-        className="container learn-article learn-shell"
-        data-article-slug={post.slug}
-        data-article-title={post.title}
-      >
-        <div className="learn-post-header">
-          <div className="learn-post-meta">
-            {published ? <span className="learn-date">{published}</span> : null}
+      <div className="container learn-detail-shell">
+        <LearnSidebar posts={allPosts} currentPostSlug={post.slug} />
+        <div className="learn-detail-content">
+          <div className={`learn-detail-reading-layout${tableOfContents.length ? " has-toc" : ""}`}>
+            <article
+              className="learn-article"
+              data-article-slug={post.slug}
+              data-article-title={post.title}
+            >
+              <nav className="learn-breadcrumb" aria-label="Breadcrumb">
+                <Link href="/learn">{learnGroupTitle}</Link>
+                <span aria-hidden="true">/</span>
+                <Link href={topicHref as any}>{learnTopic}</Link>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">{getLearnDisplayTitle(post)}</span>
+              </nav>
+              {post.feature_image ? (
+                <figure className="learn-hero-media">
+                  <img
+                    src={getOptimizedGhostImageUrl(post.feature_image, 1600)}
+                    srcSet={getGhostImageSrcSet(post.feature_image)}
+                    sizes="(max-width: 1200px) 100vw, 1200px"
+                    alt={post.feature_image_alt ?? post.title}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    fetchPriority="high"
+                    decoding="async"
+                  />
+                </figure>
+              ) : null}
+              <div className="learn-post-header">
+                <h1>{post.title}</h1>
+                {post.excerpt ? <p className="learn-post-excerpt">{post.excerpt}</p> : null}
+              </div>
+              {articleHtml ? (
+                <div className="ghost-content" dangerouslySetInnerHTML={{ __html: articleHtml }} />
+              ) : null}
+            </article>
+            {tableOfContents.length ? (
+              <div className="learn-table-of-contents-rail">
+                <LearnTableOfContents items={tableOfContents} />
+              </div>
+            ) : null}
           </div>
-          <h1>{post.title}</h1>
-          {post.excerpt ? <p className="learn-post-excerpt">{post.excerpt}</p> : null}
+          {(relatedPosts.length > 0 || campfireLink) ? (
+            <section className="learn-read-more">
+              {campfireLink ? (
+                <div className="learn-campfire-cta">
+                  <Link href={campfireLink.href as any} className="btn btn-primary">
+                    {campfireLink.label}
+                  </Link>
+                </div>
+              ) : null}
+              {relatedPosts.length > 0 ? (
+                <div className="learn-recent">
+                  <div className="learn-recent-header">
+                    <h3>Read more</h3>
+                  </div>
+                  <div className="learn-recent-grid">
+                    {relatedPosts.map((related) => {
+                      const relPublished = formatDate(related.published_at);
+                      const imageUrl = related.feature_image ? getOptimizedGhostImageUrl(related.feature_image, 720) : null;
+                      const imageSrcSet = related.feature_image ? getGhostImageSrcSet(related.feature_image) : undefined;
+                      return (
+                        <Link key={related.id} href={`/learn/${related.slug}`} className="learn-recent-link">
+                          <article className="learn-recent-card">
+                            <div className="learn-media-link">
+                              {imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  srcSet={imageSrcSet}
+                                  sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                                  alt={related.feature_image_alt ?? related.title}
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              ) : (
+                                <div className="learn-media-placeholder">Studio Tak</div>
+                              )}
+                            </div>
+                            <div className="learn-card-body">
+                              {relPublished ? <span className="learn-date">{relPublished}</span> : null}
+                              <h4 className="learn-card-title">{getLearnDisplayTitle(related)}</h4>
+                            </div>
+                          </article>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
         </div>
-        {post.feature_image ? (
-          <figure className="learn-hero-media">
-            <img
-              src={getOptimizedGhostImageUrl(post.feature_image, 1600)}
-              srcSet={getGhostImageSrcSet(post.feature_image)}
-              sizes="(max-width: 1200px) 100vw, 1200px"
-              alt={post.feature_image_alt ?? post.title}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              fetchPriority="high"
-              decoding="async"
-            />
-          </figure>
-        ) : null}
-        {post.html ? (
-          <div className="ghost-content" dangerouslySetInnerHTML={{ __html: post.html }} />
-        ) : null}
-      </article>
-      {(relatedPosts.length > 0 || campfireLink) ? (
-        <section className="container learn-shell learn-read-more">
-          {campfireLink ? (
-            <div className="learn-campfire-cta">
-              <Link href={campfireLink.href as any} className="btn btn-primary">
-                {campfireLink.label}
-              </Link>
-            </div>
-          ) : null}
-          {relatedPosts.length > 0 ? (
-            <div className="learn-recent">
-              <div className="learn-recent-header">
-                <h3>Read more</h3>
-              </div>
-              <div className="learn-recent-grid">
-                {relatedPosts.map((related) => {
-                  const relPublished = formatDate(related.published_at);
-                  const imageUrl = related.feature_image ? getOptimizedGhostImageUrl(related.feature_image, 720) : null;
-                  const imageSrcSet = related.feature_image ? getGhostImageSrcSet(related.feature_image) : undefined;
-                  return (
-                    <Link key={related.id} href={`/learn/${related.slug}`} className="learn-recent-link">
-                      <article className="learn-recent-card">
-                        <div className="learn-media-link">
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              srcSet={imageSrcSet}
-                              sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
-                              alt={related.feature_image_alt ?? related.title}
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          ) : (
-                            <div className="learn-media-placeholder">Studio Tak</div>
-                          )}
-                        </div>
-                        <div className="learn-card-body">
-                          {relPublished ? <span className="learn-date">{relPublished}</span> : null}
-                          <h4 className="learn-card-title">{related.title}</h4>
-                        </div>
-                      </article>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
+      </div>
       <Script id="ghost-toggle-fallback" strategy="afterInteractive">
         {`document.addEventListener("click", (event) => {
   const heading = event.target.closest(".kg-toggle-heading");
   if (!heading) return;
-  if (heading.tagName.toLowerCase() === "summary") return;
   const toggle = heading.closest(".kg-toggle-card");
   if (!toggle) return;
-  if (toggle.hasAttribute("open")) {
-    toggle.removeAttribute("open");
-  } else {
-    toggle.setAttribute("open", "");
-  }
+  event.preventDefault();
+  const isOpen = toggle.getAttribute("data-kg-toggle-state") === "open" || toggle.hasAttribute("open");
+  const nextState = isOpen ? "close" : "open";
+  toggle.setAttribute("data-kg-toggle-state", nextState);
+  toggle.toggleAttribute("open", !isOpen);
+  const button = heading.querySelector("button");
+  if (button) button.setAttribute("aria-expanded", String(!isOpen));
 });`}
       </Script>
       <Script id="ghost-analytics-events" strategy="afterInteractive">

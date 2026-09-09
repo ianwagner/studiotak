@@ -21,6 +21,17 @@ interface Props {
   updatedAt?: string;
 }
 
+const formatUpdatedAt = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return `${new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC"
+  }).format(date)} UTC`;
+};
+
 export function DevDataSourceBanner({ source = "not_found", blockSequence, blockCount, pageStatus, updatedAt }: Props) {
   const [visible, setVisible] = useState(true);
 
@@ -34,6 +45,7 @@ export function DevDataSourceBanner({ source = "not_found", blockSequence, block
   };
 
   const { bg, text } = colors[source] ?? colors.not_found;
+  const formattedUpdatedAt = updatedAt ? formatUpdatedAt(updatedAt) : null;
 
   const warnings: string[] = [];
   if (pageStatus && pageStatus !== "published") {
@@ -77,9 +89,9 @@ export function DevDataSourceBanner({ source = "not_found", blockSequence, block
           ⚠ {w}
         </div>
       ))}
-      {updatedAt && (
+      {formattedUpdatedAt && (
         <div style={{ opacity: 0.7, marginTop: 2 }}>
-          Updated: {new Date(updatedAt).toLocaleString()}
+          Updated: {formattedUpdatedAt}
         </div>
       )}
     </div>
