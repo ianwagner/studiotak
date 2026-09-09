@@ -1,0 +1,98 @@
+.page {
+  --orange: var(--accent);
+  --campaign-form-section: #e9dfd1;
+  --campaign-form-card: #fffdfa;
+  --campaign-form-copy: #514b45;
+  --campaign-form-card-border: #d9d5d3;
+  min-height: calc(100vh - var(--header-height));
+  background: var(--bg);
+  color: var(--text);
+}
+
+.confirmationSection {
+  display: grid;
+  place-items: center;
+  min-height: min(620px, calc(100vh - var(--header-height)));
+  padding: clamp(72px, 9vw, 135px) var(--section-px);
+  color-scheme: light;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  width: min(100%, 600px);
+  min-height: clamp(280px, 30vw, 360px);
+  padding: clamp(22px, 4vw, 40px);
+  border: 1px solid var(--campaign-form-card-border);
+  border-radius: 18px;
+  background: var(--campaign-form-card);
+  box-shadow: 0 16px 34px rgba(49, 34, 22, 0.08);
+}
+
+.successMessage {
+  width: 100%;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.successMessage > span {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #fff;
+  font-weight: 800;
+}
+
+.successMessage h1 {
+  margin: 24px 0 10px;
+  color: #1b1817;
+  font-family: var(--font-secondary);
+  font-size: 39px;
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  text-transform: none;
+}
+
+.successMessage p {
+  max-width: 350px;
+  margin: 0 auto;
+  color: var(--campaign-form-copy);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.successMessage .learnLink {
+  display: grid;
+  gap: 2px;
+  margin-top: 22px;
+  font-size: 14px;
+}
+
+.learnLink a {
+  color: var(--orange);
+  font-weight: 600;
+  text-decoration-color: currentColor;
+  text-underline-offset: 3px;
+}
+
+.learnLink a:hover {
+  color: var(--accent-strong);
+}
+
+@media (max-width: 420px) {
+  .card {
+    padding: 22px;
+  }
+
+  .successMessage {
+    padding: 28px 4px;
+  }
+
+  .successMessage h1 {
+    font-size: 34px;
+  }
+}

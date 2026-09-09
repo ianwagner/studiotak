@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import type { ContactBlock } from "@/lib/admin/pages";
 import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
 import { AnimatedSection, SectionHeading } from "./AnimatedSection";
@@ -39,6 +40,7 @@ const trackGaEvent = (eventName: string, params: Record<string, unknown>) => {
 };
 
 export function ResendContactBlockSection({ block, index }: { block: ContactBlock; index: number }) {
+  const router = useRouter();
   const hasMedia = !!block.media?.url;
   const isVideo = block.media?.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(block.media?.url ?? "");
   const captchaContainerRef = useRef<HTMLDivElement>(null);
@@ -150,6 +152,7 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
         section: block.anchor ?? "contact"
       });
       trackMetaEvent("Lead", { content_name: "Contact form" }, metaEventId);
+      router.replace("/thank-you");
     } catch (error) {
       setSubmitState("error");
       setSubmitError(error instanceof Error ? error.message : "We couldn't send your message. Please try again.");
