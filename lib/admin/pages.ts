@@ -1481,7 +1481,7 @@ export const seedPages: PageRecord[] = [
     sitemapExclude: false,
     focusKeyword: "Learn",
     twitterTitle: "Learn",
-    canonicalUrl: "https://studiotak.co/learn",
+    canonicalUrl: "https://www.studiotak.co/learn",
     ogTitle: "Learn",
     blocks: [
       {
@@ -1508,7 +1508,7 @@ export const seedPages: PageRecord[] = [
     title: "Book a Demo",
     focusKeyword: "Book a Demo",
     twitterTitle: "Book a Demo",
-    canonicalUrl: "https://studiotak.co/campfire/demo",
+    canonicalUrl: "https://www.studiotak.co/campfire/demo",
     twitterDescription: "We partner with DTC teams to produce, and ship performance-ready ads every week. Book a demo and we\u2019ll walk through how Campfire can work for you.",
     ogTitle: "Book a Demo",
     ogDescription: "We partner with DTC teams to produce, and ship performance-ready ads every week. Book a demo and we\u2019ll walk through how Campfire can work for you.",
@@ -1575,7 +1575,7 @@ export const seedPages: PageRecord[] = [
     slug: "/",
     title: "Home",
     status: "published",
-    canonicalUrl: "https://studiotak.co/",
+    canonicalUrl: "https://www.studiotak.co/",
     ogTitle: "Studio Tak | Marketing Technology & Creative Production",
     ogDescription: "Creative production systems for brands and agencies running Meta ads at scale.",
     nofollow: false,

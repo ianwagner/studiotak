@@ -6,6 +6,7 @@ import { LearnLibrary } from "@/components/LearnLibrary";
 import { getNavigationItems } from "@/lib/navigation";
 import { getPublishedPageBySlug } from "@/lib/pageContent";
 import { getGhostPosts } from "@/lib/ghost";
+import { getCanonicalUrl, getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -15,9 +16,8 @@ const FALLBACK_DESCRIPTION =
   "Search guides and Reference articles, organized by topic from Ghost tags.";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
   const page = await getPublishedPageBySlug("/learn");
-  const canonical = page?.canonicalUrl?.trim() || new URL("/learn", siteBase).toString();
+  const canonical = getCanonicalUrl("/learn", page?.canonicalUrl);
   if (!page) {
     return {
       title: FALLBACK_TITLE,
@@ -70,7 +70,7 @@ export default async function LearnPage() {
   ]);
   if (!pageData) return notFound();
 
-  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
+  const siteBase = getSiteUrl();
   const blogJsonLd = {
     "@context": "https://schema.org",
     "@type": "Blog",

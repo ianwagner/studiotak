@@ -11,6 +11,7 @@ import { buildLearnTableOfContents } from "@/lib/learnTableOfContents";
 import { getNavigationItems } from "@/lib/navigation";
 import { getGhostPostBySlug, getGhostPosts, type GhostPost } from "@/lib/ghost";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
+import { getCanonicalUrl, getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -103,8 +104,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   const post = await getGhostPostBySlug(params.slug);
   if (!post) return {};
 
-  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
-  const canonical = post.canonical_url?.trim() || new URL(`/learn/${post.slug}`, siteBase).toString();
+  const canonical = getCanonicalUrl(`/learn/${post.slug}`, post.canonical_url);
   const title = post.meta_title || post.title;
   const description = post.meta_description || post.excerpt || undefined;
 
@@ -157,7 +157,7 @@ export default async function LearnPostPage({ params }: PageParams) {
   const learnGroupTitle = LEARN_GROUPS.find((group) => group.key === learnGroup)?.title ?? "Learn";
   const topicHref = `/learn#group=${learnGroup}&topic=${encodeURIComponent(learnTopic)}`;
 
-  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
+  const siteBase = getSiteUrl();
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",

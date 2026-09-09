@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getNavigationItems } from "@/lib/navigation";
+import { getSiteUrl } from "@/lib/siteUrl";
 import FounderContent from "./FounderContent";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
 
-const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
+const siteBase = getSiteUrl();
 
 export const metadata: Metadata = {
   title: "Ian Wagner — Founder, Studio Tak",

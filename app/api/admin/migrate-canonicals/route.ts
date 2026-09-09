@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { collection, doc, getDocs, getFirestore, updateDoc } from "firebase/firestore";
 import { normalizeSlugPath } from "@/lib/pageContent";
 import { getFirebaseApp } from "@/lib/firebaseClient";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 const collectionName = "pages";
 const legacyDomain = "studio-tak.example";
@@ -16,7 +17,12 @@ function isAuthorized(request: Request): boolean {
 
 const shouldUpdateCanonical = (canonicalUrl?: string | null): boolean => {
   if (!canonicalUrl?.trim()) return true;
-  return canonicalUrl.includes(legacyDomain);
+  try {
+    const url = new URL(canonicalUrl);
+    return url.hostname === "studiotak.co" || canonicalUrl.includes(legacyDomain);
+  } catch {
+    return false;
+  }
 };
 
 const buildCanonical = (slug: string, siteBase: string): string => {
@@ -37,7 +43,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
+    const siteBase = getSiteUrl();
     const db = getFirestore(getFirebaseApp());
     const pagesRef = collection(db, collectionName);
     const snapshot = await getDocs(pagesRef);

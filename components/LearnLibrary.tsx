@@ -52,14 +52,9 @@ const ArticleCard = ({ post }: { post: GhostPost }) => (
 );
 
 export function LearnLibrary({ posts }: LearnLibraryProps) {
-  const [isHydrated, setIsHydrated] = useState(false);
   const [activeGroup, setActiveGroup] = useState<LearnGroupKey | "all">("all");
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
 
   useEffect(() => {
     const syncTopicFromHash = () => {
@@ -112,7 +107,7 @@ export function LearnLibrary({ posts }: LearnLibraryProps) {
       ...group,
       topics: Array.from(topics.entries())
         .map(([topic, topicPosts]) => ({ topic, posts: topicPosts }))
-        .sort((a, b) => a.topic.localeCompare(b.topic))
+        .sort((a, b) => (a.topic < b.topic ? -1 : a.topic > b.topic ? 1 : 0))
     };
   });
 
@@ -120,13 +115,6 @@ export function LearnLibrary({ posts }: LearnLibraryProps) {
     setActiveGroup(group);
     setActiveTopic(topic);
   };
-
-  // Ghost data is normalized in both the server and browser runtimes. Render
-  // this interactive view only after hydration so locale-dependent ordering
-  // or browser URL state can never change the markup React hydrates.
-  if (!isHydrated) {
-    return <section className="learn-library" aria-busy="true" />;
-  }
 
   return (
     <section className="learn-library" aria-labelledby="learn-title">

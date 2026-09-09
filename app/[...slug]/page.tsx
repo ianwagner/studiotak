@@ -6,6 +6,7 @@ import { BlocksRenderer } from "@/components/sections/BlocksRenderer";
 import { DevDataSourceBanner } from "@/components/DevDataSourceBanner";
 import { getNavigationItems } from "@/lib/navigation";
 import { getPublishedPageBySlug, getPublishedPageBySlugWithSource, getPublishedPages, normalizeSlugPath } from "@/lib/pageContent";
+import { getCanonicalUrl } from "@/lib/siteUrl";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -26,9 +27,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 
   if (!page) return {};
 
-  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
-  const canonical =
-    page.canonicalUrl?.trim() || new URL(slugPath === "/" ? "/" : slugPath, siteBase).toString();
+  const canonical = getCanonicalUrl(slugPath === "/" ? "/" : slugPath, page.canonicalUrl);
 
   return {
     title: page.seoTitle || page.title,

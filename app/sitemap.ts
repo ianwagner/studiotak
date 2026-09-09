@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
 import { getGhostPosts } from "@/lib/ghost";
 import { getPublishedPages, normalizeSlugPath } from "@/lib/pageContent";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
+  const siteBase = getSiteUrl();
   const [pages, posts] = await Promise.all([getPublishedPages(), getGhostPosts()]);
   const learnUrl = new URL("/learn", siteBase).toString();
 

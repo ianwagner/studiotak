@@ -42,7 +42,8 @@ const TITLE_CASE_EXCEPTIONS: Record<string, string> = {
   saas: "SaaS"
 };
 const TOPIC_TITLE_OVERRIDES: Record<string, string> = {
-  "brand ads": "Branded Ads"
+  "brand ads": "Branded Ads",
+  "media buying": "Media Buying"
 };
 const LEARN_TITLE_TAG_PATTERN = /^#?learn-title\s*:\s*(.+)$/i;
 // Keep recently published articles compact in Learn while their editorial

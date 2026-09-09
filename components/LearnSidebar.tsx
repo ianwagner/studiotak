@@ -59,7 +59,7 @@ export function LearnSidebar({
       LEARN_GROUPS.reduce<Record<LearnGroupKey, string[]>>(
         (groups, group) => {
           groups[group.key] = Array.from(new Set(postsByGroup[group.key].map((post) => getLearnTopicForPost(post, group.key)))).sort(
-            (a, b) => a.localeCompare(b)
+            (a, b) => (a < b ? -1 : a > b ? 1 : 0)
           );
           return groups;
         },

@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { CookieConsent } from "@/components/CookieConsent";
 import { HeaderHeightSync } from "@/components/HeaderHeightSync";
+import { getSiteUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
 const rubik = Rubik({
@@ -24,7 +25,7 @@ const sentient = localFont({
   variable: "--font-sentient"
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://studiotak.co";
+const siteUrl = getSiteUrl();
 const companyDescription =
   "Studio Tak is a marketing technology consultancy building creative production systems, AI-assisted ad tools, and design infrastructure for agencies and brands.";
 const organizationJsonLd = {
