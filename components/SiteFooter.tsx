@@ -7,6 +7,7 @@ import { CookiePreferencesButton } from "./CookiePreferencesButton";
 
 type SiteFooterProps = {
   navItems?: NavigationItemRecord[];
+  showTopBorder?: boolean;
 };
 
 const campfireAudienceFooterLinks: NavigationItemRecord[] = [
@@ -63,7 +64,7 @@ const getFooterChildren = (
   );
 };
 
-export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
+export async function SiteFooter({ navItems: providedNav, showTopBorder = false }: SiteFooterProps) {
   const [navItems, settings] = await Promise.all([
     providedNav ? Promise.resolve(providedNav) : getNavigationItems(),
     getSiteSettings()
@@ -86,7 +87,7 @@ export async function SiteFooter({ navItems: providedNav }: SiteFooterProps) {
   const sectionEntries = Object.entries(footerSections);
 
   return (
-    <footer data-site-footer>
+    <footer data-site-footer data-has-top-border={showTopBorder || undefined}>
       <div className="footer-shell" data-keep-centered>
         <div className="footer-top">
           <div className="footer-brand">

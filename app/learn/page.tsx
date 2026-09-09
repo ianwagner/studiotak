@@ -105,7 +105,7 @@ export default async function LearnPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
       />
-      <SiteFooter navItems={navItems} />
+      <SiteFooter navItems={navItems} showTopBorder />
     </main>
   );
 }

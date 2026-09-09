@@ -3015,7 +3015,6 @@ code {
 [data-site-footer] {
   margin-top: auto;
   padding: 64px 0 48px;
-  border-top: 1px solid var(--border-color-default);
   background:
     radial-gradient(70% 42% at var(--ember-x1, 20%) var(--ember-y1, 110%), var(--footer-ember-1), transparent 52%),
     radial-gradient(60% 40% at var(--ember-x2, 80%) var(--ember-y2, 118%), var(--footer-ember-2), transparent 50%),
@@ -3023,6 +3022,10 @@ code {
   position: relative;
   overflow: hidden;
   animation: footer-embers 8s ease-in-out infinite alternate;
+}
+
+[data-site-footer][data-has-top-border] {
+  border-top: 1px solid var(--border-color-default);
 }
 
 .route-error-page {

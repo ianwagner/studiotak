@@ -30,7 +30,7 @@ declare global {
   }
 }
 
-type SubmitState = "idle" | "submitting" | "success" | "error";
+type SubmitState = "idle" | "submitting" | "error";
 
 const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -144,8 +144,6 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
         throw new Error(payload?.error || "We couldn't send your message. Please try again.");
       }
 
-      setSubmitState("success");
-      form.reset();
       trackGaEvent("generate_lead", {
         form_id: "contact-form",
         method: "resend",
@@ -269,7 +267,6 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
           [data-resend-contact-form] .contact-submit:hover:not(:disabled) { transform: translateY(-1px); background: var(--accent-strong); box-shadow: 0 8px 18px rgba(0, 0, 0, .16); }
           [data-resend-contact-form] .contact-submit:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
           [data-resend-contact-form] .contact-submit:disabled { cursor: not-allowed; opacity: .65; }
-          [data-resend-contact-success] { padding: 18px; border: 1px solid var(--border-strong); border-radius: 14px; background: var(--accent-soft); color: var(--text); font-size: var(--font-size-body-lg); font-weight: 600; line-height: 1.6; }
           [data-resend-contact-honeypot] { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
           @media (max-width: 900px) { [data-resend-contact-media] { max-width: 540px; margin: 0 auto; } }
           @media (max-width: 768px) { [data-resend-contact-grid] { grid-template-columns: 1fr; } }
@@ -287,51 +284,47 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
             <div className="grid" style={{ gap: 12 }}>
               <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} />
               <div data-resend-contact-form>
-                {submitState === "success" ? (
-                  <div data-resend-contact-success aria-live="polite">Thank you! We&apos;ll reach out soon.</div>
-                ) : (
-                  <form onSubmit={handleSubmit} onFocus={handleFormStart} onInput={handleFormStart}>
-                    <div className="contact-name-row">
-                      <label>
-                        <span className="contact-sr-only">First name</span>
-                        <input type="text" name="firstName" autoComplete="given-name" placeholder="First name" aria-label="First name" required maxLength={100} />
-                      </label>
-                      <label>
-                        <span className="contact-sr-only">Last name</span>
-                        <input type="text" name="lastName" autoComplete="family-name" placeholder="Last name" aria-label="Last name" required maxLength={100} />
-                      </label>
-                    </div>
+                <form onSubmit={handleSubmit} onFocus={handleFormStart} onInput={handleFormStart}>
+                  <div className="contact-name-row">
                     <label>
-                      <span className="contact-sr-only">Work email</span>
-                      <input type="email" name="email" autoComplete="email" placeholder="Work email" aria-label="Work email" required maxLength={254} />
+                      <span className="contact-sr-only">First name</span>
+                      <input type="text" name="firstName" autoComplete="given-name" placeholder="First name" aria-label="First name" required maxLength={100} />
                     </label>
                     <label>
-                      <span className="contact-sr-only">What would make your creative more effective right now? Optional</span>
-                      <textarea name="creativeChallenge" placeholder="What would make your creative more effective right now? (Optional)" aria-label="What would make your creative more effective right now? Optional" maxLength={3000} rows={3} />
+                      <span className="contact-sr-only">Last name</span>
+                      <input type="text" name="lastName" autoComplete="family-name" placeholder="Last name" aria-label="Last name" required maxLength={100} />
                     </label>
-                    <p className="contact-legal">
-                      By submitting, you acknowledge our <a href="/privacy-policy">Privacy Policy</a> and agree to our{" "}
-                      <a href="/terms-of-service">Terms of Service</a>.
-                    </p>
-                    <label className="contact-consent">
-                      <input type="checkbox" name="marketingConsent" value="yes" />
-                      <span>Send me Studio Tak&apos;s occasional thinking, Campfire updates, and useful creative ideas by email. I can unsubscribe anytime.</span>
-                    </label>
-                    <div>
-                      <span className="contact-captcha-label">Security check</span>
-                      <div ref={captchaContainerRef} />
-                      {securityMessage ? <p className="contact-error" role="alert" style={{ marginTop: 8 }}>{securityMessage}</p> : null}
-                    </div>
-                    {submitState === "error" ? <p className="contact-error" role="alert">{submitError}</p> : null}
-                    <div data-resend-contact-honeypot aria-hidden="true">
-                      <label htmlFor="contact-website">Leave this field blank</label>
-                      <input id="contact-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
-                    </div>
-                    <button className="contact-submit" type="submit" disabled={submitState === "submitting" || !captchaToken}>
-                      {submitState === "submitting" ? "Submitting…" : "Submit"}
-                    </button>
-                  </form>
-                )}
+                  </div>
+                  <label>
+                    <span className="contact-sr-only">Work email</span>
+                    <input type="email" name="email" autoComplete="email" placeholder="Work email" aria-label="Work email" required maxLength={254} />
+                  </label>
+                  <label>
+                    <span className="contact-sr-only">What would make your creative more effective right now? Optional</span>
+                    <textarea name="creativeChallenge" placeholder="What would make your creative more effective right now? (Optional)" aria-label="What would make your creative more effective right now? Optional" maxLength={3000} rows={3} />
+                  </label>
+                  <p className="contact-legal">
+                    By submitting, you acknowledge our <a href="/privacy-policy">Privacy Policy</a> and agree to our{" "}
+                    <a href="/terms-of-service">Terms of Service</a>.
+                  </p>
+                  <label className="contact-consent">
+                    <input type="checkbox" name="marketingConsent" value="yes" />
+                    <span>Send me Studio Tak&apos;s occasional thinking, Campfire updates, and useful creative ideas by email. I can unsubscribe anytime.</span>
+                  </label>
+                  <div>
+                    <span className="contact-captcha-label">Security check</span>
+                    <div ref={captchaContainerRef} />
+                    {securityMessage ? <p className="contact-error" role="alert" style={{ marginTop: 8 }}>{securityMessage}</p> : null}
+                  </div>
+                  {submitState === "error" ? <p className="contact-error" role="alert">{submitError}</p> : null}
+                  <div data-resend-contact-honeypot aria-hidden="true">
+                    <label htmlFor="contact-website">Leave this field blank</label>
+                    <input id="contact-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+                  </div>
+                  <button className="contact-submit" type="submit" disabled={submitState === "submitting" || !captchaToken}>
+                    {submitState === "submitting" ? "Submitting…" : "Submit"}
+                  </button>
+                </form>
               </div>
               <p style={{ margin: 0, color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>
                 We typically reply within one business day.
