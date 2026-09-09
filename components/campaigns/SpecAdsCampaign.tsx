@@ -3,11 +3,12 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { collection, getDocs, getFirestore, limit, query, where } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import { animationPresets, defaultAnimationPreset } from "@/components/sections/animationPresets";
 import { LogosBlockSection } from "@/components/sections/BlocksRenderer";
 import type { LogosBlock } from "@/lib/admin/pages";
-import { createMetaEventId, trackMetaEvent } from "@/lib/cookieConsent";
+import { createMetaEventId, trackGoogleAdsConversion, trackMetaEvent } from "@/lib/cookieConsent";
 import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
 import styles from "./SpecAdsCampaign.module.css";
 
@@ -31,7 +32,7 @@ declare global {
   }
 }
 
-type SubmitState = "idle" | "submitting" | "success" | "error";
+type SubmitState = "idle" | "submitting" | "error";
 
 type HeroExampleAd = {
   id: string;
@@ -81,10 +82,10 @@ const selectDiverseExamples = (items: HeroExampleAd[]) => {
 };
 
 export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
+  const router = useRouter();
   const captchaContainerRef = useRef<HTMLDivElement>(null);
   const captchaWidgetRef = useRef<string | null>(null);
   const heroArtworkRef = useRef<HTMLDivElement>(null);
-  const successMessageRef = useRef<HTMLDivElement>(null);
   const formStartedAtRef = useRef(Date.now());
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
@@ -210,16 +211,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (submitState !== "success") return;
-
-    const scrollTimeout = window.setTimeout(() => {
-      successMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 0);
-
-    return () => window.clearTimeout(scrollTimeout);
-  }, [submitState]);
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -262,9 +253,9 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         throw new Error(payload?.error || "We couldn't send your application. Please try again.");
       }
 
-      setSubmitState("success");
-      form.reset();
       trackMetaEvent("Lead", { content_name: "Free spec ads application" }, metaEventId);
+      trackGoogleAdsConversion("ads_conversion_SUBMIT_LEAD_FORM_1");
+      router.replace("/thank-you");
     } catch (error) {
       setSubmitState("error");
       setSubmitError(error instanceof Error ? error.message : "We couldn't send your application. Please try again.");
@@ -362,14 +353,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
               </div>
             </div>
 
-            <div className={`${styles.formCard} ${submitState === "success" ? styles.formCardSuccess : ""}`}>
-              {submitState === "success" ? (
-                <div ref={successMessageRef} className={styles.successMessage} role="status" tabIndex={-1}>
-                  <span>✓</span>
-                  <h3>Application received.</h3>
-                  <p>Thanks for sharing your brand. We&apos;ll review the details and be in touch if it&apos;s a fit.</p>
-                </div>
-              ) : (
+            <div className={styles.formCard}>
                 <form onSubmit={handleSubmit}>
                   <div className={styles.fieldGrid}>
                     <label>
@@ -426,7 +410,6 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                     {submitState === "submitting" ? "Sending application…" : "Get your ads"} <span aria-hidden="true">→</span>
                   </button>
                 </form>
-              )}
             </div>
           </div>
         </div>

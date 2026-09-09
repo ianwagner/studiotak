@@ -77,7 +77,6 @@
 .disclaimer strong { font-size: 13px; }
 .disclaimer p { margin: 8px 0 0; color: var(--campaign-form-copy); font-size: 13px; line-height: 1.55; }
 .formCard { padding: clamp(22px, 4vw, 40px); border: 1px solid var(--campaign-form-card-border); border-radius: 18px; background: var(--campaign-form-card); box-shadow: 0 16px 34px rgba(49, 34, 22, .08); }
-.formCardSuccess { display: flex; align-items: center; min-height: clamp(280px, 30vw, 360px); }
 .formCard form { display: grid; gap: 20px; }
 .fieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .formCard label { display: grid; gap: 8px; color: var(--campaign-form-label); font-size: 13px; font-weight: 700; }
@@ -102,11 +101,6 @@
 .submitError { margin: -5px 0 0; font-size: 13px; font-weight: 600; }
 .submitButton { width: fit-content; margin-top: 4px; cursor: pointer; }
 .submitButton:disabled { cursor: not-allowed; opacity: .55; }
-.successMessage { width: 100%; padding: 32px 16px; text-align: center; }
-.successMessage > span { display: inline-grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: var(--orange); color: #fff; font-weight: 800; }
-.successMessage h3 { margin: 24px 0 10px; font-family: var(--font-secondary); font-size: 39px; font-weight: 300; letter-spacing: -.06em; }
-.successMessage p { max-width: 350px; margin: 0 auto; color: var(--campaign-form-copy); font-size: 15px; line-height: 1.55; }
-
 .pricing { position: relative; isolation: isolate; overflow: hidden; padding: clamp(70px, 8vw, 120px) 0; background: #0c0c0f; color: #f6f6f1; }
 .pricing::before { position: absolute; z-index: -1; inset: -35% -20% -8%; background: var(--campfire-glow-gradient), radial-gradient(45% 48% at 16% 100%, rgba(255, 112, 11, .14), transparent 70%); content: ""; pointer-events: none; }
 .pricing .sectionLabel { color: var(--accent); }

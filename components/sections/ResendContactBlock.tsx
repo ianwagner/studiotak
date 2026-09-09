@@ -7,7 +7,7 @@ import type { ContactBlock } from "@/lib/admin/pages";
 import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
 import { AnimatedSection, SectionHeading } from "./AnimatedSection";
 import { animationPresets, defaultAnimationPreset } from "./animationPresets";
-import { createMetaEventId, trackMetaEvent } from "@/lib/cookieConsent";
+import { createMetaEventId, trackGoogleAdsConversion, trackMetaEvent } from "@/lib/cookieConsent";
 
 declare global {
   interface Window {
@@ -150,6 +150,7 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
         section: block.anchor ?? "contact"
       });
       trackMetaEvent("Lead", { content_name: "Contact form" }, metaEventId);
+      trackGoogleAdsConversion("ads_conversion_SUBMIT_LEAD_FORM_1");
       router.replace("/thank-you");
     } catch (error) {
       setSubmitState("error");

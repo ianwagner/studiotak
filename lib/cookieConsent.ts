@@ -4,7 +4,7 @@ export type CookiePreferences = {
 };
 
 export const COOKIE_PREFERENCES_NAME = "st_cookie_preferences";
-export const COOKIE_PREFERENCES_VERSION = "2026-08";
+export const COOKIE_PREFERENCES_VERSION = "2026-09";
 export const OPEN_COOKIE_PREFERENCES_EVENT = "studio-tak:open-cookie-preferences";
 
 type MetaPixelFunction = ((...args: unknown[]) => void) & {
@@ -18,7 +18,8 @@ type MetaPixelFunction = ((...args: unknown[]) => void) & {
 declare global {
   interface Window {
     __studioTakCookiePreferences?: CookiePreferences;
-    __studioTakGaConfiguredId?: string;
+    __studioTakGoogleTagConsentInitialized?: boolean;
+    __studioTakGoogleTagConfiguredIds?: string[];
     __studioTakMetaPixelInitializedId?: string;
     dataLayer?: unknown[];
     _uxa?: unknown[][];
@@ -42,4 +43,9 @@ export function createMetaEventId() {
 export function trackMetaEvent(eventName: string, parameters: Record<string, unknown> = {}, eventId?: string) {
   if (!hasMarketingConsent() || typeof window.fbq !== "function") return;
   window.fbq("track", eventName, parameters, eventId ? { eventID: eventId } : undefined);
+}
+
+export function trackGoogleAdsConversion(eventName: string, parameters: Record<string, unknown> = {}) {
+  if (!hasMarketingConsent() || typeof window.gtag !== "function") return;
+  window.gtag("event", eventName, parameters);
 }

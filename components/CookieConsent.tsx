@@ -18,9 +18,11 @@ type StoredCookiePreferences = CookiePreferences & {
 const defaultPreferences: CookiePreferences = { analytics: false, marketing: false };
 const consentLifetimeSeconds = 60 * 60 * 24 * 365;
 const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+const googleAdsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || "AW-18441317671";
+const googleTagId = googleAnalyticsId || googleAdsId;
 const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
 const contentsquareTagId = process.env.NEXT_PUBLIC_CONTENTSQUARE_TAG_ID?.trim() || "5382551060185";
-const hasOptionalTracking = Boolean(googleAnalyticsId || metaPixelId || contentsquareTagId);
+const hasOptionalTracking = Boolean(googleTagId || metaPixelId || contentsquareTagId);
 type MetaPixel = NonNullable<Window["fbq"]>;
 
 function getCookieValue(name: string) {
@@ -68,11 +70,15 @@ function deleteCookie(name: string) {
   }
 }
 
-function clearTrackingCookies(prefix: "_ga" | "_fb") {
+function clearTrackingCookies(prefix: "_ga" | "_fb" | "_gcl") {
   const names = document.cookie
     .split("; ")
     .map((cookie) => cookie.split("=", 1)[0])
-    .filter((name) => prefix === "_ga" ? name === "_ga" || name.startsWith("_ga_") : name === "_fbp" || name === "_fbc");
+    .filter((name) => {
+      if (prefix === "_ga") return name === "_ga" || name.startsWith("_ga_");
+      if (prefix === "_fb") return name === "_fbp" || name === "_fbc";
+      return name.startsWith("_gcl");
+    });
   names.forEach(deleteCookie);
 }
 
@@ -106,29 +112,48 @@ function getGtag() {
   return window.gtag;
 }
 
-async function enableGoogleAnalytics(measurementId: string, pathname: string) {
-  (window as unknown as Record<string, boolean>)[`ga-disable-${measurementId}`] = false;
+function updateGoogleConsent(preferences: CookiePreferences) {
   const gtag = getGtag();
+  const mode = window.__studioTakGoogleTagConsentInitialized ? "update" : "default";
+  gtag("consent", mode, {
+    analytics_storage: preferences.analytics ? "granted" : "denied",
+    ad_storage: preferences.marketing ? "granted" : "denied",
+    ad_user_data: preferences.marketing ? "granted" : "denied",
+    ad_personalization: preferences.marketing ? "granted" : "denied"
+  });
+  window.__studioTakGoogleTagConsentInitialized = true;
+  return gtag;
+}
 
-  if (window.__studioTakGaConfiguredId !== measurementId) {
-    gtag("consent", "default", {
-      analytics_storage: "granted",
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied"
-    });
-    gtag("js", new Date());
-    gtag("config", measurementId, { send_page_view: false });
-    window.__studioTakGaConfiguredId = measurementId;
+async function enableGoogleTag(pathname: string, preferences: CookiePreferences) {
+  if (!googleTagId) return;
+
+  const gtag = updateGoogleConsent(preferences);
+  const configuredIds = new Set(window.__studioTakGoogleTagConfiguredIds ?? []);
+
+  if (configuredIds.size === 0) gtag("js", new Date());
+
+  if (preferences.analytics && googleAnalyticsId && !configuredIds.has(googleAnalyticsId)) {
+    (window as unknown as Record<string, boolean>)[`ga-disable-${googleAnalyticsId}`] = false;
+    gtag("config", googleAnalyticsId, { send_page_view: false });
+    configuredIds.add(googleAnalyticsId);
   }
 
+  if (preferences.marketing && googleAdsId && !configuredIds.has(googleAdsId)) {
+    gtag("config", googleAdsId);
+    configuredIds.add(googleAdsId);
+  }
+  window.__studioTakGoogleTagConfiguredIds = Array.from(configuredIds);
+
   try {
-    await addExternalScript("studio-tak-google-analytics", `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`);
+    await addExternalScript("studio-tak-google-tag", `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleTagId)}`);
   } catch {
     return;
   }
 
-  getGtag()("event", "page_view", {
+  if (!preferences.analytics || !googleAnalyticsId) return;
+
+  gtag("event", "page_view", {
     page_location: window.location.href,
     page_path: `${pathname}${window.location.search}`,
     page_title: document.title
@@ -138,6 +163,10 @@ async function enableGoogleAnalytics(measurementId: string, pathname: string) {
 function disableGoogleAnalytics(measurementId: string) {
   (window as unknown as Record<string, boolean>)[`ga-disable-${measurementId}`] = true;
   clearTrackingCookies("_ga");
+}
+
+function disableGoogleAds() {
+  clearTrackingCookies("_gcl");
 }
 
 function createMetaPixelQueue() {
@@ -219,13 +248,17 @@ export function CookieConsent() {
   }, [isAdminRoute]);
 
   useEffect(() => {
-    if (isAdminRoute || !hasMadeChoice || !googleAnalyticsId) return;
-    if (!preferences.analytics) {
-      disableGoogleAnalytics(googleAnalyticsId);
+    if (isAdminRoute || !hasMadeChoice || !googleTagId) return;
+    if (!preferences.analytics && !preferences.marketing) {
+      updateGoogleConsent(preferences);
+      if (googleAnalyticsId) disableGoogleAnalytics(googleAnalyticsId);
+      disableGoogleAds();
       return;
     }
-    void enableGoogleAnalytics(googleAnalyticsId, pathname ?? "/");
-  }, [hasMadeChoice, isAdminRoute, pathname, preferences.analytics]);
+    if (!preferences.analytics && googleAnalyticsId) disableGoogleAnalytics(googleAnalyticsId);
+    if (!preferences.marketing) disableGoogleAds();
+    void enableGoogleTag(pathname ?? "/", preferences);
+  }, [hasMadeChoice, isAdminRoute, pathname, preferences]);
 
   useEffect(() => {
     if (isAdminRoute || !hasMadeChoice || !metaPixelId) return;
@@ -312,7 +345,7 @@ export function CookieConsent() {
               <div className={styles.category}>
                 <div>
                   <label className={styles.categoryTitle} htmlFor="cookie-marketing">Marketing</label>
-                  <span className={styles.categoryCopy}>Meta Pixel measures whether Meta ads led to a visit or form submission.</span>
+                  <span className={styles.categoryCopy}>Google Ads and Meta Pixel measure whether ads led to a visit or form submission.</span>
                 </div>
                 <input id="cookie-marketing" className={styles.switch} type="checkbox" checked={preferences.marketing} onChange={(event) => setPreferences((current) => ({ ...current, marketing: event.target.checked }))} />
               </div>

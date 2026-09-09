@@ -4,7 +4,7 @@ import styles from "@/components/StaticPage.module.css";
 export const revalidate = 120;
 export const dynamic = "force-static";
 
-const lastUpdated = "August 14, 2026";
+const lastUpdated = "September 9, 2026";
 const description =
   "How Studio Tak (Campfire) collects, uses, shares, and protects your information when you use our website or engage our services.";
 
@@ -125,7 +125,7 @@ export default function PrivacyPolicyPage() {
             <ul>
               <li><strong>Strictly necessary:</strong> Our first-party <code>st_cookie_preferences</code> cookie records your cookie choices so we can respect them. It contains your category selections and the date they were saved, lasts up to 12 months, and is not used for advertising. Cloudflare Turnstile may also use security technologies when you submit a form to prevent spam and abuse.</li>
               <li><strong>Analytics:</strong> If you opt in, Google Analytics (GA4) and Contentsquare use cookies and similar technologies to help us understand site traffic and usage, such as pages viewed, navigation, scrolling, clicks, device and browser information, and approximate location derived from IP address. Contentsquare may provide aggregated heatmaps and session replays of on-site interaction. We use this information to improve the Site. Google and Contentsquare act as our service providers for this processing.</li>
-              <li><strong>Marketing:</strong> If you opt in, Meta Pixel and our server-side conversion signal measure whether Studio Tak ads on Meta led to a visit or completed lead form on this Site. Meta may receive online identifiers, browser and device information, pages viewed, completed lead-form events, and hashed contact identifiers submitted with a form to help match that conversion. This can involve tracking across websites or services and may be used to create audiences or improve delivery of our ads on Meta.</li>
+              <li><strong>Marketing:</strong> If you opt in, Google Ads, Meta Pixel, and our server-side conversion signal measure whether advertising led to a visit or completed lead form on this Site. Google and Meta may receive online identifiers, browser and device information, pages viewed, and completed lead-form events. Meta may also receive hashed contact identifiers submitted with a form to help match that conversion. This can involve tracking across websites or services and may be used to create audiences or improve delivery of ads.</li>
             </ul>
 
             <h3>5.3 Managing Cookies</h3>
@@ -147,7 +147,7 @@ export default function PrivacyPolicyPage() {
               <strong>6.1 Service Providers.</strong> We may share information with third-party service providers who perform services on our behalf, including payment processing (Stripe), email marketing, analytics, hosting, artificial intelligence services, and customer support. These providers are contractually obligated to use your information only as necessary to provide services to us and in accordance with this Policy.
             </p>
             <p>
-              <strong>6.2 Analytics and Advertising Partners.</strong> We share data collected through Tracking Technologies with analytics providers (such as Google and Contentsquare) and advertising platforms (such as Meta/Facebook) to measure advertising effectiveness and deliver targeted ads. This data may include device identifiers, browsing behavior, interaction data, and, for a consented form submission, hashed contact identifiers used to match the conversion. We do not send your raw name or email address to Meta through this conversion signal.
+              <strong>6.2 Analytics and Advertising Partners.</strong> We share data collected through Tracking Technologies with analytics providers (such as Google and Contentsquare) and advertising platforms (such as Google Ads and Meta/Facebook) to measure advertising effectiveness and deliver targeted ads. This data may include device identifiers, browsing behavior, interaction data, and, for a consented form submission, hashed contact identifiers used to match the conversion. We do not send your raw name or email address to Google Ads or Meta through this conversion signal.
             </p>
             <p>
               <strong>6.3 UGC Creators and Production Partners.</strong> In the course of providing Services, we may share limited information about your brand (such as brand name, product details, and creative direction) with UGC creators and production partners we engage on your behalf. We will not share your confidential business data, performance metrics, or financial information with these parties.
