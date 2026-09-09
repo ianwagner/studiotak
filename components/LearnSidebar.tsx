@@ -49,7 +49,7 @@ export function LearnSidebar({
           );
           return groups;
         },
-        { academy: [], campfire: [] }
+        { learn: [], campfire: [] }
       ),
     [posts, normalizedQuery]
   );
@@ -63,7 +63,7 @@ export function LearnSidebar({
           );
           return groups;
         },
-        { academy: [], campfire: [] }
+        { learn: [], campfire: [] }
       ),
     [postsByGroup]
   );

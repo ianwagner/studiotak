@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BookOpen, Search } from "lucide-react";
+import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { GhostPost } from "@/lib/ghost";
+import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 import { LearnSidebar } from "@/components/LearnSidebar";
 import {
   getLearnGroupForPost,
@@ -16,7 +17,21 @@ import {
 
 type LearnLibraryProps = {
   posts: GhostPost[];
+  initialGroup?: LearnGroupKey;
+  initialTopic?: string;
 };
+
+const TOPIC_CARD_IMAGES: Record<string, string> = {
+  BFCM: "/learn/BFCM.png",
+  "Branded Ads": "/learn/branded-ads.png",
+  "Creative Production": "/learn/creative-production.png",
+  "Creative Strategy": "/learn/creative-strategy.png",
+  "Media Buying": "/learn/media-buying.png",
+  Meta: "/learn/meta.png"
+};
+
+const getTopicHref = (group: LearnGroupKey, topic: string) =>
+  `/learn/topics/${group}/${encodeURIComponent(topic)}`;
 
 const ArticleLink = ({ post }: { post: GhostPost }) => (
   <Link href={`/learn/${post.slug}`} className="learn-library-article">
@@ -28,42 +43,76 @@ const ArticleLink = ({ post }: { post: GhostPost }) => (
 
 const TopicCard = ({
   topic,
+  href,
   onSelect
 }: {
   topic: string;
+  href: string;
   onSelect: () => void;
-}) => (
-  <button className="learn-topic-card" type="button" onClick={onSelect}>
-    <span className="learn-topic-card-title">{topic}</span>
-    <span className="learn-topic-card-action">
-      Explore guides <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
-    </span>
-  </button>
-);
+}) => {
+  const image = TOPIC_CARD_IMAGES[topic];
 
-const ArticleCard = ({ post }: { post: GhostPost }) => (
-  <Link href={`/learn/${post.slug}`} className="learn-article-card">
-    <span className="learn-article-card-title">{getLearnDisplayTitle(post)}</span>
-    {post.excerpt ? <span className="learn-article-card-excerpt">{post.excerpt}</span> : null}
-    <span className="learn-article-card-action">
-      Read guide <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
-    </span>
-  </Link>
-);
+  return (
+    <Link className={`learn-topic-card${image ? " has-visual" : ""}`} href={href as any} onClick={onSelect}>
+      <span className="learn-topic-card-title">{topic}</span>
+      {image ? (
+        <span className="learn-topic-card-visual" aria-hidden="true">
+          <img src={image} alt="" />
+        </span>
+      ) : null}
+      <span className="learn-topic-card-action">
+        Explore guides <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
+      </span>
+    </Link>
+  );
+};
 
-export function LearnLibrary({ posts }: LearnLibraryProps) {
-  const [activeGroup, setActiveGroup] = useState<LearnGroupKey | "all">("all");
-  const [activeTopic, setActiveTopic] = useState<string | null>(null);
+const ArticleCard = ({ post }: { post: GhostPost }) => {
+  const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
+
+  return (
+    <Link href={`/learn/${post.slug}`} className={`learn-article-card${imageUrl ? " has-feature-artwork" : ""}`}>
+      {imageUrl ? (
+        <span className="learn-article-card-media">
+          <img
+            src={imageUrl}
+            srcSet={getGhostImageSrcSet(post.feature_image!)}
+            sizes="(max-width: 560px) 100vw, (max-width: 900px) 50vw, 33vw"
+            alt={post.feature_image_alt ?? post.title}
+            loading="lazy"
+            decoding="async"
+          />
+        </span>
+      ) : null}
+      <span className="learn-article-card-title">{getLearnDisplayTitle(post)}</span>
+      {post.excerpt ? <span className="learn-article-card-excerpt">{post.excerpt}</span> : null}
+      <span className="learn-article-card-action">
+        Read guide <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
+      </span>
+    </Link>
+  );
+};
+
+export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibraryProps) {
+  const [activeGroup, setActiveGroup] = useState<LearnGroupKey | "all">(initialGroup ?? "all");
+  const [activeTopic, setActiveTopic] = useState<string | null>(initialTopic ?? null);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
     const syncTopicFromHash = () => {
+      if (!window.location.hash && initialGroup && initialTopic) {
+        setActiveGroup(initialGroup);
+        setActiveTopic(initialTopic);
+        return;
+      }
+
       const params = new URLSearchParams(window.location.hash.slice(1));
-      const group = params.get("group");
+      const requestedGroup = params.get("group");
+      const group = requestedGroup === "academy" ? "learn" : requestedGroup;
       const topic = params.get("topic");
 
       if (
-        (group === "academy" || group === "campfire") &&
+        (group === "learn" || group === "campfire") &&
         topic &&
         posts.some(
           (post) =>
@@ -83,7 +132,7 @@ export function LearnLibrary({ posts }: LearnLibraryProps) {
     syncTopicFromHash();
     window.addEventListener("hashchange", syncTopicFromHash);
     return () => window.removeEventListener("hashchange", syncTopicFromHash);
-  }, [posts]);
+  }, [posts, initialGroup, initialTopic]);
 
   const normalizedQuery = query.trim().toLowerCase();
   const isSearching = Boolean(normalizedQuery);
@@ -95,6 +144,7 @@ export function LearnLibrary({ posts }: LearnLibraryProps) {
       postMatchesLearnSearch(post, normalizedQuery)
   );
   const activeGroupData = activeGroup === "all" ? null : LEARN_GROUPS.find((group) => group.key === activeGroup) ?? null;
+  const activeTopicImage = activeTopic ? TOPIC_CARD_IMAGES[activeTopic] : undefined;
   const topicsByGroup = LEARN_GROUPS.map((group) => {
     const topics = new Map<string, GhostPost[]>();
     posts
@@ -178,9 +228,10 @@ export function LearnLibrary({ posts }: LearnLibraryProps) {
                     All topics
                   </button>
                   <div>
-                    <p className="learn-library-eyebrow">{activeGroupData.title}</p>
-                    <h2 id="learn-topic-title">{activeTopic}</h2>
-                    <p>Browse guides in this topic.</p>
+                    <div className="learn-topic-view-title">
+                      {activeTopicImage ? <img src={activeTopicImage} alt="" aria-hidden="true" /> : null}
+                      <h2 id="learn-topic-title">{activeTopic}</h2>
+                    </div>
                   </div>
                 </div>
                 {visiblePosts.length ? (
@@ -202,9 +253,6 @@ export function LearnLibrary({ posts }: LearnLibraryProps) {
                   <section className="learn-collection-overview-section" key={group.key} aria-labelledby={`learn-collection-${group.key}`}>
                     <div className="learn-collection-overview-heading">
                       <div>
-                        <span className={`learn-collection-icon ${group.key}`}>
-                          <BookOpen aria-hidden="true" size={20} strokeWidth={1.7} />
-                        </span>
                         <h2 id={`learn-collection-${group.key}`}>{group.title}</h2>
                       </div>
                       {group.description ? <p>{group.description}</p> : null}
@@ -215,6 +263,7 @@ export function LearnLibrary({ posts }: LearnLibraryProps) {
                           <TopicCard
                             key={topic}
                             topic={topic}
+                            href={getTopicHref(group.key, topic)}
                             onSelect={() => selectTopic(group.key, topic)}
                           />
                         ))}

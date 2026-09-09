@@ -155,7 +155,7 @@ export default async function LearnPostPage({ params }: PageParams) {
   const learnGroup = getLearnGroupForPost(post);
   const learnTopic = getLearnTopicForPost(post, learnGroup);
   const learnGroupTitle = LEARN_GROUPS.find((group) => group.key === learnGroup)?.title ?? "Learn";
-  const topicHref = `/learn#group=${learnGroup}&topic=${encodeURIComponent(learnTopic)}`;
+  const topicHref = `/learn/topics/${learnGroup}/${encodeURIComponent(learnTopic)}`;
 
   const siteBase = getSiteUrl();
   const articleJsonLd = {

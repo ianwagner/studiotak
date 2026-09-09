@@ -1,6 +1,6 @@
 import type { GhostPost } from "@/lib/ghost";
 
-export type LearnGroupKey = "academy" | "campfire";
+export type LearnGroupKey = "learn" | "campfire";
 
 export type LearnGroup = {
   key: LearnGroupKey;
@@ -10,7 +10,7 @@ export type LearnGroup = {
 
 export const LEARN_GROUPS: LearnGroup[] = [
   {
-    key: "academy",
+    key: "learn",
     title: "Learn",
     description: ""
   },
@@ -64,8 +64,8 @@ export const getLearnGroupForPost = (post: GhostPost): LearnGroupKey => {
   if (tagSlugs.some((slug) => REFERENCE_TAGS.has(slug))) {
     return "campfire";
   }
-  if (tagSlugs.some((slug) => ACADEMY_TAGS.has(slug))) return "academy";
-  return "academy";
+  if (tagSlugs.some((slug) => ACADEMY_TAGS.has(slug))) return "learn";
+  return "learn";
 };
 
 /**
