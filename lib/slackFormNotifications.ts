@@ -23,7 +23,10 @@ const escapeMrkdwn = (value: string) => value.replace(/[&<>]/g, (character) => (
  */
 export async function sendSlackFormNotification({ formName, fields }: SlackFormNotification) {
   const webhookUrl = process.env.SLACK_FORM_SUBMISSIONS_WEBHOOK_URL;
-  if (!webhookUrl) return;
+  if (!webhookUrl) {
+    console.error("Slack form notification webhook is not configured", { formName });
+    return;
+  }
 
   const safeFields = fields.map(({ label, value }) => ({
     type: "mrkdwn" as const,
@@ -59,10 +62,25 @@ export async function sendSlackFormNotification({ formName, fields }: SlackFormN
       signal: AbortSignal.timeout(10_000)
     });
 
+    const responseBody = (await response.text()).slice(0, 200);
     if (!response.ok) {
-      console.error("Slack rejected the form notification", { status: response.status });
+      console.error("Slack rejected the form notification", {
+        formName,
+        status: response.status,
+        response: responseBody
+      });
+      return;
     }
-  } catch {
-    console.error("Unable to send Slack form notification");
+
+    console.info("Slack form notification sent", {
+      formName,
+      status: response.status,
+      response: responseBody
+    });
+  } catch (error) {
+    console.error("Unable to send Slack form notification", {
+      formName,
+      message: error instanceof Error ? error.message : "Unknown error"
+    });
   }
 }
