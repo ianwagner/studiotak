@@ -1864,9 +1864,10 @@ main {
   }
 
   .learn-detail-content {
-    --learn-content-inline-start: var(--section-px);
-    --learn-content-inline-end: var(--section-px);
-    padding: 44px var(--learn-content-inline-end) 72px var(--learn-content-inline-start);
+    --learn-content-inline-start: 0;
+    --learn-content-inline-end: 0;
+    padding: 24px 0 72px;
+    background: transparent;
   }
 
   .learn-library-content {
@@ -2650,10 +2651,18 @@ main {
   }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
   .learn-article {
-    padding: 72px 16px 120px;
-    margin-top: 24px;
+    gap: 24px;
+    padding: 0 0 72px;
+    margin-top: 0;
+  }
+
+  .learn-hero-media {
+    height: auto;
+    aspect-ratio: 2 / 1;
+    border-radius: 12px;
+    box-shadow: none;
   }
 
   .ghost-content .kg-bookmark-container {
