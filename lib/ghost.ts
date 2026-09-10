@@ -24,6 +24,7 @@ export type GhostPost = {
   og_description?: string | null;
   twitter_title?: string | null;
   twitter_description?: string | null;
+  reading_time?: number | null;
   tags?: GhostTag[];
 };
 
@@ -124,7 +125,8 @@ export async function getGhostPostBySlug(slug: string): Promise<GhostPost | null
       "og_title",
       "og_description",
       "twitter_title",
-      "twitter_description"
+      "twitter_description",
+      "reading_time"
     ].join(",")
   });
   const data = await fetchGhost<GhostSingleResponse>("posts/", params);

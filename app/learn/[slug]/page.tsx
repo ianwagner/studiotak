@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { LearnSidebar } from "@/components/LearnSidebar";
 import { LearnTableOfContents } from "@/components/LearnTableOfContents";
 import { LearnArticleCard } from "@/components/LearnArticleCard";
+import { LearnArticleFeedback } from "@/components/LearnArticleFeedback";
 import { GhostArticleContent } from "@/components/GhostArticleContent";
 import { getLearnDisplayTitle, getLearnGroupForPost, getLearnTopicForPost, LEARN_GROUPS } from "@/lib/learnTaxonomy";
 import { getLearnSeriesMembership } from "@/lib/learnSeries";
@@ -37,6 +38,18 @@ const formatDate = (value?: string | null): string | null => {
     day: "numeric",
     year: "numeric"
   }).format(date);
+};
+
+const getReadingTimeMinutes = (post: GhostPost): number | null => {
+  if (typeof post.reading_time === "number" && post.reading_time > 0) {
+    return Math.ceil(post.reading_time);
+  }
+
+  // Ghost normally supplies reading_time. The fallback keeps the label useful
+  // for older API responses and custom Ghost configurations.
+  const text = post.html?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  return Math.max(1, Math.ceil(text.split(" ").length / 225));
 };
 
 /**
@@ -161,6 +174,7 @@ export default async function LearnPostPage({ params }: PageParams) {
   const topicHref = `/learn/topics/${learnGroup}/${encodeURIComponent(learnTopic)}`;
   const seriesMembership = getLearnSeriesMembership(post.slug, allPosts);
   const nextSeriesStep = seriesMembership?.series.steps[seriesMembership.stepIndex + 1];
+  const readingTimeMinutes = getReadingTimeMinutes(post);
 
   const siteBase = getSiteUrl();
   const articleJsonLd = {
@@ -171,6 +185,7 @@ export default async function LearnPostPage({ params }: PageParams) {
     ...(post.published_at ? { datePublished: post.published_at } : {}),
     ...(post.updated_at ? { dateModified: post.updated_at } : {}),
     ...(post.excerpt ? { description: post.excerpt } : {}),
+    ...(readingTimeMinutes ? { timeRequired: `PT${readingTimeMinutes}M` } : {}),
     ...(post.feature_image
       ? { image: { "@type": "ImageObject", url: post.feature_image, ...(post.feature_image_alt ? { name: post.feature_image_alt } : {}) } }
       : {}),
@@ -223,11 +238,15 @@ export default async function LearnPostPage({ params }: PageParams) {
               ) : null}
               <div className="learn-post-header">
                 <h1>{post.title}</h1>
+                {readingTimeMinutes ? (
+                  <p className="learn-post-meta">{readingTimeMinutes} min read</p>
+                ) : null}
                 {post.excerpt ? <p className="learn-post-excerpt">{post.excerpt}</p> : null}
               </div>
               {articleHtml ? (
                 <GhostArticleContent html={articleHtml} />
               ) : null}
+              <LearnArticleFeedback articleSlug={post.slug} articleTitle={post.title} />
             </article>
             {tableOfContents.length ? (
               <div className="learn-table-of-contents-rail">

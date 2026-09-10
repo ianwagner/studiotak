@@ -133,10 +133,17 @@ async function enableGoogleTag(pathname: string, preferences: CookiePreferences)
 
   if (configuredIds.size === 0) gtag("js", new Date());
 
-  if (preferences.analytics && googleAnalyticsId && !configuredIds.has(googleAnalyticsId)) {
+  if (preferences.analytics && googleAnalyticsId) {
+    // This flag is set when Analytics is declined. It must be reset every
+    // time Analytics is enabled, not only on the first gtag configuration.
+    // Otherwise a visitor who changes their cookie preference from off to on
+    // can be left with a configured-but-silenced GA4 tag.
     (window as unknown as Record<string, boolean>)[`ga-disable-${googleAnalyticsId}`] = false;
-    gtag("config", googleAnalyticsId, { send_page_view: false });
-    configuredIds.add(googleAnalyticsId);
+
+    if (!configuredIds.has(googleAnalyticsId)) {
+      gtag("config", googleAnalyticsId, { send_page_view: false });
+      configuredIds.add(googleAnalyticsId);
+    }
   }
 
   if (preferences.marketing && googleAdsId && !configuredIds.has(googleAdsId)) {
