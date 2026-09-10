@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
+import { Clock } from "lucide-react";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -13,7 +14,7 @@ import { getLearnDisplayTitle, getLearnGroupForPost, getLearnTopicForPost, LEARN
 import { getLearnSeriesMembership } from "@/lib/learnSeries";
 import { buildLearnTableOfContents } from "@/lib/learnTableOfContents";
 import { getNavigationItems } from "@/lib/navigation";
-import { getGhostPostBySlug, getGhostPosts, type GhostPost } from "@/lib/ghost";
+import { getGhostPostBySlug, getGhostPosts, getReadingTimeMinutes, type GhostPost } from "@/lib/ghost";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 import { getCanonicalUrl, getSiteUrl } from "@/lib/siteUrl";
 
@@ -38,18 +39,6 @@ const formatDate = (value?: string | null): string | null => {
     day: "numeric",
     year: "numeric"
   }).format(date);
-};
-
-const getReadingTimeMinutes = (post: GhostPost): number | null => {
-  if (typeof post.reading_time === "number" && post.reading_time > 0) {
-    return Math.ceil(post.reading_time);
-  }
-
-  // Ghost normally supplies reading_time. The fallback keeps the label useful
-  // for older API responses and custom Ghost configurations.
-  const text = post.html?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  if (!text) return null;
-  return Math.max(1, Math.ceil(text.split(" ").length / 225));
 };
 
 /**
@@ -216,13 +205,21 @@ export default async function LearnPostPage({ params }: PageParams) {
               data-article-slug={post.slug}
               data-article-title={post.title}
             >
-              <nav className="learn-breadcrumb" aria-label="Breadcrumb">
-                <Link href="/learn">{learnGroupTitle}</Link>
-                <span aria-hidden="true">/</span>
-                <Link href={topicHref as any}>{learnTopic}</Link>
-                <span aria-hidden="true">/</span>
-                <span aria-current="page">{getLearnDisplayTitle(post)}</span>
-              </nav>
+              <div className="learn-article-topline">
+                <nav className="learn-breadcrumb" aria-label="Breadcrumb">
+                  <Link href="/learn">{learnGroupTitle}</Link>
+                  <span aria-hidden="true">/</span>
+                  <Link href={topicHref as any}>{learnTopic}</Link>
+                  <span aria-hidden="true">/</span>
+                  <span aria-current="page">{getLearnDisplayTitle(post)}</span>
+                </nav>
+                {readingTimeMinutes ? (
+                  <p className="learn-post-meta">
+                    <Clock aria-hidden="true" size={15} strokeWidth={1.8} />
+                    {readingTimeMinutes} min read
+                  </p>
+                ) : null}
+              </div>
               {post.feature_image ? (
                 <figure className="learn-hero-media">
                   <img
@@ -238,9 +235,6 @@ export default async function LearnPostPage({ params }: PageParams) {
               ) : null}
               <div className="learn-post-header">
                 <h1>{post.title}</h1>
-                {readingTimeMinutes ? (
-                  <p className="learn-post-meta">{readingTimeMinutes} min read</p>
-                ) : null}
                 {post.excerpt ? <p className="learn-post-excerpt">{post.excerpt}</p> : null}
               </div>
               {articleHtml ? (

@@ -1,6 +1,6 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";
-import type { GhostPost } from "@/lib/ghost";
+import { getReadingTimeMinutes, type GhostPost } from "@/lib/ghost";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 import { getLearnDisplayTitle } from "@/lib/learnTaxonomy";
 
@@ -15,6 +15,7 @@ export function LearnArticleCard({
   sizes = "(max-width: 560px) 100vw, (max-width: 900px) 50vw, 33vw"
 }: LearnArticleCardProps) {
   const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
+  const readingTimeMinutes = getReadingTimeMinutes(post);
 
   return (
     <Link href={`/learn/${post.slug}`} className={`learn-article-card${imageUrl ? " has-feature-artwork" : ""}`}>
@@ -32,8 +33,16 @@ export function LearnArticleCard({
       ) : null}
       <span className="learn-article-card-title">{getLearnDisplayTitle(post)}</span>
       {post.excerpt ? <span className="learn-article-card-excerpt">{post.excerpt}</span> : null}
-      <span className="learn-article-card-action">
-        Read guide <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
+      <span className="learn-article-card-footer">
+        <span className="learn-article-card-action">
+          Read guide <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
+        </span>
+        {readingTimeMinutes ? (
+          <span className="learn-article-card-reading-time">
+            <Clock aria-hidden="true" size={15} strokeWidth={1.8} />
+            {readingTimeMinutes} min read
+          </span>
+        ) : null}
       </span>
     </Link>
   );

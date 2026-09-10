@@ -142,6 +142,7 @@ async function enableGoogleTag(pathname: string, preferences: CookiePreferences)
   // the same loader.
   const configuredIds = new Set(window.__studioTakGoogleTagConfiguredIds ?? []);
   if (configuredIds.size === 0) gtag("js", new Date());
+  let configuredAnalytics = false;
 
   if (preferences.analytics && googleAnalyticsId) {
     // This flag is set when Analytics is declined. It must be reset every
@@ -151,8 +152,12 @@ async function enableGoogleTag(pathname: string, preferences: CookiePreferences)
     (window as unknown as Record<string, boolean>)[`ga-disable-${googleAnalyticsId}`] = false;
 
     if (!configuredIds.has(googleAnalyticsId)) {
-      gtag("config", googleAnalyticsId, { send_page_view: false });
+      // Let GA4 emit its native first page_view. Tag Assistant reports a
+      // deferred hit when the first view is sent as a standalone event before
+      // this dynamically loaded destination has finished configuring.
+      gtag("config", googleAnalyticsId);
       configuredIds.add(googleAnalyticsId);
+      configuredAnalytics = true;
     }
   }
 
@@ -162,8 +167,10 @@ async function enableGoogleTag(pathname: string, preferences: CookiePreferences)
   }
   window.__studioTakGoogleTagConfiguredIds = Array.from(configuredIds);
 
-  if (!preferences.analytics || !googleAnalyticsId) return;
+  if (!preferences.analytics || !googleAnalyticsId || configuredAnalytics) return;
 
+  // Subsequent App Router navigations need an explicit page view because the
+  // GA4 destination was already configured on the initial page load.
   gtag("event", "page_view", {
     send_to: googleAnalyticsId,
     page_location: window.location.href,

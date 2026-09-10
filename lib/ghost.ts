@@ -28,6 +28,18 @@ export type GhostPost = {
   tags?: GhostTag[];
 };
 
+export const getReadingTimeMinutes = (post: GhostPost): number | null => {
+  if (typeof post.reading_time === "number" && post.reading_time > 0) {
+    return Math.ceil(post.reading_time);
+  }
+
+  // Ghost normally supplies reading_time. The fallback keeps the label useful
+  // for older API responses and custom Ghost configurations.
+  const text = post.html?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  return Math.max(1, Math.ceil(text.split(" ").length / 225));
+};
+
 type GhostListResponse = {
   posts: GhostPost[];
 };
@@ -92,7 +104,8 @@ export async function getGhostPosts(tag?: string | null): Promise<GhostPost[]> {
       "feature_image_caption",
       "published_at",
       "updated_at",
-      "canonical_url"
+      "canonical_url",
+      "reading_time"
     ].join(",")
   });
   const normalizedTag = normalizeGhostTag(tag);
