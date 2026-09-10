@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { GhostPost } from "@/lib/ghost";
 import { LearnSidebar } from "@/components/LearnSidebar";
 import { LearnArticleCard } from "@/components/LearnArticleCard";
+import { LearnSeriesCard } from "@/components/LearnSeriesCard";
 import {
   getLearnGroupForPost,
   getLearnDisplayTitle,
@@ -14,6 +15,7 @@ import {
   postMatchesLearnSearch,
   type LearnGroupKey
 } from "@/lib/learnTaxonomy";
+import { getAvailableLearnSeries } from "@/lib/learnSeries";
 
 type LearnLibraryProps = {
   posts: GhostPost[];
@@ -119,9 +121,16 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
   );
   const activeGroupData = activeGroup === "all" ? null : LEARN_GROUPS.find((group) => group.key === activeGroup) ?? null;
   const activeTopicImage = activeTopic ? TOPIC_CARD_IMAGES[activeTopic] : undefined;
+  const availableSeries = getAvailableLearnSeries(posts);
+  const matchingSeries = availableSeries.filter((series) =>
+    [series.title, series.description, ...series.steps.map((step) => step.title)]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery)
+  );
   // Keep unpublished collections out of the library until they have content.
-  const visibleGroups = LEARN_GROUPS.filter((group) =>
-    posts.some((post) => getLearnGroupForPost(post) === group.key)
+  const visibleGroups = LEARN_GROUPS.filter(
+    (group) => posts.some((post) => getLearnGroupForPost(post) === group.key) || (group.key === "campfire" && availableSeries.length)
   );
   const topicsByGroup = visibleGroups.map((group) => {
     const topics = new Map<string, GhostPost[]>();
@@ -178,12 +187,25 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
                   <h2>Search results</h2>
                   <p>Showing matches for “{query.trim()}”.</p>
                 </div>
-                {visiblePosts.length ? (
-                  <div className="learn-library-results-list">
-                    {visiblePosts.map((post) => (
-                      <ArticleLink key={post.id} post={post} />
-                    ))}
-                  </div>
+                {matchingSeries.length || visiblePosts.length ? (
+                  <>
+                    {matchingSeries.length ? (
+                      <section className="learn-series-search-results" aria-label="Curated guide paths">
+                        <div className="learn-series-card-grid">
+                          {matchingSeries.map((series) => (
+                            <LearnSeriesCard key={series.slug} series={series} />
+                          ))}
+                        </div>
+                      </section>
+                    ) : null}
+                    {visiblePosts.length ? (
+                      <div className="learn-library-results-list">
+                        {visiblePosts.map((post) => (
+                          <ArticleLink key={post.id} post={post} />
+                        ))}
+                      </div>
+                    ) : null}
+                  </>
                 ) : (
                   <div className="learn-library-empty" role="status">
                     <h2>No guides found</h2>
@@ -235,6 +257,13 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
                       </div>
                       {group.description ? <p>{group.description}</p> : null}
                     </div>
+                    {group.key === "campfire" && availableSeries.length ? (
+                      <div className="learn-series-card-grid">
+                        {availableSeries.map((series) => (
+                          <LearnSeriesCard key={series.slug} series={series} />
+                        ))}
+                      </div>
+                    ) : null}
                     {group.topics.length ? (
                       <div className="learn-topic-card-grid">
                         {group.topics.map(({ topic }) => (

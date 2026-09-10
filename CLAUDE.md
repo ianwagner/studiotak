@@ -25,6 +25,7 @@ Ghost CMS provides blog/article content at `/learn/`. Articles are fetched via t
 
 - `/` — Home page (`app/page.tsx`)
 - `/learn/` — Ghost CMS article listing with tag filtering
+- `/learn/series/[slug]/` — Curated, ordered Learn guide Series
 - `/learn/[slug]/` — Individual Ghost article
 - `/[...slug]/` — Dynamic catch-all for Firestore-backed marketing pages (supports redirects)
 - `/admin/` — Refine.dev admin panel behind `app/admin/(protected)/` route group
@@ -159,6 +160,22 @@ Each article renders a **Campfire CTA** and **related posts** section. Ghost tag
 | No match | — | Defaults to `/campfire` |
 
 Tag maps are in `app/learn/[slug]/page.tsx` (`CAMPFIRE_PAGE_TAGS`, `CAMPFIRE_AUDIENCE_TAGS`). Related posts are ranked by tag overlap with the current article, limited to 3.
+
+### Learn Series
+
+The Learn landing page and sidebar include curated, step-by-step Series. The initial catalog and its fallback guide order live in `lib/learnSeries.ts`. A Series only appears once every guide in its sequence is published.
+
+Ghost can take over the guide membership and ordering without a code change. Add an **internal** tag to each guide in this form:
+
+```
+#series: Build a Creative Testing System | 1
+```
+
+Use the same title and increase the final number for each later guide. Optionally override its card/page description by adding this internal tag to any guide in that Series:
+
+```
+#series-description: Build a Creative Testing System | Learn what to test, how to read the results, and how to turn winners into your next round of creative.
+```
 
 ### Components Data Model
 

@@ -12,12 +12,14 @@ import {
   postMatchesLearnSearch,
   type LearnGroupKey
 } from "@/lib/learnTaxonomy";
+import { getAvailableLearnSeries } from "@/lib/learnSeries";
 
 type LearnSidebarProps = {
   posts: GhostPost[];
   activeGroup?: LearnGroupKey | "all";
   activeTopic?: string | null;
   currentPostSlug?: string;
+  currentSeriesSlug?: string;
   query?: string;
   onQueryChange?: (query: string) => void;
   onSelectTopic?: (group: LearnGroupKey, topic: string) => void;
@@ -28,6 +30,7 @@ export function LearnSidebar({
   activeGroup,
   activeTopic,
   currentPostSlug,
+  currentSeriesSlug,
   query,
   onQueryChange,
   onSelectTopic
@@ -39,8 +42,9 @@ export function LearnSidebar({
   const currentPost = currentPostSlug ? posts.find((post) => post.slug === currentPostSlug) : undefined;
   const currentGroup = currentPost ? getLearnGroupForPost(currentPost) : undefined;
   const currentTopic = currentPost && currentGroup ? getLearnTopicForPost(currentPost, currentGroup) : undefined;
-  const visibleGroups = LEARN_GROUPS.filter((group) =>
-    posts.some((post) => getLearnGroupForPost(post) === group.key)
+  const availableSeries = getAvailableLearnSeries(posts);
+  const visibleGroups = LEARN_GROUPS.filter(
+    (group) => posts.some((post) => getLearnGroupForPost(post) === group.key) || (group.key === "campfire" && availableSeries.length)
   );
 
   const postsByGroup = useMemo(
@@ -90,6 +94,19 @@ export function LearnSidebar({
               <BookOpen aria-hidden="true" size={17} strokeWidth={1.8} />
               {group.title}
             </p>
+            {group.key === "campfire" && availableSeries.length ? (
+              <div className="learn-sidebar-series-list">
+                {availableSeries.map((series) => (
+                  <Link
+                    className={`learn-sidebar-series-link ${currentSeriesSlug === series.slug ? "is-current" : ""}`}
+                    href={`/learn/series/${series.slug}`}
+                    key={series.slug}
+                  >
+                    <span>{series.title}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
             <div className="learn-sidebar-topics">
               {topicsByGroup[group.key].map((topic) => (
                 <details

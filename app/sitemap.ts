@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getGhostPosts } from "@/lib/ghost";
+import { getAvailableLearnSeries } from "@/lib/learnSeries";
 import { getPublishedPages, normalizeSlugPath } from "@/lib/pageContent";
 import { getSiteUrl } from "@/lib/siteUrl";
 
@@ -24,6 +25,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: new URL(`/learn/${post.slug}`, siteBase).toString(),
     lastModified: post.updated_at ?? post.published_at ?? new Date().toISOString()
   }));
+  const seriesEntries = getAvailableLearnSeries(posts).map((series) => ({
+    url: new URL(`/learn/series/${series.slug}`, siteBase).toString(),
+    lastModified: new Date().toISOString()
+  }));
 
   const learnEntry = hasLearnPage ? [] : [{ url: learnUrl, lastModified: new Date().toISOString() }];
   const founderEntry = { url: new URL("/founder", siteBase).toString(), lastModified: new Date().toISOString() };
@@ -31,5 +36,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: new URL("/terms-of-service", siteBase).toString(), lastModified: new Date().toISOString() },
     { url: new URL("/privacy-policy", siteBase).toString(), lastModified: new Date().toISOString() }
   ];
-  return [founderEntry, ...legalEntries, ...learnEntry, ...pageEntries, ...postEntries];
+  return [founderEntry, ...legalEntries, ...learnEntry, ...pageEntries, ...seriesEntries, ...postEntries];
 }

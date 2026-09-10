@@ -9,6 +9,7 @@ import { LearnTableOfContents } from "@/components/LearnTableOfContents";
 import { LearnArticleCard } from "@/components/LearnArticleCard";
 import { GhostArticleContent } from "@/components/GhostArticleContent";
 import { getLearnDisplayTitle, getLearnGroupForPost, getLearnTopicForPost, LEARN_GROUPS } from "@/lib/learnTaxonomy";
+import { getLearnSeriesMembership } from "@/lib/learnSeries";
 import { buildLearnTableOfContents } from "@/lib/learnTableOfContents";
 import { getNavigationItems } from "@/lib/navigation";
 import { getGhostPostBySlug, getGhostPosts, type GhostPost } from "@/lib/ghost";
@@ -158,6 +159,8 @@ export default async function LearnPostPage({ params }: PageParams) {
   const learnTopic = getLearnTopicForPost(post, learnGroup);
   const learnGroupTitle = LEARN_GROUPS.find((group) => group.key === learnGroup)?.title ?? "Learn";
   const topicHref = `/learn/topics/${learnGroup}/${encodeURIComponent(learnTopic)}`;
+  const seriesMembership = getLearnSeriesMembership(post.slug, allPosts);
+  const nextSeriesStep = seriesMembership?.series.steps[seriesMembership.stepIndex + 1];
 
   const siteBase = getSiteUrl();
   const articleJsonLd = {
@@ -232,8 +235,33 @@ export default async function LearnPostPage({ params }: PageParams) {
               </div>
             ) : null}
           </div>
-          {(relatedPosts.length > 0 || campfireLink) ? (
+          {(seriesMembership || relatedPosts.length > 0 || campfireLink) ? (
             <section className="learn-read-more">
+              {seriesMembership ? (
+                <section className="learn-series-progress" aria-labelledby="learn-series-progress-title">
+                  <p>
+                    Step {seriesMembership.stepIndex + 1} of {seriesMembership.series.steps.length}
+                  </p>
+                  <h2 id="learn-series-progress-title">{seriesMembership.series.title}</h2>
+                  <span className="learn-series-progress-current">
+                    You’re reading: {seriesMembership.series.steps[seriesMembership.stepIndex].title}
+                  </span>
+                  <div className="learn-series-progress-actions">
+                    <Link href={`/learn/series/${seriesMembership.series.slug}`} className="learn-series-progress-link">
+                      View all steps
+                    </Link>
+                    {nextSeriesStep ? (
+                      <Link href={`/learn/${nextSeriesStep.postSlug}`} className="learn-series-progress-next">
+                        Next: {nextSeriesStep.title}
+                      </Link>
+                    ) : (
+                      <Link href={`/learn/series/${seriesMembership.series.slug}`} className="learn-series-progress-next">
+                        Review steps
+                      </Link>
+                    )}
+                  </div>
+                </section>
+              ) : null}
               {campfireLink ? (
                 <div className="learn-campfire-cta">
                   <Link href={campfireLink.href as any} className="btn btn-primary">

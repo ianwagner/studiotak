@@ -9,6 +9,24 @@ Tags on a Ghost article control two things:
 1. **CTA routing** — The call-to-action on each article page links to a product landing page determined by the article's tags.
 2. **Article filtering** — The `/learn` listing page can filter articles by tag via the `?tag=` query parameter.
 3. **Related posts** — Articles that share more tags with the current article rank higher in the "Related" section.
+4. **Learn Series** — Internal Series tags can position a curated group of guides as ordered steps.
+
+## Learn Series Tags
+
+Use an **internal** tag on every guide that belongs to a Series. The title before the pipe must match exactly; the number after it determines the step order.
+
+```
+#series: Build a Creative Testing System | 1
+#series: Build a Creative Testing System | 2
+```
+
+The site automatically creates a `/learn/series/...` page and adds the Series to the Learn landing page and sidebar once all tagged guides are published. A guide can appear in more than one Series by using more than one Series tag.
+
+To set or revise the Series description, add this internal tag to any guide in the Series:
+
+```
+#series-description: Build a Creative Testing System | Learn what to test, how to read the results, and how to turn winners into your next round of creative.
+```
 
 ## CTA Tags
 
