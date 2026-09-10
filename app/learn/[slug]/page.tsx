@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LearnSidebar } from "@/components/LearnSidebar";
 import { LearnTableOfContents } from "@/components/LearnTableOfContents";
+import { LearnArticleCard } from "@/components/LearnArticleCard";
 import { GhostArticleContent } from "@/components/GhostArticleContent";
 import { getLearnDisplayTitle, getLearnGroupForPost, getLearnTopicForPost, LEARN_GROUPS } from "@/lib/learnTaxonomy";
 import { buildLearnTableOfContents } from "@/lib/learnTableOfContents";
@@ -245,36 +246,10 @@ export default async function LearnPostPage({ params }: PageParams) {
                   <div className="learn-recent-header">
                     <h3>Read more</h3>
                   </div>
-                  <div className="learn-recent-grid">
-                    {relatedPosts.map((related) => {
-                      const relPublished = formatDate(related.published_at);
-                      const imageUrl = related.feature_image ? getOptimizedGhostImageUrl(related.feature_image, 720) : null;
-                      const imageSrcSet = related.feature_image ? getGhostImageSrcSet(related.feature_image) : undefined;
-                      return (
-                        <Link key={related.id} href={`/learn/${related.slug}`} className="learn-recent-link">
-                          <article className="learn-recent-card">
-                            <div className="learn-media-link">
-                              {imageUrl ? (
-                                <img
-                                  src={imageUrl}
-                                  srcSet={imageSrcSet}
-                                  sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
-                                  alt={related.feature_image_alt ?? related.title}
-                                  loading="lazy"
-                                  decoding="async"
-                                />
-                              ) : (
-                                <div className="learn-media-placeholder">Studio Tak</div>
-                              )}
-                            </div>
-                            <div className="learn-card-body">
-                              {relPublished ? <span className="learn-date">{relPublished}</span> : null}
-                              <h4 className="learn-card-title">{getLearnDisplayTitle(related)}</h4>
-                            </div>
-                          </article>
-                        </Link>
-                      );
-                    })}
+                  <div className="learn-article-card-grid">
+                    {relatedPosts.map((related) => (
+                      <LearnArticleCard key={related.id} post={related} />
+                    ))}
                   </div>
                 </div>
               ) : null}
@@ -351,7 +326,7 @@ export default async function LearnPostPage({ params }: PageParams) {
   onScroll();
 })();`}
       </Script>
-      <SiteFooter navItems={navItems} />
+      <SiteFooter navItems={navItems} showTopBorder />
     </main>
   );
 }

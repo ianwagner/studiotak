@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { GhostPost } from "@/lib/ghost";
-import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 import { LearnSidebar } from "@/components/LearnSidebar";
+import { LearnArticleCard } from "@/components/LearnArticleCard";
 import {
   getLearnGroupForPost,
   getLearnDisplayTitle,
@@ -62,32 +62,6 @@ const TopicCard = ({
       ) : null}
       <span className="learn-topic-card-action">
         Explore guides <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
-      </span>
-    </Link>
-  );
-};
-
-const ArticleCard = ({ post }: { post: GhostPost }) => {
-  const imageUrl = post.feature_image ? getOptimizedGhostImageUrl(post.feature_image, 720) : null;
-
-  return (
-    <Link href={`/learn/${post.slug}`} className={`learn-article-card${imageUrl ? " has-feature-artwork" : ""}`}>
-      {imageUrl ? (
-        <span className="learn-article-card-media">
-          <img
-            src={imageUrl}
-            srcSet={getGhostImageSrcSet(post.feature_image!)}
-            sizes="(max-width: 560px) 100vw, (max-width: 900px) 50vw, 33vw"
-            alt={post.feature_image_alt ?? post.title}
-            loading="lazy"
-            decoding="async"
-          />
-        </span>
-      ) : null}
-      <span className="learn-article-card-title">{getLearnDisplayTitle(post)}</span>
-      {post.excerpt ? <span className="learn-article-card-excerpt">{post.excerpt}</span> : null}
-      <span className="learn-article-card-action">
-        Read guide <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
       </span>
     </Link>
   );
@@ -237,7 +211,7 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
                 {visiblePosts.length ? (
                   <div className="learn-article-card-grid">
                     {visiblePosts.map((post) => (
-                      <ArticleCard key={post.id} post={post} />
+                      <LearnArticleCard key={post.id} post={post} />
                     ))}
                   </div>
                 ) : (

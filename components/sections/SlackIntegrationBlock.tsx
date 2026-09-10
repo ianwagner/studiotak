@@ -83,18 +83,18 @@ export const SlackIntegrationBlockSection = ({ block, index }: { block: SlackInt
         display: block;
       }
       [data-slack-integration-section][data-slack-integration-theme="dark"] [data-slack-integration-content] {
-        border-color: rgba(255, 255, 255, .14);
-        background: #121218;
-        box-shadow: 0 18px 46px rgba(0, 0, 0, .32);
+        border-color: #484848;
+        background: #202020;
+        box-shadow: 0 18px 34px -16px rgba(0, 0, 0, 0.66), 0 8px 16px -12px rgba(0, 0, 0, 0.58);
       }
       [data-slack-integration-section][data-slack-integration-theme="dark"] [data-slack-integration-content] h2 {
-        color: #f6f6f1;
+        color: #f3f0f0;
       }
       [data-slack-integration-section][data-slack-integration-theme="dark"] [data-slack-integration-content] p {
-        color: #b3b3c2;
+        color: #a19d9d;
       }
       :root[data-theme="dark"] [data-slack-integration-content] {
-        box-shadow: 0 18px 46px rgba(0, 0, 0, .32);
+        box-shadow: var(--shadow-lg);
       }
     `}</style>
     <div data-slack-integration-content>

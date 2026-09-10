@@ -136,7 +136,7 @@
 .admin-shell .status-select.draft {
   background-color: var(--edit-color-10);
   border-color: color-mix(in srgb, var(--edit-color) 40%, var(--border-color-default));
-  color: #8a5a00;
+  color: var(--edit-text);
 }
 
 .admin-shell h1 {
