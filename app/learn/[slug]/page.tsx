@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LearnSidebar } from "@/components/LearnSidebar";
 import { LearnTableOfContents } from "@/components/LearnTableOfContents";
+import { GhostArticleContent } from "@/components/GhostArticleContent";
 import { getLearnDisplayTitle, getLearnGroupForPost, getLearnTopicForPost, LEARN_GROUPS } from "@/lib/learnTaxonomy";
 import { buildLearnTableOfContents } from "@/lib/learnTableOfContents";
 import { getNavigationItems } from "@/lib/navigation";
@@ -221,7 +222,7 @@ export default async function LearnPostPage({ params }: PageParams) {
                 {post.excerpt ? <p className="learn-post-excerpt">{post.excerpt}</p> : null}
               </div>
               {articleHtml ? (
-                <div className="ghost-content" dangerouslySetInnerHTML={{ __html: articleHtml }} />
+                <GhostArticleContent html={articleHtml} />
               ) : null}
             </article>
             {tableOfContents.length ? (
