@@ -108,7 +108,12 @@ function addExternalScript(id: string, src: string) {
 
 function getGtag() {
   window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer?.push(args));
+  // Match Google's canonical gtag queue shape. gtag.js consumes the native
+  // `arguments` object; pushing a rest-parameter array can leave commands
+  // recognised by Tag Assistant but deferred instead of delivered.
+  window.gtag = window.gtag || function gtag() {
+    window.dataLayer?.push(arguments);
+  };
   return window.gtag;
 }
 
