@@ -13,7 +13,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
   }, [error]);
 
   return (
-    <main className="route-error-page" role="alert">
+    <main id="main-content" tabIndex={-1} className="route-error-page" role="alert">
       <p>Something went wrong</p>
       <h1>Let&apos;s try that again.</h1>
       <button type="button" onClick={reset} className="btn">

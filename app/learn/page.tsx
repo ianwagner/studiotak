@@ -98,14 +98,16 @@ export default async function LearnPage() {
   };
 
   return (
-    <main>
+    <>
       <SiteHeader navItems={navItems} />
-      <LearnLibrary posts={posts} />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
-      />
+      <main id="main-content" tabIndex={-1}>
+        <LearnLibrary posts={posts} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
+        />
+      </main>
       <SiteFooter navItems={navItems} showTopBorder />
-    </main>
+    </>
   );
 }

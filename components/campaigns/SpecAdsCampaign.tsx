@@ -278,7 +278,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
   const whyExamples = featuredExamples.filter((example) => !heroExampleIds.has(example.id)).slice(0, 3);
 
   return (
-    <main className={styles.page}>
+    <main id="main-content" tabIndex={-1} className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.shell}>
           <div className={styles.heroGrid}>
@@ -408,7 +408,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                   <div className={styles.captchaWrap}>
                     <span className={styles.captchaLabel}>Security check</span>
                     <div ref={captchaContainerRef} />
-                    {securityMessage ? <p className={styles.captchaError}>{securityMessage}</p> : null}
+                    {securityMessage ? <p className={styles.captchaError} role="alert">{securityMessage}</p> : null}
                   </div>
                   {submitState === "error" ? <p className={styles.submitError} role="alert">{submitError}</p> : null}
                   <button className={styles.submitButton} type="submit" disabled={submitState === "submitting" || !captchaToken}>

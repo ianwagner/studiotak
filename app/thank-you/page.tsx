@@ -32,7 +32,7 @@ export default async function ThankYouPage() {
   return (
     <>
       <SiteHeader navItems={navItems} />
-      <main className={styles.page}>
+      <main id="main-content" tabIndex={-1} className={styles.page}>
         <section className={styles.confirmationSection} aria-labelledby="confirmation-heading">
           <div className={styles.card}>
             <div className={styles.successMessage} role="status">

@@ -58,10 +58,12 @@ export default async function LearnTopicPage({ params }: TopicPageProps) {
   if (!pageData || !hasTopic) notFound();
 
   return (
-    <main>
+    <>
       <SiteHeader navItems={navItems} />
-      <LearnLibrary posts={posts} initialGroup={group} initialTopic={topic} />
+      <main id="main-content" tabIndex={-1}>
+        <LearnLibrary posts={posts} initialGroup={group} initialTopic={topic} />
+      </main>
       <SiteFooter navItems={navItems} showTopBorder />
-    </main>
+    </>
   );
 }

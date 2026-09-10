@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { SlackIntegrationBlock } from "@/lib/admin/pages";
 
 const SlackLogo = ({ size = 48, title }: { size?: number; title?: string }) => (
@@ -20,15 +20,18 @@ const SlackLogo = ({ size = 48, title }: { size?: number; title?: string }) => (
   </svg>
 );
 
-export const SlackIntegrationBlockSection = ({ block, index }: { block: SlackIntegrationBlock; index: number }) => (
-  <motion.section
+export const SlackIntegrationBlockSection = ({ block, index }: { block: SlackIntegrationBlock; index: number }) => {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.section
     key={block.id ?? index}
     data-slack-integration-section
     data-slack-integration-theme={block.enableDarkModeOnScroll ? "dark" : undefined}
-    initial={{ opacity: 0, y: 22 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.18 }}
-    transition={{ duration: 0.5, ease: "easeOut" }}
+    initial={shouldReduceMotion ? false : { opacity: 0, y: 22 }}
+    whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+    viewport={shouldReduceMotion ? undefined : { once: true, amount: 0.18 }}
+    transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.5, ease: "easeOut" }}
   >
     <style>{`
       [data-slack-integration-section] {
@@ -105,5 +108,6 @@ export const SlackIntegrationBlockSection = ({ block, index }: { block: SlackInt
       <h2>{block.heading}</h2>
       <p>{block.body}</p>
     </div>
-  </motion.section>
-);
+    </motion.section>
+  );
+};

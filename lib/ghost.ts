@@ -99,6 +99,7 @@ export async function getGhostPosts(tag?: string | null): Promise<GhostPost[]> {
       "title",
       "slug",
       "excerpt",
+      "html",
       "feature_image",
       "feature_image_alt",
       "feature_image_caption",
@@ -113,7 +114,11 @@ export async function getGhostPosts(tag?: string | null): Promise<GhostPost[]> {
     params.set("filter", `tag:${normalizedTag}`);
   }
   const data = await fetchGhost<GhostListResponse>("posts/", params);
-  return data?.posts ?? [];
+  return (data?.posts ?? []).map((post) => {
+    const readingTimeMinutes = getReadingTimeMinutes(post);
+    const { html: _html, ...summary } = post;
+    return readingTimeMinutes ? { ...summary, reading_time: readingTimeMinutes } : summary;
+  });
 }
 
 export async function getGhostPostBySlug(slug: string): Promise<GhostPost | null> {

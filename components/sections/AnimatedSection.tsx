@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { CSSProperties, PropsWithChildren } from "react";
 import { animationPresets, defaultAnimationPreset } from "./animationPresets";
 
@@ -19,10 +19,11 @@ export function AnimatedSection({
   variant?: "card" | "plain";
 }>) {
   const preset = animationPresets[defaultAnimationPreset];
+  const shouldReduceMotion = useReducedMotion();
   const baseClass = variant === "card" ? "card" : "";
   const composedClassName = [baseClass, className].filter(Boolean).join(" ");
 
-  if (!animated) {
+  if (!animated || shouldReduceMotion) {
     return (
       <section className={composedClassName} style={style}>
         {children}
@@ -94,6 +95,23 @@ export function Pill({ children }: PropsWithChildren) {
 
 export function Stat({ label, value }: { label: string; value: string }) {
   const preset = animationPresets[defaultAnimationPreset];
+  const shouldReduceMotion = useReducedMotion();
+  const style: CSSProperties = {
+    padding: "16px",
+    borderRadius: 14,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.02)",
+    display: "grid",
+    gap: 8
+  };
+  const content = (
+    <>
+      <span style={{ color: "var(--muted)", fontSize: "var(--font-size-label)" }}>{label}</span>
+      <span style={{ fontSize: "var(--font-size-title-md)", fontWeight: 700 }}>{value}</span>
+    </>
+  );
+
+  if (shouldReduceMotion) return <div style={style}>{content}</div>;
 
   return (
     <motion.div
@@ -102,17 +120,9 @@ export function Stat({ label, value }: { label: string; value: string }) {
       whileInView="visible"
       viewport={{ once: true }}
       custom={Math.random() * 2}
-      style={{
-        padding: "16px",
-        borderRadius: 14,
-        border: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(255,255,255,0.02)",
-        display: "grid",
-        gap: 8
-      }}
+      style={style}
     >
-      <span style={{ color: "var(--muted)", fontSize: "var(--font-size-label)" }}>{label}</span>
-      <span style={{ fontSize: "var(--font-size-title-md)", fontWeight: 700 }}>{value}</span>
+      {content}
     </motion.div>
   );
 }

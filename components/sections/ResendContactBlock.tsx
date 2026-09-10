@@ -257,7 +257,7 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
             border: 0;
             border-radius: 12px;
             background: var(--accent);
-            color: #fff;
+            color: var(--accent-foreground);
             font: inherit;
             font-size: var(--font-size-body);
             font-weight: 700;

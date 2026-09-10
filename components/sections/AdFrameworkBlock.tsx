@@ -228,7 +228,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           padding: 5px 8px;
           border: 1px solid rgba(255, 112, 11, 0.42);
           border-radius: 999px;
-          color: #d85d00;
+          color: var(--accent-callout-text);
           background: #fff7ed;
           box-shadow: 0 3px 10px rgba(255, 112, 11, 0.12);
           font-family: var(--font-primary, system-ui, sans-serif);
@@ -243,7 +243,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           right: calc(100% + 12px);
         }
         .ad-review-hotspot-hint-arrow {
-          color: #ff700b;
+          color: var(--accent-text);
           font-size: 15px;
           font-weight: 700;
           line-height: .75;
@@ -259,7 +259,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           text-align: center;
         }
         [data-ad-framework-eyebrow] {
-          color: var(--accent);
+          color: var(--accent-text);
           font-family: inherit;
           font-size: 11px;
           font-weight: 700;
@@ -415,7 +415,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           padding: 6px 16px;
           border: 0;
           border-radius: 999px;
-          color: #fff;
+          color: var(--accent-foreground);
           background: var(--accent-color);
           font-family: var(--font-primary, system-ui, sans-serif);
           font-size: 12px;
@@ -480,7 +480,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           align-items: center;
           gap: 6px;
           margin-top: 10px;
-          color: #ff700b;
+          color: var(--accent-text);
           font-size: 13px;
           font-weight: 600;
           line-height: 1.25;
@@ -546,7 +546,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           padding: 5px 8px;
           border: 1px solid rgba(255, 112, 11, 0.42);
           border-radius: 999px;
-          color: #d85d00;
+          color: var(--accent-callout-text);
           background: #fff7ed;
           box-shadow: 0 3px 10px rgba(255, 112, 11, 0.12);
           font-family: var(--font-primary, system-ui, sans-serif);
@@ -563,7 +563,7 @@ export const AdFrameworkBlockSection = ({ block, index }: { block: AdFrameworkBl
           animation-play-state: paused;
         }
         [data-ad-framework-inspiration-hotspot] span {
-          color: #ff700b;
+          color: var(--accent-text);
           font-size: 15px;
           font-weight: 700;
           line-height: .75;

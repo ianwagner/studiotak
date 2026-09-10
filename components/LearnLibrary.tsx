@@ -169,6 +169,7 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
           <div className="learn-library-hero">
             <h1 id="learn-title">How can we help?</h1>
             <label className="learn-search" htmlFor="learn-main-search">
+              <span className="visually-hidden">Search Learn guides</span>
               <Search aria-hidden="true" size={20} strokeWidth={1.8} />
               <input
                 id="learn-main-search"
@@ -250,7 +251,12 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
             ) : (
               <section className="learn-collection-overview" aria-label="Browse Learn topics">
                 {topicsByGroup.map((group) => (
-                  <section className="learn-collection-overview-section" key={group.key} aria-labelledby={`learn-collection-${group.key}`}>
+                  <section
+                    className="learn-collection-overview-section"
+                    id={group.key === "learn" ? "learn" : "references"}
+                    key={group.key}
+                    aria-labelledby={`learn-collection-${group.key}`}
+                  >
                     <div className="learn-collection-overview-heading">
                       <div>
                         <h2 id={`learn-collection-${group.key}`}>{group.title}</h2>

@@ -1612,7 +1612,7 @@ const renderHeroBlock = (
 };
 
 const renderAnimatedHeadlineBlock = (block: AnimatedHeadlineBlock, index: number, headerHeight: number) => (
-  <AnimatedHeadline key={block.id ?? index} block={block} headerOffset={headerHeight} />
+  <AnimatedHeadline key={block.id ?? index} block={block} headerOffset={headerHeight} headingLevel={index === 0 ? 1 : 2} />
 );
 
 const renderDividerBlock = (block: DividerBlock, index: number) => {
@@ -2469,7 +2469,7 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
             text-align: left;
             font-weight: 700;
             font-family: var(--font-sans, "Rubik", system-ui, -apple-system, sans-serif);
-            color: #ffffff;
+            color: var(--accent-foreground);
             background: var(--accent);
             border-radius: 12px;
             border-width: 0px;

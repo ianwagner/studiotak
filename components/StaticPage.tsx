@@ -47,7 +47,7 @@ export async function StaticPage({ title, lastUpdated, children }: StaticPagePro
   return (
     <>
       <SiteHeader navItems={navItems} />
-      <main className={styles.main}>
+      <main id="main-content" tabIndex={-1} className={styles.main}>
         <div className={styles.page}>
           <header className={styles.header}>
             <h1 className={styles.title}>{title}</h1>

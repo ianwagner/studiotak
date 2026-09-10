@@ -12,17 +12,18 @@ export default async function NotFoundPage() {
   const iconUrl = settings.notFoundIconUrl;
 
   return (
-    <main>
+    <>
       <SiteHeader navItems={navItems} />
-      <div
-        className="container"
-        style={{
-          minHeight: "calc(100vh - var(--header-height) - 240px)",
-          display: "grid",
-          alignItems: "center",
-          padding: "96px 0 120px"
-        }}
-      >
+      <main id="main-content" tabIndex={-1}>
+        <div
+          className="container"
+          style={{
+            minHeight: "calc(100vh - var(--header-height) - 240px)",
+            display: "grid",
+            alignItems: "center",
+            padding: "96px 0 120px"
+          }}
+        >
         <div style={{ display: "grid", gap: 20, justifyItems: "center", textAlign: "center" }}>
           <div style={{ color: "var(--accent-strong)" }}>
             {iconUrl ? (
@@ -77,8 +78,9 @@ export default async function NotFoundPage() {
             Go back home
           </Link>
         </div>
-      </div>
+        </div>
+      </main>
       <SiteFooter navItems={navItems} />
-    </main>
+    </>
   );
 }

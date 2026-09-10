@@ -78,6 +78,7 @@ export function LearnSidebar({
   return (
     <aside className="learn-library-sidebar">
       <label className="learn-sidebar-search" htmlFor="learn-sidebar-search">
+        <span className="visually-hidden">Search Learn guides</span>
         <Search aria-hidden="true" size={16} strokeWidth={1.8} />
         <input
           id="learn-sidebar-search"
@@ -90,10 +91,14 @@ export function LearnSidebar({
       <nav className="learn-collection-nav" aria-label="Learn collections">
         {visibleGroups.map((group) => (
           <div className="learn-sidebar-collection" key={group.key}>
-            <p className="learn-sidebar-collection-heading">
+            <Link
+              className="learn-sidebar-collection-heading"
+              href={`/learn#${group.key === "learn" ? "learn" : "references"}`}
+              onClick={() => updateQuery("")}
+            >
               <BookOpen aria-hidden="true" size={17} strokeWidth={1.8} />
               {group.title}
-            </p>
+            </Link>
             {group.key === "campfire" && availableSeries.length ? (
               <div className="learn-sidebar-series-list">
                 {availableSeries.map((series) => (

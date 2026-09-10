@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { animationPresets } from "@/components/sections/animationPresets";
 import styles from "./founder.module.css";
 
@@ -20,14 +20,17 @@ const handleEmailClick = (e: React.MouseEvent) => {
 /*  Main content                                                       */
 /* ------------------------------------------------------------------ */
 export default function FounderContent() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <div className={styles.page}>
       <motion.div
         className={styles.card}
-        initial="hidden"
-        animate="visible"
+        initial={shouldReduceMotion ? false : "hidden"}
+        animate={shouldReduceMotion ? false : "visible"}
         variants={lift.container}
       >
+        <h1 className={styles.title}>A note from Ian Wagner</h1>
         <motion.p className={styles.greeting} variants={lift.item}>
           Hey, thank you for finding this.
         </motion.p>

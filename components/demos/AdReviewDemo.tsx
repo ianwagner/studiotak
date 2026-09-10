@@ -255,7 +255,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
           gap: 6,
           fontSize: 13,
           fontWeight: 600,
-          color: "#ff700b",
+          color: "var(--accent-text)",
           textDecoration: "none",
           transition: "opacity 0.15s",
         }}
@@ -308,7 +308,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
         padding: 5px 8px;
         border: 1px solid rgba(255, 112, 11, 0.42);
         border-radius: 999px;
-        color: #d85d00;
+        color: var(--accent-callout-text);
         background: #fff7ed;
         box-shadow: 0 3px 10px rgba(255, 112, 11, 0.12);
         font-size: 11px;
@@ -329,7 +329,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
       }
 
       .ad-review-hotspot-hint-arrow {
-        color: #ff700b;
+        color: var(--accent-text);
         font-size: 15px;
         font-weight: 700;
         line-height: 0.75;
@@ -413,7 +413,7 @@ export default function AdReviewDemo({ block }: { block: ProductDemoBlock }) {
                     border: "1px solid",
                     borderColor: activeVersion === i ? "#ff700b" : popoverBorder,
                     background: activeVersion === i ? (isDark ? "rgba(255,112,11,0.12)" : "#fff5ee") : card,
-                    color: activeVersion === i ? "#ff700b" : fgSecondary,
+                    color: activeVersion === i ? "var(--accent-text)" : fgSecondary,
                     cursor: "pointer",
                     transition: "all 0.12s",
                   }}

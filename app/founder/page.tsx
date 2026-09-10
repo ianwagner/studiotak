@@ -61,7 +61,7 @@ export default async function FounderPage() {
   return (
     <>
       <SiteHeader navItems={navItems} />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <FounderContent />
       </main>
       <SiteFooter navItems={navItems} />

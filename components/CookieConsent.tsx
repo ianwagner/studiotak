@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   COOKIE_PREFERENCES_NAME,
@@ -250,6 +250,23 @@ export function CookieConsent() {
   const [preferences, setPreferences] = useState<CookiePreferences>(defaultPreferences);
   const [hasMadeChoice, setHasMadeChoice] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const preferencesRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusedElementRef = useRef<HTMLElement | null>(null);
+
+  const openPreferences = useCallback(() => {
+    if (isAdminRoute || !hasOptionalTracking) return;
+    if (!preferencesOpen && document.activeElement instanceof HTMLElement) {
+      previousFocusedElementRef.current = document.activeElement;
+    }
+    setPreferences(readStoredPreferences() ?? defaultPreferences);
+    setPreferencesOpen(true);
+  }, [isAdminRoute, preferencesOpen]);
+
+  const closePreferences = useCallback(() => {
+    setPreferencesOpen(false);
+  }, []);
 
   useEffect(() => {
     if (isAdminRoute || !hasOptionalTracking) return;
@@ -262,14 +279,80 @@ export function CookieConsent() {
   }, [isAdminRoute]);
 
   useEffect(() => {
-    const openPreferences = () => {
-      if (isAdminRoute || !hasOptionalTracking) return;
-      setPreferences(readStoredPreferences() ?? defaultPreferences);
-      setPreferencesOpen(true);
-    };
     window.addEventListener(OPEN_COOKIE_PREFERENCES_EVENT, openPreferences);
     return () => window.removeEventListener(OPEN_COOKIE_PREFERENCES_EVENT, openPreferences);
-  }, [isAdminRoute]);
+  }, [openPreferences]);
+
+  useEffect(() => {
+    if (!preferencesOpen) return;
+
+    const backdrop = backdropRef.current;
+    const dialog = preferencesRef.current;
+    if (!backdrop || !dialog) return;
+
+    const backgroundElements = Array.from(document.body.children).filter((element) => element !== backdrop);
+    const backgroundState = backgroundElements.map((element) => ({
+      element,
+      ariaHidden: element.getAttribute("aria-hidden"),
+      inert: (element as HTMLElement).inert
+    }));
+
+    backgroundElements.forEach((element) => {
+      (element as HTMLElement).inert = true;
+      element.setAttribute("aria-hidden", "true");
+    });
+
+    const focusDialog = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const getFocusableElements = () => Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((element) => !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true");
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closePreferences();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const focusableElements = getFocusableElements();
+      if (!focusableElements.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey && (activeElement === first || !dialog.contains(activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (activeElement === last || !dialog.contains(activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusDialog);
+      document.removeEventListener("keydown", handleKeyDown);
+      backgroundState.forEach(({ element, ariaHidden, inert }) => {
+        (element as HTMLElement).inert = inert;
+        if (ariaHidden === null) element.removeAttribute("aria-hidden");
+        else element.setAttribute("aria-hidden", ariaHidden);
+      });
+      const previousFocusedElement = previousFocusedElementRef.current;
+      if (previousFocusedElement?.isConnected) {
+        window.requestAnimationFrame(() => previousFocusedElement.focus());
+      }
+    };
+  }, [closePreferences, preferencesOpen]);
 
   useEffect(() => {
     if (isAdminRoute || !hasMadeChoice || !googleTagId) return;
@@ -313,7 +396,7 @@ export function CookieConsent() {
     savePreferences(nextPreferences);
     setPreferences(nextPreferences);
     setHasMadeChoice(true);
-    setPreferencesOpen(false);
+    closePreferences();
   };
 
   const rejectAll = () => commitPreferences(defaultPreferences);
@@ -331,24 +414,24 @@ export function CookieConsent() {
           <div className={styles.actions}>
             <button type="button" className={styles.button} onClick={acceptAll}>Accept all</button>
             <button type="button" className={styles.buttonSecondary} onClick={rejectAll}>Reject non-essential</button>
-            <button type="button" className={styles.manage} onClick={() => setPreferencesOpen(true)}>Manage choices</button>
+            <button type="button" className={styles.manage} onClick={openPreferences}>Manage choices</button>
           </div>
         </section>
       ) : null}
 
       {preferencesOpen ? (
-        <div className={styles.backdrop} onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setPreferencesOpen(false);
+        <div ref={backdropRef} className={styles.backdrop} onMouseDown={(event) => {
+          if (event.target === event.currentTarget) closePreferences();
         }}>
-          <section className={styles.preferences} role="dialog" aria-modal="true" aria-labelledby="cookie-preferences-title">
+          <section ref={preferencesRef} className={styles.preferences} role="dialog" aria-modal="true" aria-labelledby="cookie-preferences-title" aria-describedby="cookie-preferences-description" tabIndex={-1}>
             <div className={styles.preferencesHeader}>
               <div>
                 <p className={styles.eyebrow}>Your privacy</p>
                 <h2 id="cookie-preferences-title" className={styles.title}>Cookie preferences</h2>
               </div>
-              <button type="button" className={styles.close} onClick={() => setPreferencesOpen(false)} aria-label="Close cookie preferences">×</button>
+              <button ref={closeButtonRef} type="button" className={styles.close} onClick={closePreferences} aria-label="Close cookie preferences">×</button>
             </div>
-            <p className={styles.copy}>
+            <p id="cookie-preferences-description" className={styles.copy}>
               Essential technologies keep the site secure and remember this choice. Analytics and marketing remain off unless you choose to enable them.
             </p>
             <div className={styles.categories}>

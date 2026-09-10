@@ -133,10 +133,16 @@ export async function SiteFooter({ navItems: providedNav, showTopBorder = false 
 
         <div className="footer-bottom">
           <div className="footer-legal">
-            <span>© {year} Studio Tak. All rights reserved.</span>
-            <Link href={"/terms-of-service" as Route} className="footer-legal-link">Terms of Service</Link>
-            <Link href={"/privacy-policy" as Route} className="footer-legal-link">Privacy Policy</Link>
-            <CookiePreferencesButton />
+            <div className="footer-legal-copy">
+              <span>© {year} Studio Tak. All rights reserved.</span>
+              <div className="footer-legal-links">
+                <Link href={"/terms-of-service" as Route} className="footer-legal-link">Terms of Service</Link>
+                <Link href={"/privacy-policy" as Route} className="footer-legal-link">Privacy Policy</Link>
+              </div>
+            </div>
+            <div className="footer-preferences">
+              <CookiePreferencesButton />
+            </div>
           </div>
           <div className="footer-cta">
             <Link href={"/campfire/demo" as Route} className="footer-cta-link">

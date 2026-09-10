@@ -16,6 +16,16 @@
   padding: clamp(32px, 5vw, 56px) 0;
 }
 
+.title {
+  margin: 0 0 24px;
+  color: var(--text);
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-title-3xl);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
 .greeting {
   font-size: var(--font-size-title-md);
   font-weight: 500;

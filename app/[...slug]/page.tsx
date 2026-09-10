@@ -100,24 +100,26 @@ export default async function MarketingPage({ params }: PageParams) {
   const blockSequence = blocks.map((b) => b.type).join(" → ");
 
   return (
-    <main>
+    <>
       <SiteHeader navItems={navItems} />
-      <div
-        className="container"
-        style={{
-          padding: `${pagePaddingTop}px 0 ${pagePaddingBottom}px`,
-          display: "grid",
-          gap: 32
-        }}
-      >
-        <BlocksRenderer blocks={blocks} deferOffscreenRendering={slugPath === "/campfire"} />
-        {jsonLd ? (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-          />
-        ) : null}
-      </div>
+      <main id="main-content" tabIndex={-1}>
+        <div
+          className="container"
+          style={{
+            padding: `${pagePaddingTop}px 0 ${pagePaddingBottom}px`,
+            display: "grid",
+            gap: 32
+          }}
+        >
+          <BlocksRenderer blocks={blocks} deferOffscreenRendering={slugPath === "/campfire"} />
+          {jsonLd ? (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+          ) : null}
+        </div>
+      </main>
       <SiteFooter navItems={navItems} />
       <DevDataSourceBanner
         source={source}
@@ -126,6 +128,6 @@ export default async function MarketingPage({ params }: PageParams) {
         pageStatus={page.status}
         updatedAt={page.updatedAt}
       />
-    </main>
+    </>
   );
 }

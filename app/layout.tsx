@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { CookieConsent } from "@/components/CookieConsent";
 import { HeaderHeightSync } from "@/components/HeaderHeightSync";
+import { MotionPreferences } from "@/components/MotionPreferences";
 import { getSiteUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
@@ -82,9 +83,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={rubik.className}>
-        <HeaderHeightSync />
-        {children}
-        <CookieConsent />
+        <a className="skip-link" href="#main-content">Skip to main content</a>
+        <MotionPreferences>
+          <HeaderHeightSync />
+          {children}
+          <CookieConsent />
+        </MotionPreferences>
       </body>
     </html>
   );

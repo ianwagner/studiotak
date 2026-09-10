@@ -190,13 +190,14 @@ export default async function LearnPostPage({ params }: PageParams) {
   };
 
   return (
-    <main>
+    <>
       <SiteHeader navItems={navItems} />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
-      />
-      <div className="container learn-detail-shell">
+      <main id="main-content" tabIndex={-1}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        />
+        <div className="container learn-detail-shell">
         <LearnSidebar posts={allPosts} currentPostSlug={post.slug} />
         <div className="learn-detail-content">
           <div className={`learn-detail-reading-layout${tableOfContents.length ? " has-toc" : ""}`}>
@@ -297,7 +298,7 @@ export default async function LearnPostPage({ params }: PageParams) {
             </section>
           ) : null}
         </div>
-      </div>
+        </div>
       <Script id="ghost-toggle-fallback" strategy="afterInteractive">
         {`document.addEventListener("click", (event) => {
   const heading = event.target.closest(".kg-toggle-heading");
@@ -367,7 +368,8 @@ export default async function LearnPostPage({ params }: PageParams) {
   onScroll();
 })();`}
       </Script>
+      </main>
       <SiteFooter navItems={navItems} showTopBorder />
-    </main>
+    </>
   );
 }

@@ -29,8 +29,8 @@
 .hero h1 em { color: var(--orange); font-weight: 300; }
 .heroLead { max-width: 490px; margin: 34px 0 28px; color: var(--text-body); font-size: 18px; line-height: 1.55; }
 .heroActions { display: flex; flex-wrap: wrap; gap: 10px; }
-.primaryButton, .secondaryButton, .submitButton { display: inline-flex; align-items: center; justify-content: center; min-height: 2.7rem; gap: 9px; padding: 10px 15px; border: 1px solid var(--orange); border-radius: var(--radius-md); background: var(--orange); box-shadow: var(--shadow-sm); color: #fff; font: inherit; font-size: var(--font-size-button); font-weight: 600; letter-spacing: 0; text-decoration: none; text-transform: none; transition: background 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
-.page a.primaryButton:hover { color: #fff; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.primaryButton, .secondaryButton, .submitButton { display: inline-flex; align-items: center; justify-content: center; min-height: 2.7rem; gap: 9px; padding: 10px 15px; border: 1px solid var(--orange); border-radius: var(--radius-md); background: var(--orange); box-shadow: var(--shadow-sm); color: var(--accent-foreground); font: inherit; font-size: var(--font-size-button); font-weight: 600; letter-spacing: 0; text-decoration: none; text-transform: none; transition: background 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
+.page a.primaryButton:hover { color: var(--accent-foreground); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .submitButton:not(:disabled):hover { background: var(--orange-dark); border-color: var(--orange-dark); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .secondaryButton { border-color: var(--border-strong); background: var(--surface-card); color: var(--text-body); }
 .page a.secondaryButton:hover { box-shadow: var(--shadow-sm); color: var(--text-body); transform: translateY(-1px); }
@@ -49,7 +49,7 @@
 .adCardTwo { transform: translate3d(0, var(--parallax-two, 0px), 0) rotate(5deg); }
 .adCardThree { transform: translate3d(0, var(--parallax-three, 0px), 0) rotate(-3deg); }
 .messageCardOne { transform: translate3d(0, var(--parallax-two, 0px), 0) rotate(3deg); background: var(--orange); }
-.messageCardOne span { color: #fff0e5; }
+.messageCardOne span { color: var(--accent-muted-foreground); }
 .messageCardTwo { transform: translate3d(0, var(--parallax-three, 0px), 0) rotate(-3deg); }
 .messageCardThree { transform: translate3d(0, var(--parallax-one, 0px), 0) rotate(4deg); background: #e9dfd1; color: #171411; border-color: rgba(23,20,17,.16); }
 .messageCardThree span { color: var(--orange); }
@@ -82,7 +82,7 @@
 .formCard label { display: grid; gap: 8px; color: var(--campaign-form-label); font-size: 13px; font-weight: 700; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .formCard input, .formCard select, .formCard textarea { width: 100%; appearance: none; padding: 12px 14px; border: 1px solid var(--campaign-form-field-border); border-radius: 10px; background: transparent; color: var(--campaign-form-label); font: inherit; font-size: 15px; font-weight: 500; line-height: 1.35; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease; }
-.formCard input::placeholder, .formCard textarea::placeholder, .formCard select:invalid { color: #817971; opacity: 1; }
+.formCard input::placeholder, .formCard textarea::placeholder, .formCard select:invalid { color: var(--form-placeholder); opacity: 1; }
 .formCard select { cursor: pointer; background: linear-gradient(45deg, transparent 50%, #554d46 50%) calc(100% - 18px) 50%/5px 5px no-repeat, linear-gradient(135deg, #554d46 50%, transparent 50%) calc(100% - 13px) 50%/5px 5px no-repeat; }
 .formCard textarea { resize: none; min-height: 75px; }
 .formCard input:focus, .formCard select:focus, .formCard textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255, 112, 11, .14); }

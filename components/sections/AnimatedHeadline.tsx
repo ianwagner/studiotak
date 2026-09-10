@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, motion, useInView, useMotionValue, useMotionValueEvent, useScroll, useSpring } from "framer-motion";
+import { animate, motion, useInView, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { AnimatedHeadlineBlock } from "@/lib/admin/pages";
@@ -250,17 +250,20 @@ function AnimatedTextContent({
 
 export function AnimatedHeadline({
   block,
-  headerOffset = 0
+  headerOffset = 0,
+  headingLevel = 2
 }: {
   block: AnimatedHeadlineBlock;
   headerOffset?: number;
+  headingLevel?: 1 | 2;
 }) {
   const { headline, subtext, animationMode, animationStyle, freezeOnScroll, enableDarkModeOnScroll } = block;
-  const enableThemeShift = !!enableDarkModeOnScroll;
+  const shouldReduceMotion = useReducedMotion();
+  const enableThemeShift = !!enableDarkModeOnScroll && !shouldReduceMotion;
   const viewportWidth = useViewportWidth();
   const containerRef = useRef<HTMLElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const freezeEnabled = freezeOnScroll;
+  const freezeEnabled = freezeOnScroll && !shouldReduceMotion;
   const scrollOffsets: NonNullable<Parameters<typeof useScroll>[0]>["offset"] =
     freezeEnabled ? ["start 90%", "end start"] : ["start 80%", "end 30%"];
   const { scrollYProgress } = useScroll({
@@ -275,18 +278,20 @@ export function AnimatedHeadline({
   const [progressValue, setProgressValue] = useState(0);
 
   useEffect(() => {
-    manualProgress.set(0);
-  }, [headline, animationStyle, animationMode, manualProgress]);
+    const nextProgress = shouldReduceMotion ? 1 : 0;
+    manualProgress.set(nextProgress);
+    setProgressValue(nextProgress);
+  }, [headline, animationStyle, animationMode, manualProgress, shouldReduceMotion]);
 
   useEffect(() => {
-    if (animationMode !== "viewport") return;
+    if (shouldReduceMotion || animationMode !== "viewport") return;
     if (inView) {
       const controls = animate(manualProgress, 1, { duration: 0.9, ease: [0.33, 1, 0.68, 1] });
       return () => controls.stop();
     }
-  }, [animationMode, inView, manualProgress]);
+  }, [animationMode, inView, manualProgress, shouldReduceMotion]);
 
-  const activeProgress = animationMode === "scroll" ? springProgress : manualProgress;
+  const activeProgress = !shouldReduceMotion && animationMode === "scroll" ? springProgress : manualProgress;
 
   useMotionValueEvent(activeProgress, "change", (value) => {
     if (freezeEnabled && animationMode === "scroll") return;
@@ -382,6 +387,7 @@ export function AnimatedHeadline({
 
   const subtextOpacity = clamp01((progressValue - 0.2) / 0.4);
   const subtextY = (1 - subtextOpacity) * -12;
+  const Heading = headingLevel === 1 ? "h1" : "h2";
 
   // Use scroll position (not IntersectionObserver) to control dark mode.
   // IntersectionObserver re-fires when theme changes cause layout shifts, creating a feedback loop.
@@ -426,7 +432,7 @@ export function AnimatedHeadline({
     <section ref={containerRef} style={containerStyle} aria-label={headline}>
       <motion.div ref={wrapperRef} style={wrapperStyle}>
         <div style={contentStyle}>
-          <h1
+          <Heading
             style={{
               fontFamily: "var(--font-secondary)",
               fontSize: "var(--font-size-display-md)",
@@ -439,25 +445,31 @@ export function AnimatedHeadline({
               textTransform: "none"
             }}
           >
-            <AnimatedText text={headline} variant={animationStyle} progress={progressValue} />
-          </h1>
+            {shouldReduceMotion ? headline : <AnimatedText text={headline} variant={animationStyle} progress={progressValue} />}
+          </Heading>
           {subtext ? (
-            <motion.p
-              style={{
-                margin: 0,
-                maxWidth: 740,
-                color: "var(--muted)",
-                fontFamily: "var(--font-sans, var(--font-primary))",
-                fontSize: "var(--font-size-body-lg)",
-                fontWeight: 400,
-                lineHeight: 1.45,
-                transform: `translateY(${subtextY}px)`,
-                opacity: subtextOpacity,
-                transition: "transform 0.2s ease, opacity 0.2s ease"
-              }}
-            >
-              {subtext}
-            </motion.p>
+            shouldReduceMotion ? (
+              <p style={{ margin: 0, maxWidth: 740, color: "var(--muted)", fontFamily: "var(--font-sans, var(--font-primary))", fontSize: "var(--font-size-body-lg)", fontWeight: 400, lineHeight: 1.45 }}>
+                {subtext}
+              </p>
+            ) : (
+              <motion.p
+                style={{
+                  margin: 0,
+                  maxWidth: 740,
+                  color: "var(--muted)",
+                  fontFamily: "var(--font-sans, var(--font-primary))",
+                  fontSize: "var(--font-size-body-lg)",
+                  fontWeight: 400,
+                  lineHeight: 1.45,
+                  transform: `translateY(${subtextY}px)`,
+                  opacity: subtextOpacity,
+                  transition: "transform 0.2s ease, opacity 0.2s ease"
+                }}
+              >
+                {subtext}
+              </motion.p>
+            )
           ) : null}
         </div>
       </motion.div>
