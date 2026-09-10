@@ -39,6 +39,9 @@ export function LearnSidebar({
   const currentPost = currentPostSlug ? posts.find((post) => post.slug === currentPostSlug) : undefined;
   const currentGroup = currentPost ? getLearnGroupForPost(currentPost) : undefined;
   const currentTopic = currentPost && currentGroup ? getLearnTopicForPost(currentPost, currentGroup) : undefined;
+  const visibleGroups = LEARN_GROUPS.filter((group) =>
+    posts.some((post) => getLearnGroupForPost(post) === group.key)
+  );
 
   const postsByGroup = useMemo(
     () =>
@@ -81,7 +84,7 @@ export function LearnSidebar({
         />
       </label>
       <nav className="learn-collection-nav" aria-label="Learn collections">
-        {LEARN_GROUPS.map((group) => (
+        {visibleGroups.map((group) => (
           <div className="learn-sidebar-collection" key={group.key}>
             <p className="learn-sidebar-collection-heading">
               <BookOpen aria-hidden="true" size={17} strokeWidth={1.8} />

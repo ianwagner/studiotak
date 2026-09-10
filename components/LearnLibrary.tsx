@@ -119,7 +119,11 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
   );
   const activeGroupData = activeGroup === "all" ? null : LEARN_GROUPS.find((group) => group.key === activeGroup) ?? null;
   const activeTopicImage = activeTopic ? TOPIC_CARD_IMAGES[activeTopic] : undefined;
-  const topicsByGroup = LEARN_GROUPS.map((group) => {
+  // Keep unpublished collections out of the library until they have content.
+  const visibleGroups = LEARN_GROUPS.filter((group) =>
+    posts.some((post) => getLearnGroupForPost(post) === group.key)
+  );
+  const topicsByGroup = visibleGroups.map((group) => {
     const topics = new Map<string, GhostPost[]>();
     posts
       .filter((post) => getLearnGroupForPost(post) === group.key)
@@ -242,9 +246,7 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
                           />
                         ))}
                       </div>
-                    ) : (
-                      <p className="learn-collection-empty">Reference guides will appear here as they’re published.</p>
-                    )}
+                    ) : null}
                   </section>
                 ))}
               </section>
