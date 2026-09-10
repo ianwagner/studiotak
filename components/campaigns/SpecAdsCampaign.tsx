@@ -223,7 +223,12 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
     setSubmitState("submitting");
     setSubmitError("");
 
-    const fields = Object.fromEntries(new FormData(form).entries());
+    const formData = new FormData(form);
+    // Password managers and browser autofill can populate visually hidden inputs.
+    // Keep the server-side honeypot for direct bot submissions, but never send an
+    // accidental browser-filled value from this form.
+    formData.delete("companyNameConfirm");
+    const fields = Object.fromEntries(formData.entries());
     const searchParams = new URLSearchParams(window.location.search);
     const metaEventId = createMetaEventId();
 
