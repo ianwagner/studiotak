@@ -129,8 +129,18 @@ async function enableGoogleTag(pathname: string, preferences: CookiePreferences)
   if (!googleTagId) return;
 
   const gtag = updateGoogleConsent(preferences);
-  const configuredIds = new Set(window.__studioTakGoogleTagConfiguredIds ?? []);
 
+  try {
+    await addExternalScript("studio-tak-google-tag", `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleTagId)}`);
+  } catch {
+    return;
+  }
+
+  // Configure destinations only after the Google tag is ready. This prevents
+  // page_view from being deferred while a dynamically inserted tag is still
+  // initializing, which is especially important when Analytics and Ads share
+  // the same loader.
+  const configuredIds = new Set(window.__studioTakGoogleTagConfiguredIds ?? []);
   if (configuredIds.size === 0) gtag("js", new Date());
 
   if (preferences.analytics && googleAnalyticsId) {
@@ -152,15 +162,10 @@ async function enableGoogleTag(pathname: string, preferences: CookiePreferences)
   }
   window.__studioTakGoogleTagConfiguredIds = Array.from(configuredIds);
 
-  try {
-    await addExternalScript("studio-tak-google-tag", `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleTagId)}`);
-  } catch {
-    return;
-  }
-
   if (!preferences.analytics || !googleAnalyticsId) return;
 
   gtag("event", "page_view", {
+    send_to: googleAnalyticsId,
     page_location: window.location.href,
     page_path: `${pathname}${window.location.search}`,
     page_title: document.title
