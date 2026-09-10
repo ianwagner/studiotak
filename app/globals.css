@@ -1838,27 +1838,45 @@ main {
 }
 
 @media (max-width: 560px) {
-  .learn-topic-card-grid,
+  .learn-topic-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
   .learn-article-card-grid {
     grid-template-columns: 1fr;
   }
 
-  .learn-topic-card,
+  .learn-topic-card {
+    min-height: 156px;
+    padding: 14px;
+  }
+
   .learn-article-card {
     min-height: 150px;
     padding: 18px;
   }
 
   .learn-topic-card-visual {
-    top: 18px;
-    left: 18px;
-    width: 54px;
-    height: 54px;
+    top: 14px;
+    left: 14px;
+    width: 48px;
+    height: 48px;
   }
 
   .learn-topic-card-visual img {
-    width: 54px;
-    height: 54px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .learn-topic-card.has-visual .learn-topic-card-title {
+    margin-top: 58px;
+  }
+
+  .learn-topic-card-action {
+    gap: 5px;
+    padding-top: 16px;
+    font-size: var(--font-size-caption);
   }
 
   .learn-article-card.has-feature-artwork .learn-article-card-title,
