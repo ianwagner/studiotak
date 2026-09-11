@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, ChevronDown, Search } from "lucide-react";
+import { ChevronDown, GraduationCap, LibraryBig, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { GhostPost } from "@/lib/ghost";
 import {
@@ -56,7 +56,7 @@ export function LearnSidebar({
           );
           return groups;
         },
-        { learn: [], campfire: [] }
+        { learn: [], campfire: [], compare: [] }
       ),
     [posts, normalizedQuery]
   );
@@ -70,7 +70,7 @@ export function LearnSidebar({
           );
           return groups;
         },
-        { learn: [], campfire: [] }
+        { learn: [], campfire: [], compare: [] }
       ),
     [postsByGroup]
   );
@@ -89,16 +89,22 @@ export function LearnSidebar({
         />
       </label>
       <nav className="learn-collection-nav" aria-label="Learn collections">
-        {visibleGroups.map((group) => (
-          <div className="learn-sidebar-collection" key={group.key}>
-            <Link
-              className="learn-sidebar-collection-heading"
-              href={`/learn#${group.key === "learn" ? "learn" : "references"}`}
-              onClick={() => updateQuery("")}
-            >
-              <BookOpen aria-hidden="true" size={17} strokeWidth={1.8} />
-              {group.title}
-            </Link>
+        {visibleGroups.map((group) => {
+          const anchor = group.key === "learn" ? "learn" : group.key === "campfire" ? "references" : "compare";
+          return (
+            <div className="learn-sidebar-collection" key={group.key}>
+              <Link
+                className="learn-sidebar-collection-heading"
+                href={`/learn#${anchor}`}
+                onClick={() => updateQuery("")}
+              >
+                {group.key === "campfire" ? (
+                  <LibraryBig aria-hidden="true" size={17} strokeWidth={1.8} />
+                ) : (
+                  <GraduationCap aria-hidden="true" size={17} strokeWidth={1.8} />
+                )}
+                {group.title}
+              </Link>
             {group.key === "campfire" && availableSeries.length ? (
               <div className="learn-sidebar-series-list">
                 {availableSeries.map((series) => (
@@ -112,35 +118,50 @@ export function LearnSidebar({
                 ))}
               </div>
             ) : null}
-            <div className="learn-sidebar-topics">
-              {topicsByGroup[group.key].map((topic) => (
-                <details
-                  className={`learn-sidebar-topic ${activeGroup === group.key && activeTopic === topic ? "is-active" : ""}`}
-                  key={topic}
-                  open={currentGroup === group.key && currentTopic === topic ? true : undefined}
-                >
-                  <summary onClick={() => onSelectTopic?.(group.key, topic)}>
-                    <span>{topic}</span>
-                    <ChevronDown aria-hidden="true" size={14} strokeWidth={1.8} />
-                  </summary>
-                  <div className="learn-sidebar-topic-articles">
-                    {postsByGroup[group.key]
-                      .filter((post) => getLearnTopicForPost(post, group.key) === topic)
-                      .map((post) => (
-                        <Link
-                          key={post.id}
-                          href={`/learn/${post.slug}`}
-                          className={`learn-sidebar-article ${currentPostSlug === post.slug ? "is-current" : ""}`}
-                        >
-                          {getLearnDisplayTitle(post)}
-                        </Link>
-                      ))}
-                  </div>
-                </details>
-              ))}
+            {group.key === "compare" ? (
+              <div className="learn-sidebar-topic-articles">
+                {postsByGroup.compare.map((post) => (
+                  <Link
+                    key={post.id}
+                    href={`/learn/${post.slug}`}
+                    className={`learn-sidebar-article ${currentPostSlug === post.slug ? "is-current" : ""}`}
+                  >
+                    {getLearnDisplayTitle(post)}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="learn-sidebar-topics">
+                {topicsByGroup[group.key].map((topic) => (
+                  <details
+                    className={`learn-sidebar-topic ${activeGroup === group.key && activeTopic === topic ? "is-active" : ""}`}
+                    key={topic}
+                    open={currentGroup === group.key && currentTopic === topic ? true : undefined}
+                  >
+                    <summary onClick={() => onSelectTopic?.(group.key, topic)}>
+                      <span>{topic}</span>
+                      <ChevronDown aria-hidden="true" size={14} strokeWidth={1.8} />
+                    </summary>
+                    <div className="learn-sidebar-topic-articles">
+                      {postsByGroup[group.key]
+                        .filter((post) => getLearnTopicForPost(post, group.key) === topic)
+                        .map((post) => (
+                          <Link
+                            key={post.id}
+                            href={`/learn/${post.slug}`}
+                            className={`learn-sidebar-article ${currentPostSlug === post.slug ? "is-current" : ""}`}
+                          >
+                            {getLearnDisplayTitle(post)}
+                          </Link>
+                        ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </nav>
     </aside>
   );

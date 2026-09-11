@@ -208,9 +208,13 @@ export default async function LearnPostPage({ params }: PageParams) {
             >
               <div className="learn-article-topline">
                 <nav className="learn-breadcrumb" aria-label="Breadcrumb">
-                  <Link href="/learn">{learnGroupTitle}</Link>
-                  <span aria-hidden="true">/</span>
-                  <Link href={topicHref as any}>{learnTopic}</Link>
+                  <Link href={learnGroup === "compare" ? "/learn#compare" : "/learn"}>{learnGroupTitle}</Link>
+                  {learnGroup !== "compare" ? (
+                    <>
+                      <span aria-hidden="true">/</span>
+                      <Link href={topicHref as any}>{learnTopic}</Link>
+                    </>
+                  ) : null}
                   <span aria-hidden="true">/</span>
                   <span aria-current="page">{getLearnDisplayTitle(post)}</span>
                 </nav>

@@ -14,7 +14,7 @@ import type {
 import { seedPages } from "./admin/pages";
 import { getFirebaseApp } from "./firebaseClient";
 import { seedComponents, type ComponentRecord } from "./admin/components";
-import { getGhostPosts } from "./ghost";
+import { getGhostPosts, type GhostPost } from "./ghost";
 
 const collectionName = "pages";
 
@@ -195,6 +195,16 @@ const normalizeTagFilter = (value?: string | null): string | null => {
   return trimmed ? trimmed : null;
 };
 
+const excludedArticleGridTagNames = new Set(["#resource", "#campfire-compare"]);
+const excludedArticleGridTagSlugs = new Set(["hash-resource", "hash-campfire-compare"]);
+
+const isExcludedFromArticleGrids = (post: GhostPost): boolean =>
+  post.tags?.some(
+    (tag) =>
+      excludedArticleGridTagNames.has(tag.name.trim().toLowerCase()) ||
+      excludedArticleGridTagSlugs.has(tag.slug.trim().toLowerCase())
+  ) ?? false;
+
 const mergePageWithArticles = async (page: PageRecord | null, tagOverride?: string | null): Promise<PageRecord | null> => {
   if (!page) return page;
   const blocks = page.blocks ?? [];
@@ -224,9 +234,10 @@ const mergePageWithArticles = async (page: PageRecord | null, tagOverride?: stri
       if (block.type === "article_grid") {
         const effectiveTag = normalizedOverride ?? block.tagFilter;
         const posts = await getPostsForTag(effectiveTag);
+        const gridPosts = posts.filter((post) => !isExcludedFromArticleGrids(post));
         const offset = Math.max(0, block.offset ?? 0);
-        const limit = block.limit && block.limit > 0 ? block.limit : posts.length - offset;
-        const list = posts.slice(offset, offset + Math.max(0, limit));
+        const limit = block.limit && block.limit > 0 ? block.limit : gridPosts.length - offset;
+        const list = gridPosts.slice(offset, offset + Math.max(0, limit));
         return { ...(block as ArticleGridBlock), posts: list };
       }
       return block;

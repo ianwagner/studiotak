@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Route } from "next";
 import type { NavigationItemRecord } from "@/lib/admin/navigation";
+import { getGhostPosts, type GhostPost } from "@/lib/ghost";
+import { getLearnDisplayTitle, getLearnGroupForPost, getLearnTopicForPost } from "@/lib/learnTaxonomy";
 import { getNavigationItems } from "@/lib/navigation";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { CookiePreferencesButton } from "./CookiePreferencesButton";
@@ -64,10 +66,40 @@ const getFooterChildren = (
   );
 };
 
+const getLearnFooterTopics = (posts: GhostPost[]) =>
+  Array.from(
+    new Set(
+      posts
+        .filter((post) => getLearnGroupForPost(post) === "learn")
+        .map((post) => getLearnTopicForPost(post, "learn"))
+    )
+  )
+    .sort((a, b) => a.localeCompare(b))
+    .map((topic) => ({
+      id: `footer-learn-${topic.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      label: topic,
+      href: `/learn/topics/learn/${encodeURIComponent(topic)}` as Route
+    }));
+
+const isCampfireComparePost = (post: GhostPost) =>
+  post.tags?.some((tag) => {
+    const name = tag.name.trim().toLowerCase();
+    const slug = tag.slug.trim().toLowerCase();
+    return name === "campfire-compare" || name === "#campfire-compare" || slug === "campfire-compare" || slug === "hash-campfire-compare";
+  }) ?? false;
+
+const getCompareFooterArticles = (posts: GhostPost[]) =>
+  posts.filter(isCampfireComparePost).map((post) => ({
+    id: `footer-compare-${post.id}`,
+    label: getLearnDisplayTitle(post),
+    href: `/learn/${post.slug}` as Route
+  }));
+
 export async function SiteFooter({ navItems: providedNav, showTopBorder = false }: SiteFooterProps) {
-  const [navItems, settings] = await Promise.all([
+  const [navItems, settings, learnPosts] = await Promise.all([
     providedNav ? Promise.resolve(providedNav) : getNavigationItems(),
-    getSiteSettings()
+    getSiteSettings(),
+    getGhostPosts()
   ]);
   const footerLogoUrl = settings.footerLogoUrl || settings.logoUrl;
   const footerLinks = navItems.filter((item) => item.showInFooter && !isDuplicateCampfireDemoFooterLink(item));
@@ -78,13 +110,33 @@ export async function SiteFooter({ navItems: providedNav, showTopBorder = false 
     return acc;
   }, {});
   const footerParents = footerLinks.filter((item) => !item.parentId);
+  const campfireFooterParents = footerParents.filter(isCampfireFooterParent);
+  const remainingFooterParents = footerParents.filter((item) => !isCampfireFooterParent(item));
   const year = 2026;
-  const footerSections = footerParents.reduce<Record<string, NavigationItemRecord[]>>((sections, item) => {
-    const sectionName = item.footerSection?.trim() || "Links";
-    sections[sectionName] = sections[sectionName] ? [...sections[sectionName], item] : [item];
-    return sections;
-  }, {});
-  const sectionEntries = Object.entries(footerSections);
+  const learnTopics = getLearnFooterTopics(learnPosts);
+  const compareArticles = getCompareFooterArticles(learnPosts);
+  const renderFooterParent = (item: NavigationItemRecord) => {
+    const children = getFooterChildren(item, childrenByParent);
+    return (
+      <div key={item.id} className="footer-parent-block">
+        <span className="footer-parent-label">{item.label}</span>
+        {children.length ? (
+          <div className="footer-children">
+            {children.map((child) => (
+              <Link
+                key={child.id}
+                href={child.href as Route}
+                target={child.isExternal ? "_blank" : undefined}
+                rel={child.isExternal ? "noreferrer noopener" : undefined}
+              >
+                {child.label}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <footer data-site-footer data-has-top-border={showTopBorder || undefined}>
@@ -103,32 +155,36 @@ export async function SiteFooter({ navItems: providedNav, showTopBorder = false 
             <span className="footer-tagline">Design &amp; Build</span>
           </div>
 
-          {footerParents.length ? (
-            <nav data-footer-nav aria-label="Footer links">
-              {footerParents.map((item) => {
-                const children = getFooterChildren(item, childrenByParent);
-                return (
-                  <div key={item.id} className="footer-parent-block">
-                    <span className="footer-parent-label">{item.label}</span>
-                    {children.length ? (
-                      <div className="footer-children">
-                        {children.map((child) => (
-                          <Link
-                            key={child.id}
-                            href={child.href as Route}
-                            target={child.isExternal ? "_blank" : undefined}
-                            rel={child.isExternal ? "noreferrer noopener" : undefined}
-                          >
-                            {child.label}
-                          </Link>
-                        ))}
-                      </div>
-                    ) : null}
+          <nav data-footer-nav aria-label="Footer links">
+            {campfireFooterParents.map(renderFooterParent)}
+            {compareArticles.length ? (
+              <div className="footer-parent-block">
+                <span className="footer-parent-label">Compare</span>
+                <div className="footer-children">
+                  {compareArticles.map((article) => (
+                    <Link key={article.id} href={article.href}>
+                      {article.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+              <div className="footer-parent-block">
+                <Link href="/learn" className="footer-parent-label footer-parent-link">
+                  Learn
+                </Link>
+                {learnTopics.length ? (
+                  <div className="footer-children">
+                    {learnTopics.map((topic) => (
+                      <Link key={topic.id} href={topic.href}>
+                        {topic.label}
+                      </Link>
+                    ))}
                   </div>
-                );
-              })}
-            </nav>
-          ) : null}
+                ) : null}
+              </div>
+            {remainingFooterParents.map(renderFooterParent)}
+          </nav>
         </div>
 
         <div className="footer-bottom">

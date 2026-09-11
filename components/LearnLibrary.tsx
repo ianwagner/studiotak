@@ -88,7 +88,7 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
       const topic = params.get("topic");
 
       if (
-        (group === "learn" || group === "campfire") &&
+        (group === "learn" || group === "campfire" || group === "compare") &&
         topic &&
         posts.some(
           (post) =>
@@ -253,7 +253,7 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
                 {topicsByGroup.map((group) => (
                   <section
                     className="learn-collection-overview-section"
-                    id={group.key === "learn" ? "learn" : "references"}
+                    id={group.key === "learn" ? "learn" : group.key === "campfire" ? "references" : "compare"}
                     key={group.key}
                     aria-labelledby={`learn-collection-${group.key}`}
                   >
@@ -270,7 +270,13 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
                         ))}
                       </div>
                     ) : null}
-                    {group.topics.length ? (
+                    {group.key === "compare" ? (
+                      <div className="learn-article-card-grid" aria-label="Compare articles">
+                        {group.topics.flatMap(({ posts }) => posts).map((post) => (
+                          <LearnArticleCard key={post.id} post={post} />
+                        ))}
+                      </div>
+                    ) : group.topics.length ? (
                       <div className="learn-topic-card-grid">
                         {group.topics.map(({ topic }) => (
                           <TopicCard

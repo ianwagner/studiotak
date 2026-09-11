@@ -1,6 +1,6 @@
 import type { GhostPost } from "@/lib/ghost";
 
-export type LearnGroupKey = "learn" | "campfire";
+export type LearnGroupKey = "learn" | "campfire" | "compare";
 
 export type LearnGroup = {
   key: LearnGroupKey;
@@ -18,6 +18,11 @@ export const LEARN_GROUPS: LearnGroup[] = [
     key: "campfire",
     title: "Reference",
     description: ""
+  },
+  {
+    key: "compare",
+    title: "Compare",
+    description: ""
   }
 ];
 
@@ -29,6 +34,7 @@ const REFERENCE_TAGS = new Set([
   "campfire-references",
   "campfire-help"
 ]);
+const CAMPFIRE_COMPARE_TAGS = new Set(["campfire-compare"]);
 
 const COLLECTION_TAGS = new Set(Array.from(ACADEMY_TAGS).concat(Array.from(REFERENCE_TAGS)));
 const NON_TOPIC_TAGS = new Set(["product-campfire"]);
@@ -61,9 +67,8 @@ const normalizeCollectionSlug = (slug: string) => slug.toLowerCase().replace(/^h
 export const getLearnGroupForPost = (post: GhostPost): LearnGroupKey => {
   const tags = post.tags ?? [];
   const tagSlugs = tags.map((tag) => normalizeCollectionSlug(tag.slug));
-  if (tagSlugs.some((slug) => REFERENCE_TAGS.has(slug))) {
-    return "campfire";
-  }
+  if (tagSlugs.some((slug) => CAMPFIRE_COMPARE_TAGS.has(slug))) return "compare";
+  if (tagSlugs.some((slug) => REFERENCE_TAGS.has(slug))) return "campfire";
   if (tagSlugs.some((slug) => ACADEMY_TAGS.has(slug))) return "learn";
   return "learn";
 };
@@ -105,6 +110,8 @@ const formatTopicName = (name: string, slug: string) => {
 };
 
 export const getLearnTopicForPost = (post: GhostPost, group: LearnGroupKey) => {
+  if (group === "compare") return "Compare";
+
   const candidateTags = (post.tags ?? []).filter((item) => {
     const slug = normalizeCollectionSlug(item.slug);
     return item.visibility !== "internal" && !COLLECTION_TAGS.has(slug) && !NON_TOPIC_TAGS.has(slug);

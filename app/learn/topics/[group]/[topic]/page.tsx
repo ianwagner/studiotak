@@ -25,6 +25,7 @@ const getTopicParam = (value: string) => {
 const getGroupParam = (value: string): LearnGroupKey | null => {
   if (value === "learn" || value === "academy") return "learn";
   if (value === "campfire") return "campfire";
+  if (value === "compare") return "compare";
   return null;
 };
 
