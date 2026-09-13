@@ -267,6 +267,7 @@ export async function POST(request: Request) {
   const fallbackApplicantEmail = {
     from: fromEmail,
     to: [email],
+    reply_to: "info@studiotak.co",
     subject: "Thanks for your interest in Campfire",
     text: `${applicantText}\n\n${applicantComplianceText}`,
     html: applicantHtmlWithFooter
@@ -275,6 +276,7 @@ export async function POST(request: Request) {
     ? {
         from: fromEmail,
         to: [email],
+        reply_to: "info@studiotak.co",
         subject: "Thanks for your interest in Campfire",
         template: { id: applicationTemplateId, variables: { NAME: firstName } }
       }
