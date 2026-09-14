@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, GraduationCap, LibraryBig, Search } from "lucide-react";
+import { ChevronDown, GitCompareArrows, GraduationCap, LibraryBig, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { GhostPost } from "@/lib/ghost";
 import {
@@ -100,6 +100,8 @@ export function LearnSidebar({
               >
                 {group.key === "campfire" ? (
                   <LibraryBig aria-hidden="true" size={17} strokeWidth={1.8} />
+                ) : group.key === "compare" ? (
+                  <GitCompareArrows aria-hidden="true" size={17} strokeWidth={1.8} />
                 ) : (
                   <GraduationCap aria-hidden="true" size={17} strokeWidth={1.8} />
                 )}

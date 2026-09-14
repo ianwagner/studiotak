@@ -1346,7 +1346,6 @@ const renderHeroBlock = (
       };
   const headingSize = isCompact ? "var(--font-size-display-md)" : "var(--font-size-display-lg)";
   const headingLineHeight = 1;
-  const subtitleSize = isCompact ? "var(--font-size-body-lg)" : "var(--font-size-lede)";
   const stackGap = isCompact ? 12 : 14;
   const layoutGap = isCompact ? 16 : 18;
   const dynamicLayoutGap = isDynamicHero ? 12 : layoutGap;
@@ -1403,13 +1402,13 @@ const renderHeroBlock = (
         <p
           className={hasCopyColorBlock ? "hero-copy-subtitle-wrap" : undefined}
           style={{
-            maxWidth: isCompact ? "52ch" : "48ch",
+            maxWidth: 490,
             color: "var(--muted)",
             fontFamily: "var(--font-sans, var(--font-primary))",
-            fontSize: subtitleSize,
+            fontSize: "var(--font-size-body-lg)",
             fontStyle: "normal",
             fontWeight: 400,
-            lineHeight: isCompact ? 1.4 : 1.45,
+            lineHeight: 1.55,
             margin: 0,
             ...(hasCopyColorBlock
               ? {
