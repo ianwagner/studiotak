@@ -4,6 +4,7 @@ import type { NavigationItemRecord } from "@/lib/admin/navigation";
 import { getGhostPosts, type GhostPost } from "@/lib/ghost";
 import { getLearnDisplayTitle, getLearnGroupForPost, getLearnTopicForPost } from "@/lib/learnTaxonomy";
 import { getNavigationItems } from "@/lib/navigation";
+import { isPartnerPost } from "@/lib/partners";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { CookiePreferencesButton } from "./CookiePreferencesButton";
 
@@ -70,6 +71,7 @@ const getLearnFooterTopics = (posts: GhostPost[]) =>
   Array.from(
     new Set(
       posts
+        .filter((post) => !isPartnerPost(post))
         .filter((post) => getLearnGroupForPost(post) === "learn")
         .map((post) => getLearnTopicForPost(post, "learn"))
     )
@@ -182,6 +184,11 @@ export async function SiteFooter({ navItems: providedNav, showTopBorder = false 
                     ))}
                   </div>
                 ) : null}
+              </div>
+              <div className="footer-parent-block">
+                <Link href="/partners" className="footer-parent-label footer-parent-link">
+                  Partners
+                </Link>
               </div>
             {remainingFooterParents.map(renderFooterParent)}
           </nav>

@@ -11,6 +11,7 @@ import { findLearnSeriesBySlug, getAvailableLearnSeries } from "@/lib/learnSerie
 import { getNavigationItems } from "@/lib/navigation";
 import { getPublishedPageBySlug } from "@/lib/pageContent";
 import { getCanonicalUrl, getSiteUrl } from "@/lib/siteUrl";
+import { excludePartnerPosts } from "@/lib/partners";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -22,12 +23,12 @@ type SeriesPageProps = {
 const getSeriesPath = (slug: string) => `/learn/series/${slug}`;
 
 export async function generateStaticParams() {
-  const posts = await getGhostPosts();
+  const posts = excludePartnerPosts(await getGhostPosts());
   return getAvailableLearnSeries(posts).map((series) => ({ slug: series.slug }));
 }
 
 export async function generateMetadata({ params }: SeriesPageProps): Promise<Metadata> {
-  const posts = await getGhostPosts();
+  const posts = excludePartnerPosts(await getGhostPosts());
   const series = findLearnSeriesBySlug(params.slug, posts);
   if (!series) return {};
 
@@ -55,11 +56,12 @@ export async function generateMetadata({ params }: SeriesPageProps): Promise<Met
 }
 
 export default async function LearnSeriesPage({ params }: SeriesPageProps) {
-  const [navItems, pageData, posts] = await Promise.all([
+  const [navItems, pageData, allPosts] = await Promise.all([
     getNavigationItems(),
     getPublishedPageBySlug("/learn"),
     getGhostPosts()
   ]);
+  const posts = excludePartnerPosts(allPosts);
   const series = findLearnSeriesBySlug(params.slug, posts);
 
   if (!pageData || !series) notFound();

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
 import { Clock } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LearnSidebar } from "@/components/LearnSidebar";
@@ -17,6 +17,7 @@ import { getNavigationItems } from "@/lib/navigation";
 import { getGhostPostBySlug, getGhostPosts, getReadingTimeMinutes, type GhostPost } from "@/lib/ghost";
 import { getGhostImageSrcSet, getOptimizedGhostImageUrl } from "@/lib/ghostImage";
 import { getCanonicalUrl, getSiteUrl } from "@/lib/siteUrl";
+import { excludePartnerPosts, isPartnerPost } from "@/lib/partners";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -27,7 +28,7 @@ type PageParams = {
 
 export async function generateStaticParams() {
   const posts = await getGhostPosts();
-  return posts.map((post) => ({ slug: post.slug }));
+  return excludePartnerPosts(posts).map((post) => ({ slug: post.slug }));
 }
 
 const formatDate = (value?: string | null): string | null => {
@@ -109,6 +110,14 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   const post = await getGhostPostBySlug(params.slug);
   if (!post) return {};
 
+  if (isPartnerPost(post)) {
+    return {
+      title: post.meta_title || `${post.title} | Studio Tak Partner`,
+      description: post.meta_description || post.excerpt || undefined,
+      alternates: { canonical: getCanonicalUrl(`/partners/${post.slug}`) }
+    };
+  }
+
   const canonical = getCanonicalUrl(`/learn/${post.slug}`, post.canonical_url);
   const title = post.meta_title || post.title;
   const description = post.meta_description || post.excerpt || undefined;
@@ -144,7 +153,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 }
 
 export default async function LearnPostPage({ params }: PageParams) {
-  const [navItems, post, allPosts] = await Promise.all([
+  const [navItems, post, allGhostPosts] = await Promise.all([
     getNavigationItems(),
     getGhostPostBySlug(params.slug),
     getGhostPosts()
@@ -153,6 +162,12 @@ export default async function LearnPostPage({ params }: PageParams) {
   if (!post) {
     return notFound();
   }
+
+  if (isPartnerPost(post)) {
+    permanentRedirect(`/partners/${post.slug}`);
+  }
+
+  const allPosts = excludePartnerPosts(allGhostPosts);
 
   const relatedPosts = getRelatedPosts(post, allPosts);
   const campfireLink = getCampfireLink(post.tags);

@@ -3,6 +3,7 @@ import { getGhostPosts } from "@/lib/ghost";
 import { getAvailableLearnSeries } from "@/lib/learnSeries";
 import { getPublishedPages, normalizeSlugPath } from "@/lib/pageContent";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { isPartnerPost } from "@/lib/partners";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteBase = getSiteUrl();
@@ -21,8 +22,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       };
     });
 
-  const postEntries = posts.map((post) => ({
+  const postEntries = posts.filter((post) => !isPartnerPost(post)).map((post) => ({
     url: new URL(`/learn/${post.slug}`, siteBase).toString(),
+    lastModified: post.updated_at ?? post.published_at ?? new Date().toISOString()
+  }));
+  const partnerEntries = posts.filter(isPartnerPost).map((post) => ({
+    url: new URL(`/partners/${post.slug}`, siteBase).toString(),
     lastModified: post.updated_at ?? post.published_at ?? new Date().toISOString()
   }));
   const seriesEntries = getAvailableLearnSeries(posts).map((series) => ({
@@ -31,10 +36,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const learnEntry = hasLearnPage ? [] : [{ url: learnUrl, lastModified: new Date().toISOString() }];
+  const partnersEntry = { url: new URL("/partners", siteBase).toString(), lastModified: new Date().toISOString() };
   const founderEntry = { url: new URL("/founder", siteBase).toString(), lastModified: new Date().toISOString() };
   const legalEntries = [
     { url: new URL("/terms-of-service", siteBase).toString(), lastModified: new Date().toISOString() },
     { url: new URL("/privacy-policy", siteBase).toString(), lastModified: new Date().toISOString() }
   ];
-  return [founderEntry, ...legalEntries, ...learnEntry, ...pageEntries, ...seriesEntries, ...postEntries];
+  return [founderEntry, partnersEntry, ...legalEntries, ...learnEntry, ...pageEntries, ...seriesEntries, ...partnerEntries, ...postEntries];
 }

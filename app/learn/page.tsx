@@ -7,6 +7,7 @@ import { getNavigationItems } from "@/lib/navigation";
 import { getPublishedPageBySlug } from "@/lib/pageContent";
 import { getGhostPosts } from "@/lib/ghost";
 import { getCanonicalUrl, getSiteUrl } from "@/lib/siteUrl";
+import { excludePartnerPosts } from "@/lib/partners";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -63,12 +64,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LearnPage() {
-  const [navItems, pageData, posts] = await Promise.all([
+  const [navItems, pageData, allPosts] = await Promise.all([
     getNavigationItems(),
     getPublishedPageBySlug("/learn"),
     getGhostPosts()
   ]);
   if (!pageData) return notFound();
+  const posts = excludePartnerPosts(allPosts);
 
   const siteBase = getSiteUrl();
   const blogJsonLd = {

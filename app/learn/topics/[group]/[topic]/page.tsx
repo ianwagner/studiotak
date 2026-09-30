@@ -6,6 +6,7 @@ import { getNavigationItems } from "@/lib/navigation";
 import { getPublishedPageBySlug } from "@/lib/pageContent";
 import { getGhostPosts } from "@/lib/ghost";
 import { getLearnGroupForPost, getLearnTopicForPost, type LearnGroupKey } from "@/lib/learnTaxonomy";
+import { excludePartnerPosts } from "@/lib/partners";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -30,7 +31,7 @@ const getGroupParam = (value: string): LearnGroupKey | null => {
 };
 
 export async function generateStaticParams() {
-  const posts = await getGhostPosts();
+  const posts = excludePartnerPosts(await getGhostPosts());
   const topics = new Map<string, { group: LearnGroupKey; topic: string }>();
 
   posts.forEach((post) => {
@@ -47,11 +48,12 @@ export default async function LearnTopicPage({ params }: TopicPageProps) {
   const topic = getTopicParam(params.topic);
   if (!group) notFound();
 
-  const [navItems, pageData, posts] = await Promise.all([
+  const [navItems, pageData, allPosts] = await Promise.all([
     getNavigationItems(),
     getPublishedPageBySlug("/learn"),
     getGhostPosts()
   ]);
+  const posts = excludePartnerPosts(allPosts);
   const hasTopic = posts.some(
     (post) => getLearnGroupForPost(post) === group && getLearnTopicForPost(post, group) === topic
   );
