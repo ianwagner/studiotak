@@ -62,7 +62,6 @@ export default async function PartnersPage() {
         <section className="partners-index" aria-labelledby="partners-title">
           <div className="container partners-index-shell" data-keep-centered>
             <header className="partners-index-hero">
-              <p className="partners-eyebrow">Studio Tak network</p>
               <h1 id="partners-title">Better work, built together.</h1>
               <p>
                 Meet the technology and service partners we trust to help ambitious teams connect creative,
@@ -93,4 +92,3 @@ export default async function PartnersPage() {
     </>
   );
 }
-
