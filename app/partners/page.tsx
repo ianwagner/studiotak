@@ -12,6 +12,7 @@ export const dynamic = "force-static";
 const TITLE = "Partners | Studio Tak";
 const DESCRIPTION =
   "Meet the technology and service partners Studio Tak trusts to help brands build stronger, more connected growth systems.";
+const SHARE_IMAGE = getCanonicalUrl("/partners/opengraph-image");
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -22,12 +23,14 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: getCanonicalUrl("/partners"),
     siteName: "Studio Tak",
-    type: "website"
+    type: "website",
+    images: [{ url: SHARE_IMAGE, width: 1200, height: 630, alt: "Studio Tak Partners" }]
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: TITLE,
-    description: DESCRIPTION
+    description: DESCRIPTION,
+    images: [SHARE_IMAGE]
   }
 };
 

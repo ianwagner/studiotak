@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   if (!post || !isPartnerPost(post)) return {};
 
   const canonical = getCanonicalUrl(`/partners/${post.slug}`);
+  const shareImage = getCanonicalUrl("/partners/opengraph-image");
   const title = post.meta_title || `${post.title} | Studio Tak Partner`;
   const description = post.meta_description || post.excerpt || undefined;
 
@@ -41,15 +42,13 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
       url: canonical,
       siteName: "Studio Tak",
       type: "article",
-      images: post.feature_image
-        ? [{ url: post.feature_image, alt: post.feature_image_alt ?? post.title }]
-        : undefined
+      images: [{ url: shareImage, width: 1200, height: 630, alt: "Studio Tak Partners" }]
     },
     twitter: {
-      card: post.feature_image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: post.twitter_title || post.og_title || title,
       description: post.twitter_description || post.og_description || description,
-      images: post.feature_image ? [post.feature_image] : undefined
+      images: [shareImage]
     }
   };
 }
@@ -133,4 +132,3 @@ export default async function PartnerProfilePage({ params }: PageParams) {
     </>
   );
 }
-
