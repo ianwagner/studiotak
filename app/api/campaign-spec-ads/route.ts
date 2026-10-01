@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { syncAttioPerson } from "@/lib/attio";
+import { isMonthlyMetaSpend, isValidBrandWebsite, normalizeWebsite } from "@/lib/leadQualification";
 import { sendMetaWebsiteLead } from "@/lib/metaWebEvents";
 import { sendSlackFormNotification } from "@/lib/slackFormNotifications";
+import { reserveUniqueLeadConversion } from "@/lib/uniqueLeadConversion";
 
 export const runtime = "nodejs";
 
@@ -196,8 +198,7 @@ export async function POST(request: Request) {
   const firstName = getString(payload.firstName, fieldLimits.firstName);
   const lastName = getString(payload.lastName, fieldLimits.lastName);
   const email = getString(payload.email, fieldLimits.email).toLowerCase();
-  const submittedWebsite = getString(payload.website, fieldLimits.website);
-  const website = submittedWebsite && !/^https?:\/\//i.test(submittedWebsite) ? `https://${submittedWebsite}` : submittedWebsite;
+  const website = normalizeWebsite(getString(payload.website, fieldLimits.website));
   const monthlyMetaSpend = getString(payload.monthlyMetaSpend, fieldLimits.monthlyMetaSpend);
   const marketingConsent = getString(payload.marketingConsent, 10) === "yes";
   const signupPath = getString(payload.signupPath, fieldLimits.signupPath);
@@ -207,16 +208,14 @@ export async function POST(request: Request) {
   const metaEventId = getString(payload.metaEventId, 100);
   const captchaToken = getString(payload.captchaToken, 2048);
 
-  const isValidWebsite = (() => {
-    try {
-      const url = new URL(website);
-      return url.protocol === "http:" || url.protocol === "https:";
-    } catch {
-      return false;
-    }
-  })();
-
-  if (!firstName || !lastName || !email || !monthlyMetaSpend || !emailPattern.test(email) || !isValidWebsite) {
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !emailPattern.test(email) ||
+    !isValidBrandWebsite(website) ||
+    !isMonthlyMetaSpend(monthlyMetaSpend)
+  ) {
     return NextResponse.json({ error: "Please complete every field with a valid work email and website." }, { status: 400 });
   }
 
@@ -243,7 +242,7 @@ export async function POST(request: Request) {
     ["Last name", lastName],
     ["Email", email],
     ["Website", website],
-    ["Monthly Meta spend", monthlyMetaSpend],
+    ["Current monthly Meta spend", monthlyMetaSpend],
     ["Marketing email opt-in", marketingConsent ? "Yes" : "No"]
   ];
   const text = entries.map(([label, value]) => `${label}:\n${value}`).join("\n\n");
@@ -337,6 +336,8 @@ export async function POST(request: Request) {
     }
   }
 
+  const isUniqueLead = await reserveUniqueLeadConversion(email, "spec_ads", metaEventId);
+
   if (marketingConsent) {
     await addMarketingContact(apiKey, {
       email,
@@ -367,19 +368,21 @@ export async function POST(request: Request) {
     }
   });
 
-  try {
-    await sendMetaWebsiteLead(request, {
-      email,
-      firstName,
-      lastName,
-      eventId: metaEventId,
-      signupPath,
-      contentName: "Free spec ads application"
-    });
-  } catch (error) {
-    console.error("Unable to send Meta website Lead", {
-      message: error instanceof Error ? error.message : "Unknown error"
-    });
+  if (isUniqueLead) {
+    try {
+      await sendMetaWebsiteLead(request, {
+        email,
+        firstName,
+        lastName,
+        eventId: metaEventId,
+        signupPath,
+        contentName: "Free spec ads application"
+      });
+    } catch (error) {
+      console.error("Unable to send Meta website Lead", {
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
   }
 
   await sendSlackFormNotification({
@@ -388,7 +391,11 @@ export async function POST(request: Request) {
       { label: "Name", value: `${firstName} ${lastName}` },
       { label: "Email", value: email },
       { label: "Website", value: website },
-      { label: "Monthly Meta spend", value: monthlyMetaSpend },
+      { label: "Current monthly Meta spend", value: monthlyMetaSpend },
+      {
+        label: "Unique conversion",
+        value: isUniqueLead === true ? "Yes" : isUniqueLead === false ? "No — existing lead" : "Unknown — tracking suppressed"
+      },
       { label: "Marketing email opt-in", value: marketingConsent ? "Yes" : "No" },
       { label: "Signup path", value: signupPath },
       { label: "UTM source", value: utmSource },
@@ -397,5 +404,8 @@ export async function POST(request: Request) {
     ]
   });
 
-  return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(
+    { ok: true, isUniqueLead: isUniqueLead === true },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }

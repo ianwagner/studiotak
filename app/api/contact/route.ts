@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { syncAttioPerson } from "@/lib/attio";
+import { isMonthlyMetaSpend, isValidBrandWebsite, normalizeWebsite } from "@/lib/leadQualification";
 import { sendMetaWebsiteLead } from "@/lib/metaWebEvents";
 import { sendSlackFormNotification } from "@/lib/slackFormNotifications";
+import { reserveUniqueLeadConversion } from "@/lib/uniqueLeadConversion";
 
 export const runtime = "nodejs";
 
@@ -12,6 +14,8 @@ type ContactPayload = {
   firstName?: unknown;
   lastName?: unknown;
   email?: unknown;
+  website?: unknown;
+  monthlyMetaSpend?: unknown;
   creativeChallenge?: unknown;
   marketingConsent?: unknown;
   signupPath?: unknown;
@@ -19,7 +23,7 @@ type ContactPayload = {
   utmMedium?: unknown;
   utmCampaign?: unknown;
   metaEventId?: unknown;
-  website?: unknown;
+  companyNameConfirm?: unknown;
   captchaToken?: unknown;
   formStartedAt?: unknown;
 };
@@ -28,6 +32,8 @@ const fieldLimits = {
   firstName: 100,
   lastName: 100,
   email: 254,
+  website: 2_048,
+  monthlyMetaSpend: 100,
   creativeChallenge: 3000,
   signupPath: 2_000,
   utm: 255
@@ -86,6 +92,8 @@ type MarketingContactDetails = {
   email: string;
   firstName: string;
   lastName: string;
+  website: string;
+  monthlyMetaSpend: string;
   signupPath: string;
   utmSource: string;
   utmMedium: string;
@@ -95,7 +103,7 @@ type MarketingContactDetails = {
 const MARKETING_CONSENT_VERSION = "website_marketing_v1";
 
 async function addMarketingContact(apiKey: string, details: MarketingContactDetails) {
-  const { email, firstName, lastName, signupPath, utmSource, utmMedium, utmCampaign } = details;
+  const { email, firstName, lastName, website, monthlyMetaSpend, signupPath, utmSource, utmMedium, utmCampaign } = details;
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
@@ -109,6 +117,8 @@ async function addMarketingContact(apiKey: string, details: MarketingContactDeta
     marketing_consent_at: new Date().toISOString(),
     marketing_consent_version: MARKETING_CONSENT_VERSION,
     signup_path: signupPath,
+    website,
+    monthly_meta_spend: monthlyMetaSpend,
     ...(utmSource ? { utm_source: utmSource } : {}),
     ...(utmMedium ? { utm_medium: utmMedium } : {}),
     ...(utmCampaign ? { utm_campaign: utmCampaign } : {})
@@ -164,7 +174,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please complete the form and try again." }, { status: 400 });
   }
 
-  if (getString(payload.website, 200)) {
+  if (getString(payload.companyNameConfirm, 200)) {
     // Return success so automated submissions receive no signal.
     return NextResponse.json({ ok: true });
   }
@@ -178,6 +188,8 @@ export async function POST(request: Request) {
   const firstName = getString(payload.firstName, fieldLimits.firstName);
   const lastName = getString(payload.lastName, fieldLimits.lastName);
   const email = getString(payload.email, fieldLimits.email).toLowerCase();
+  const website = normalizeWebsite(getString(payload.website, fieldLimits.website));
+  const monthlyMetaSpend = getString(payload.monthlyMetaSpend, fieldLimits.monthlyMetaSpend);
   const creativeChallenge = getString(payload.creativeChallenge, fieldLimits.creativeChallenge);
   const marketingConsent = getString(payload.marketingConsent, 10) === "yes";
   const signupPath = getString(payload.signupPath, fieldLimits.signupPath);
@@ -187,8 +199,15 @@ export async function POST(request: Request) {
   const metaEventId = getString(payload.metaEventId, 100);
   const captchaToken = getString(payload.captchaToken, 2048);
 
-  if (!firstName || !lastName || !email || !emailPattern.test(email)) {
-    return NextResponse.json({ error: "Please complete each field with a valid email address." }, { status: 400 });
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !emailPattern.test(email) ||
+    !isValidBrandWebsite(website) ||
+    !isMonthlyMetaSpend(monthlyMetaSpend)
+  ) {
+    return NextResponse.json({ error: "Please complete every required field with a valid work email and brand website." }, { status: 400 });
   }
 
   const turnstile = await verifyTurnstile(captchaToken);
@@ -220,8 +239,8 @@ export async function POST(request: Request) {
       to: ["info@studiotak.co"],
       reply_to: email,
       subject: `Website contact — ${firstName} ${lastName}`,
-      text: `New website contact\n\nFirst name: ${firstName}\nLast name: ${lastName}\nEmail: ${email}\nWhat would make your creative more effective right now?: ${creativeChallenge || "Not provided"}\nMarketing email opt-in: ${marketingConsent ? "Yes" : "No"}`,
-      html: `<h2 style="font-family:Arial,sans-serif">New website contact</h2><table style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45"><tr><td style="padding:5px 12px 5px 0;font-weight:600">First name</td><td>${escapeHtml(firstName)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Last name</td><td>${escapeHtml(lastName)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Email</td><td>${escapeHtml(email)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600;vertical-align:top">What would make your creative more effective right now?</td><td style="white-space:pre-wrap">${escapeHtml(creativeChallenge || "Not provided")}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Marketing email opt-in</td><td>${marketingConsent ? "Yes" : "No"}</td></tr></table>`
+      text: `New website contact\n\nFirst name: ${firstName}\nLast name: ${lastName}\nEmail: ${email}\nBrand website: ${website}\nCurrent monthly Meta spend: ${monthlyMetaSpend}\nWhat would make your creative more effective right now?: ${creativeChallenge || "Not provided"}\nMarketing email opt-in: ${marketingConsent ? "Yes" : "No"}`,
+      html: `<h2 style="font-family:Arial,sans-serif">New website contact</h2><table style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45"><tr><td style="padding:5px 12px 5px 0;font-weight:600">First name</td><td>${escapeHtml(firstName)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Last name</td><td>${escapeHtml(lastName)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Email</td><td>${escapeHtml(email)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Brand website</td><td>${escapeHtml(website)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Current monthly Meta spend</td><td>${escapeHtml(monthlyMetaSpend)}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600;vertical-align:top">What would make your creative more effective right now?</td><td style="white-space:pre-wrap">${escapeHtml(creativeChallenge || "Not provided")}</td></tr><tr><td style="padding:5px 12px 5px 0;font-weight:600">Marketing email opt-in</td><td>${marketingConsent ? "Yes" : "No"}</td></tr></table>`
     }),
     cache: "no-store"
   });
@@ -234,11 +253,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "We couldn't send your message. Please try again." }, { status: 502 });
   }
 
+  const isUniqueLead = await reserveUniqueLeadConversion(email, "contact", metaEventId);
+
   if (marketingConsent) {
     await addMarketingContact(apiKey, {
       email,
       firstName,
       lastName,
+      website,
+      monthlyMetaSpend,
       signupPath,
       utmSource,
       utmMedium,
@@ -252,6 +275,8 @@ export async function POST(request: Request) {
     lastName,
     attributes: {
       lead_source: "Website contact",
+      website,
+      monthly_meta_spend: monthlyMetaSpend,
       creative_challenge: creativeChallenge,
       marketing_consent: marketingConsent ? "Yes" : "No",
       signup_path: signupPath,
@@ -261,19 +286,21 @@ export async function POST(request: Request) {
     }
   });
 
-  try {
-    await sendMetaWebsiteLead(request, {
-      email,
-      firstName,
-      lastName,
-      eventId: metaEventId,
-      signupPath,
-      contentName: "Contact form"
-    });
-  } catch (error) {
-    console.error("Unable to send Meta website Lead", {
-      message: error instanceof Error ? error.message : "Unknown error"
-    });
+  if (isUniqueLead) {
+    try {
+      await sendMetaWebsiteLead(request, {
+        email,
+        firstName,
+        lastName,
+        eventId: metaEventId,
+        signupPath,
+        contentName: "Contact form"
+      });
+    } catch (error) {
+      console.error("Unable to send Meta website Lead", {
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
   }
 
   await sendSlackFormNotification({
@@ -281,6 +308,12 @@ export async function POST(request: Request) {
     fields: [
       { label: "Name", value: `${firstName} ${lastName}` },
       { label: "Email", value: email },
+      { label: "Brand website", value: website },
+      { label: "Current monthly Meta spend", value: monthlyMetaSpend },
+      {
+        label: "Unique conversion",
+        value: isUniqueLead === true ? "Yes" : isUniqueLead === false ? "No — existing lead" : "Unknown — tracking suppressed"
+      },
       { label: "Creative challenge", value: creativeChallenge },
       { label: "Marketing email opt-in", value: marketingConsent ? "Yes" : "No" },
       { label: "Signup path", value: signupPath },
@@ -290,5 +323,8 @@ export async function POST(request: Request) {
     ]
   });
 
-  return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(
+    { ok: true, isUniqueLead: isUniqueLead === true },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }

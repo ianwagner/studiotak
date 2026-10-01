@@ -3,12 +3,12 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { collection, getDocs, getFirestore, limit, query, where } from "firebase/firestore";
-import { useRouter } from "next/navigation";
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import { animationPresets, defaultAnimationPreset } from "@/components/sections/animationPresets";
 import { LogosBlockSection } from "@/components/sections/BlocksRenderer";
 import type { LogosBlock } from "@/lib/admin/pages";
 import { createMetaEventId, trackGoogleAdsConversion, trackMetaEvent } from "@/lib/cookieConsent";
+import { monthlyMetaSpendOptions } from "@/lib/leadQualification";
 import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
 import styles from "./SpecAdsCampaign.module.css";
 
@@ -32,7 +32,7 @@ declare global {
   }
 }
 
-type SubmitState = "idle" | "submitting" | "error";
+type SubmitState = "idle" | "submitting" | "success" | "error";
 
 type HeroExampleAd = {
   id: string;
@@ -43,7 +43,11 @@ type HeroExampleAd = {
 
 const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-const spendOptions = ["Under $10k", "$10k–$50k", "$50k–$150k", "$150k–$500k", "$500k+"];
+const trackGaEvent = (eventName: string, params: Record<string, unknown>) => {
+  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
+  window.gtag("event", eventName, params);
+};
+
 const heroCardTransforms = [styles.adCardOne, styles.adCardTwo, styles.adCardThree];
 const messageCardTransforms = [styles.messageCardOne, styles.messageCardTwo, styles.messageCardThree];
 const heroMessageCards = [
@@ -82,11 +86,12 @@ const selectDiverseExamples = (items: HeroExampleAd[]) => {
 };
 
 export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
-  const router = useRouter();
   const captchaContainerRef = useRef<HTMLDivElement>(null);
   const captchaWidgetRef = useRef<string | null>(null);
   const heroArtworkRef = useRef<HTMLDivElement>(null);
+  const successMessageRef = useRef<HTMLDivElement>(null);
   const formStartedAtRef = useRef(Date.now());
+  const hasTrackedFormStart = useRef(false);
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaError, setCaptchaError] = useState("");
@@ -211,6 +216,20 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (submitState === "success") successMessageRef.current?.focus();
+  }, [submitState]);
+
+  const handleFormStart = () => {
+    if (hasTrackedFormStart.current) return;
+    hasTrackedFormStart.current = true;
+    trackGaEvent("form_start", {
+      form_id: "campaign-spec-ads",
+      method: "resend",
+      section: "application"
+    });
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -248,7 +267,11 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         })
       });
 
-      const payload = (await response.json().catch(() => null)) as { error?: string; code?: string } | null;
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+        code?: string;
+        isUniqueLead?: boolean;
+      } | null;
       if (!response.ok) {
         if (payload?.code === "turnstile_expired") {
           setCaptchaError("The security check expired. Please complete it again before submitting.");
@@ -258,9 +281,18 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
         throw new Error(payload?.error || "We couldn't send your application. Please try again.");
       }
 
-      trackMetaEvent("Lead", { content_name: "Free spec ads application" }, metaEventId);
-      trackGoogleAdsConversion("ads_conversion_SUBMIT_LEAD_FORM_1");
-      router.replace("/thank-you");
+      setSubmitState("success");
+      form.reset();
+      if (payload?.isUniqueLead) {
+        trackGaEvent("generate_lead", {
+          form_id: "campaign-spec-ads",
+          method: "resend",
+          section: "application",
+          lead_type: "unique_enquiry"
+        });
+        trackMetaEvent("Lead", { content_name: "Free spec ads application" }, metaEventId);
+        trackGoogleAdsConversion("ads_conversion_SUBMIT_LEAD_FORM_1");
+      }
     } catch (error) {
       setSubmitState("error");
       setSubmitError(error instanceof Error ? error.message : "We couldn't send your application. Please try again.");
@@ -358,8 +390,15 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
               </div>
             </div>
 
-            <div className={styles.formCard}>
-                <form onSubmit={handleSubmit}>
+            <div className={`${styles.formCard} ${submitState === "success" ? styles.formCardSuccess : ""}`}>
+              {submitState === "success" ? (
+                <div ref={successMessageRef} className={styles.successMessage} role="status" tabIndex={-1}>
+                  <span aria-hidden="true">✓</span>
+                  <h3>Application received.</h3>
+                  <p>Thanks for sharing your brand. We&apos;ll review the details and be in touch if it&apos;s a fit.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} onFocus={handleFormStart} onInput={handleFormStart}>
                   <div className={styles.fieldGrid}>
                     <label>
                       <span className={styles.srOnly}>Name</span>
@@ -382,9 +421,9 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                     <span className={styles.srOnly}>Average monthly spend on Meta</span>
                     <select name="monthlyMetaSpend" required defaultValue="">
                       <option value="" disabled>
-                        Monthly Meta spend
+                        Current monthly Meta spend
                       </option>
-                      {spendOptions.map((option) => (
+                      {monthlyMetaSpendOptions.map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>
@@ -415,6 +454,7 @@ export function SpecAdsCampaign({ logoBlock }: { logoBlock?: LogosBlock }) {
                     {submitState === "submitting" ? "Sending application…" : "Get your ads"} <span aria-hidden="true">→</span>
                   </button>
                 </form>
+              )}
             </div>
           </div>
         </div>

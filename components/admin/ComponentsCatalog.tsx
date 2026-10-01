@@ -70,8 +70,8 @@ const componentEntries: ComponentEntry[] = [
   {
     id: "contact",
     title: "Contact",
-    summary: "Two-column layout pairing the Resend contact form with optional media.",
-    fields: ["Eyebrow + heading + body copy", "Anchor ID for #contact links", "Sitewide Resend lead capture", "Optional media"],
+    summary: "Two-column qualified-enquiry form with optional media.",
+    fields: ["Eyebrow + heading + body copy", "Anchor ID for #contact links", "Required brand website + current Meta spend", "Resend, Attio, and Slack delivery", "Optional media"],
     usage: "Use for lead capture or inquiries. Drop near the end of a page so CTAs can jump visitors into the form."
   },
   {

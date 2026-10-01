@@ -2,9 +2,9 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import type { ContactBlock } from "@/lib/admin/pages";
 import { getTurnstileLoadError, loadTurnstile } from "@/lib/turnstile";
+import { monthlyMetaSpendOptions } from "@/lib/leadQualification";
 import { AnimatedSection, SectionHeading } from "./AnimatedSection";
 import { animationPresets, defaultAnimationPreset } from "./animationPresets";
 import { createMetaEventId, trackGoogleAdsConversion, trackMetaEvent } from "@/lib/cookieConsent";
@@ -30,7 +30,7 @@ declare global {
   }
 }
 
-type SubmitState = "idle" | "submitting" | "error";
+type SubmitState = "idle" | "submitting" | "success" | "error";
 
 const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -40,7 +40,6 @@ const trackGaEvent = (eventName: string, params: Record<string, unknown>) => {
 };
 
 export function ResendContactBlockSection({ block, index }: { block: ContactBlock; index: number }) {
-  const router = useRouter();
   const hasMedia = !!block.media?.url;
   const isVideo = block.media?.type === "video" || /\.(mp4|mov|webm|ogg)$/i.test(block.media?.url ?? "");
   const captchaContainerRef = useRef<HTMLDivElement>(null);
@@ -116,7 +115,11 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
     setSubmitState("submitting");
     setSubmitError("");
 
-    const fields = Object.fromEntries(new FormData(form).entries());
+    const formData = new FormData(form);
+    // Password managers can populate visually hidden fields. Keep the server
+    // honeypot for direct bot requests without forwarding an autofilled value.
+    formData.delete("companyNameConfirm");
+    const fields = Object.fromEntries(formData.entries());
     const searchParams = new URLSearchParams(window.location.search);
     const metaEventId = createMetaEventId();
     try {
@@ -134,7 +137,11 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
           metaEventId
         })
       });
-      const payload = (await response.json().catch(() => null)) as { error?: string; code?: string } | null;
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+        code?: string;
+        isUniqueLead?: boolean;
+      } | null;
       if (!response.ok) {
         if (payload?.code === "turnstile_expired") {
           setCaptchaError("The security check expired. Please complete it again before submitting.");
@@ -144,14 +151,18 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
         throw new Error(payload?.error || "We couldn't send your message. Please try again.");
       }
 
-      trackGaEvent("generate_lead", {
-        form_id: "contact-form",
-        method: "resend",
-        section: block.anchor ?? "contact"
-      });
-      trackMetaEvent("Lead", { content_name: "Contact form" }, metaEventId);
-      trackGoogleAdsConversion("ads_conversion_SUBMIT_LEAD_FORM_1");
-      router.replace("/thank-you");
+      setSubmitState("success");
+      form.reset();
+      if (payload?.isUniqueLead) {
+        trackGaEvent("generate_lead", {
+          form_id: "contact-form",
+          method: "resend",
+          section: block.anchor ?? "contact",
+          lead_type: "unique_enquiry"
+        });
+        trackMetaEvent("Lead", { content_name: "Contact form" }, metaEventId);
+        trackGoogleAdsConversion("ads_conversion_SUBMIT_LEAD_FORM_1");
+      }
     } catch (error) {
       setSubmitState("error");
       setSubmitError(error instanceof Error ? error.message : "We couldn't send your message. Please try again.");
@@ -224,6 +235,8 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
           [data-resend-contact-form] .contact-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
           [data-resend-contact-form] input[type=text],
           [data-resend-contact-form] input[type=email],
+          [data-resend-contact-form] input[type=url],
+          [data-resend-contact-form] select,
           [data-resend-contact-form] textarea {
             width: 100%;
             box-sizing: border-box;
@@ -239,9 +252,12 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
           }
           [data-resend-contact-form] input::placeholder,
           [data-resend-contact-form] textarea::placeholder { color: var(--muted); opacity: .78; }
+          [data-resend-contact-form] select { appearance: none; cursor: pointer; }
           [data-resend-contact-form] textarea { min-height: 72px; resize: none; }
           [data-resend-contact-form] input:focus,
+          [data-resend-contact-form] select:focus,
           [data-resend-contact-form] textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+          [data-resend-contact-success] { padding: 12px 2px; color: var(--text); font-size: var(--font-size-body); line-height: 1.6; }
           [data-resend-contact-form] .contact-consent { grid-template-columns: 16px 1fr; align-items: start; gap: 10px; color: var(--muted); font-size: var(--font-size-label); font-weight: 500; line-height: 1.5; }
           [data-resend-contact-form] .contact-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--accent); }
           [data-resend-contact-form] .contact-legal { margin: 0; color: var(--muted); font-size: var(--font-size-xs); line-height: 1.5; }
@@ -285,7 +301,12 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
             <div className="grid" style={{ gap: 12 }}>
               <SectionHeading eyebrow={block.eyebrow} title={block.heading} kicker={block.body} />
               <div data-resend-contact-form>
-                <form onSubmit={handleSubmit} onFocus={handleFormStart} onInput={handleFormStart}>
+                {submitState === "success" ? (
+                  <div data-resend-contact-success role="status" aria-live="polite">
+                    Thank you—your enquiry has been received. We&apos;ll be in touch within one business day.
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} onFocus={handleFormStart} onInput={handleFormStart}>
                   <div className="contact-name-row">
                     <label>
                       <span className="contact-sr-only">First name</span>
@@ -299,6 +320,19 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
                   <label>
                     <span className="contact-sr-only">Work email</span>
                     <input type="email" name="email" autoComplete="email" placeholder="Work email" aria-label="Work email" required maxLength={254} />
+                  </label>
+                  <label>
+                    <span className="contact-sr-only">Brand website</span>
+                    <input type="text" name="website" inputMode="url" autoComplete="url" placeholder="Brand website" aria-label="Brand website" required maxLength={2048} />
+                  </label>
+                  <label>
+                    <span className="contact-sr-only">Current monthly Meta spend</span>
+                    <select name="monthlyMetaSpend" aria-label="Current monthly Meta spend" required defaultValue="">
+                      <option value="" disabled>Current monthly Meta spend</option>
+                      {monthlyMetaSpendOptions.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
                   </label>
                   <label>
                     <span className="contact-sr-only">What would make your creative more effective right now? Optional</span>
@@ -319,13 +353,14 @@ export function ResendContactBlockSection({ block, index }: { block: ContactBloc
                   </div>
                   {submitState === "error" ? <p className="contact-error" role="alert">{submitError}</p> : null}
                   <div data-resend-contact-honeypot aria-hidden="true">
-                    <label htmlFor="contact-website">Leave this field blank</label>
-                    <input id="contact-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+                    <label htmlFor="contact-company-confirm">Leave this field blank</label>
+                    <input id="contact-company-confirm" name="companyNameConfirm" type="text" tabIndex={-1} autoComplete="off" />
                   </div>
                   <button className="contact-submit" type="submit" disabled={submitState === "submitting" || !captchaToken}>
                     {submitState === "submitting" ? "Submitting…" : "Submit"}
                   </button>
-                </form>
+                  </form>
+                )}
               </div>
               <p style={{ margin: 0, color: "var(--muted)", fontSize: "var(--font-size-sm)" }}>
                 We typically reply within one business day.

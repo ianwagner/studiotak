@@ -2236,12 +2236,12 @@ const ContactBlockSection = ({ block, index }: { block: ContactBlock; index: num
         });
         if (!response.ok) throw new Error("Newsletter subscription was rejected.");
         setFormSuccess(true);
-        trackGaEvent("generate_lead", {
+        trackGaEvent("sign_up", {
           form_id: "sib-form",
           method: "newsletter",
           section: block.anchor ?? "contact"
         });
-        trackMetaEvent("Lead", { content_name: "Newsletter form" }, metaEventId);
+        trackMetaEvent("CompleteRegistration", { content_name: "Newsletter form" }, metaEventId);
         form.reset();
         const errorEls = form.querySelectorAll<HTMLElement>(".entry__error");
         errorEls.forEach((el) => (el.textContent = ""));

@@ -2001,9 +2001,9 @@ export function PageForm({
                 <span>Trigger dark mode while this block is in view</span>
               </label>
               <div className="card" style={{ padding: 12, border: "1px dashed var(--border-strong)", display: "grid", gap: 6 }}>
-                <strong style={{ fontSize: 14 }}>Resend form</strong>
+                <strong style={{ fontSize: 14 }}>Qualified enquiry form</strong>
                 <span style={{ color: "var(--muted)", fontSize: 13 }}>
-                  Uses the sitewide Resend contact form rendered by the public page component.
+                  Requires a brand website and current monthly Meta spend, then sends the enquiry to Resend, Attio, and Slack.
                 </span>
               </div>
             </div>

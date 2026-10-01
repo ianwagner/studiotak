@@ -51,7 +51,7 @@ Global CSS with custom properties in `app/globals.css` (no Tailwind). Rubik font
 
 ## Environment Variables
 
-**Firebase**: `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`
+**Firebase**: `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, and server-side `FIREBASE_SERVICE_ACCOUNT_JSON` for admin APIs and the hashed-email `lead-conversions` deduplication ledger
 
 **Ghost CMS**: `GHOST_CONTENT_URL`, `GHOST_CONTENT_API_KEY`
 
@@ -132,7 +132,7 @@ Each block needs `id` + `type`. Full type definitions in `lib/admin/pages.ts`. R
 | `scroll_gallery` | Horizontal carousel with left/right nav buttons and edge fade masks. Stacks on mobile. | Portfolio items, step-by-step processes, card showcases | `heading`, `body`, `items[]` (same as features) |
 | `showcase` | Overlapping card stack with staggered rotation angles. Loads media from Firebase by type/industry filter. | Project portfolios, impressive media galleries | `typeFilter`, `industryFilter`, `limit`, `featuredOnly`, `animationPreset` |
 | `logos` | Two-row continuously scrolling logo wall (opposite directions). Loads from Firebase. | Client logos, partner showcases | `heading`, `limit` |
-| `contact` | Two-column: Resend contact form on the left, square media on the right. Includes email validation, Turnstile protection, and a success state. | Lead capture, contact forms, inquiries | `heading`, `body`, `anchor`, `media` |
+| `contact` | Two-column qualified-enquiry form on the left, square media on the right. Requires brand website and current monthly Meta spend; includes email/URL validation, Turnstile protection, Resend/Attio/Slack delivery, unique-lead conversion tracking, and an inline success state. | Lead capture, contact forms, inquiries | `heading`, `body`, `anchor`, `media` |
 | `article_featured` | Large featured article card (image + title + excerpt + "Read more"). Pulls from Ghost CMS. | Blog highlight at top of learn/news pages | `tagFilter` (optional Ghost tag) |
 | `article_grid` | Two-tier article listing: 3-column recent posts grid on top, auto-fit card grid below. Pulls from Ghost CMS. | Blog listing, knowledge base index | `tagFilter`, `offset`, `limit` |
 | `stats` | Row of large numbers with labels. Two variants: plain or bordered cards. | Key metrics, social proof numbers, at-a-glance KPIs | `heading`, `body`, `items[]` ({value, label, prefix, suffix}), `variant` ("default"\|"card") |

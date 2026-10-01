@@ -2,6 +2,8 @@
 
 The website already creates or updates an Attio **Person** for every verified contact or Campfire application. The `/api/webhooks/attio/meta-qualified-leads` endpoint completes the CRM portion of Meta's Qualified Leads integration: an Attio lead-stage change is sent to Meta as a Conversions API event.
 
+Both website enquiry forms also write the required qualification answers to the Person attributes `website` and `monthly_meta_spend`. Ensure those attributes exist in Attio with compatible text/select values before deploying form changes; otherwise Attio can reject the record update even though the Resend and Slack deliveries succeed.
+
 The endpoint verifies Attio's HMAC signature, reads the relevant Attio record, SHA-256 hashes customer data locally, and then calls Meta. It never logs email addresses, phone numbers, lead IDs, access tokens, or un-hashed contact data.
 
 ## Choose the source of truth for stages

@@ -15,7 +15,7 @@ type MetaWebEventResult =
 
 const META_GRAPH_BASE_URL = "https://graph.facebook.com";
 const COOKIE_PREFERENCES_NAME = "st_cookie_preferences";
-const COOKIE_PREFERENCES_VERSION = "2026-08";
+const COOKIE_PREFERENCES_VERSION = "2026-09";
 const EVENT_ID_PATTERN = /^[A-Za-z0-9:_-]{1,100}$/;
 
 function setting(...names: string[]) {
