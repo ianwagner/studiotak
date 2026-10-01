@@ -91,7 +91,7 @@ const isCampfireComparePost = (post: GhostPost) =>
   }) ?? false;
 
 const getCompareFooterArticles = (posts: GhostPost[]) =>
-  posts.filter(isCampfireComparePost).map((post) => ({
+  posts.filter((post) => !isPartnerPost(post) && isCampfireComparePost(post)).map((post) => ({
     id: `footer-compare-${post.id}`,
     label: getLearnDisplayTitle(post),
     href: `/learn/${post.slug}` as Route

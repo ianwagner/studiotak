@@ -3,7 +3,7 @@ import { getGhostPosts } from "@/lib/ghost";
 import { getAvailableLearnSeries } from "@/lib/learnSeries";
 import { getPublishedPages, normalizeSlugPath } from "@/lib/pageContent";
 import { getSiteUrl } from "@/lib/siteUrl";
-import { isPartnerPost } from "@/lib/partners";
+import { excludePartnerPosts, isPartnerPost } from "@/lib/partners";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteBase = getSiteUrl();
@@ -22,7 +22,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       };
     });
 
-  const postEntries = posts.filter((post) => !isPartnerPost(post)).map((post) => ({
+  const learnPosts = excludePartnerPosts(posts);
+  const postEntries = learnPosts.map((post) => ({
     url: new URL(`/learn/${post.slug}`, siteBase).toString(),
     lastModified: post.updated_at ?? post.published_at ?? new Date().toISOString()
   }));
@@ -30,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: new URL(`/partners/${post.slug}`, siteBase).toString(),
     lastModified: post.updated_at ?? post.published_at ?? new Date().toISOString()
   }));
-  const seriesEntries = getAvailableLearnSeries(posts).map((series) => ({
+  const seriesEntries = getAvailableLearnSeries(learnPosts).map((series) => ({
     url: new URL(`/learn/series/${series.slug}`, siteBase).toString(),
     lastModified: new Date().toISOString()
   }));

@@ -15,6 +15,7 @@ import { seedPages } from "./admin/pages";
 import { getFirebaseApp } from "./firebaseClient";
 import { seedComponents, type ComponentRecord } from "./admin/components";
 import { getGhostPosts, type GhostPost } from "./ghost";
+import { excludePartnerPosts } from "./partners";
 
 const collectionName = "pages";
 
@@ -218,7 +219,7 @@ const mergePageWithArticles = async (page: PageRecord | null, tagOverride?: stri
     if (tagCache.has(key)) {
       return tagCache.get(key) ?? [];
     }
-    const posts = await getGhostPosts(key);
+    const posts = excludePartnerPosts(await getGhostPosts(key));
     tagCache.set(key, posts);
     return posts;
   };
