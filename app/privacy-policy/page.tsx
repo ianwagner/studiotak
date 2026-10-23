@@ -1,12 +1,13 @@
-import { StaticPage, createStaticPageMetadata } from "@/components/StaticPage";
+import { GhostLegalPage } from "@/components/GhostLegalPage";
+import { createStaticPageMetadata } from "@/components/StaticPage";
 import styles from "@/components/StaticPage.module.css";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
 
-const lastUpdated = "September 9, 2026";
+const lastUpdated = "October 23, 2026";
 const description =
-  "How Studio Tak (Campfire) collects, uses, shares, and protects your information when you use our website or engage our services.";
+  "How Studio Tak (Campfire) collects, uses, shares, and protects your information when you use our websites or engage our services.";
 
 export const metadata = createStaticPageMetadata({
   title: "Privacy Policy | Studio Tak / Campfire",
@@ -16,9 +17,9 @@ export const metadata = createStaticPageMetadata({
 
 export default function PrivacyPolicyPage() {
   return (
-    <StaticPage title="Privacy Policy" lastUpdated={lastUpdated}>
+    <GhostLegalPage slug="privacy-policy" title="Privacy Policy" lastUpdated={lastUpdated}>
             <p className={styles.intro}>
-              Studio Tak LLC, doing business as Campfire (&quot;we,&quot; &quot;us,&quot; and &quot;our&quot;), is committed to protecting your privacy and the personal information you provide to us when accessing or using our services, products, or website at www.studiotak.co (the &quot;Site&quot;). This privacy policy (this &quot;Policy&quot;) explains how we collect, use, disclose, and protect information when you visit our Site or engage our services.
+              Studio Tak LLC, doing business as Campfire (&quot;we,&quot; &quot;us,&quot; and &quot;our&quot;), is committed to protecting your privacy and the personal information you provide to us when accessing or using our services, products, or websites at www.studiotak.co and www.campfireads.io (together, the &quot;Site&quot;). This privacy policy (this &quot;Policy&quot;) explains how we collect, use, disclose, and protect information when you visit our Site or engage our services.
             </p>
             <p>
               This Policy may be updated from time to time. Changes will be posted at this URL and are effective when posted. Your continued use of our Site or services following any updates constitutes your acceptance of those changes. If you do not agree with this Policy, please do not use our Site and do not provide any information to us.
@@ -29,7 +30,7 @@ export default function PrivacyPolicyPage() {
 
             <h2 id="scope">1. Scope and Restrictions</h2>
             <p>
-              <strong>1.1</strong> This Policy covers your interactions with our Site and our creative production services (the &quot;Services&quot;). It applies to information we collect online through our Site, via email, and through our business relationship with you.
+              <strong>1.1</strong> This Policy covers your interactions with our Site and our creative production services (the &quot;Services&quot;). It applies to clients, prospective clients, site visitors, and UGC creators and production partners. It covers information we collect online through our Site, via email, and through our business relationship with you.
             </p>
             <p>
               <strong>1.2</strong> Our Services are intended for business users acting on behalf of an organization. Our Site and Services are not directed to children. We do not knowingly collect personal information from children under the age of 13. If we become aware that we have collected information from a child under 13, we will take steps to delete that information. See Section 13 for more.
@@ -43,7 +44,7 @@ export default function PrivacyPolicyPage() {
             <ul>
               <li>Contact information: name, email address, phone number, company name, and job title</li>
               <li>Account and registration information when you create an account on our Site or engage our Services</li>
-              <li>Project-related information you provide to us, including brand assets, performance data, ad account access credentials, and creative briefs</li>
+              <li>Project-related information you provide to us, including brand assets, performance data, ad account identifiers and access permissions, and creative briefs</li>
               <li>Communication records, including emails, messages, and any correspondence between us</li>
               <li>Billing information, including your name, billing address, and payment method details (processed through our payment processor, currently Stripe, see Section 4)</li>
             </ul>
@@ -61,10 +62,14 @@ export default function PrivacyPolicyPage() {
 
             <h3>2.3 Information From Third Parties</h3>
             <p>
-              We may receive information about you from third parties, including business partners, marketing partners, social media platforms, and publicly available sources. This may include contact information, company details, and professional profile data.
+              We may receive information about you from third parties, including business partners, marketing partners, social media platforms, and publicly available sources. This may include contact information, company details, and professional profile data. When you authorize access to Meta advertising accounts or share reports from Meta Ads Manager, we may receive account and business identifiers, campaign and ad identifiers, creative assets, and performance metrics such as spend, impressions, clicks, conversions, and return on ad spend, depending on the permissions and reports you provide. We use this information to deliver and evaluate creative and improve our Services as described below. This access is separate from the marketing tracking on our own Site described in Section 5.
             </p>
             <p>
               We ask that you do not send us any sensitive personal information (such as social security numbers, health information, financial account numbers, or government-issued identification numbers) unless specifically requested and necessary for the Services.
+            </p>
+
+            <p>
+              <strong>2.4 Creator Information.</strong> When we engage UGC creators, we may collect names, contact details, professional profiles, portfolios, shipping details for product samples, contracts, payment and tax information needed to pay creators and meet legal obligations, and submitted content, including images, voices, likenesses, and performances. We use this information to evaluate and coordinate projects, produce and license creative, pay creators, and maintain required records. We share relevant profiles and content with the commissioning client and production partners, and payment or tax details only with providers or authorities that need them for those purposes. Published ads are visible to audiences on the agreed channels. The permitted duration and scope of ad use are set by the written creator agreement or project license; this Policy does not grant perpetual likeness rights. Record retention is described in Section 9.
             </p>
 
             <h2 id="how-we-use">3. How We Use Your Information</h2>
@@ -81,7 +86,7 @@ export default function PrivacyPolicyPage() {
             <h3>3.2 Improving Our Services</h3>
             <ul>
               <li>To analyze usage patterns and improve our Site and Services</li>
-              <li>To conduct internal research and development</li>
+              <li>To conduct internal research and development, including using de-identified, aggregated usage and advertising performance data across clients to improve our models and Services and develop benchmarks. We remove identifiers and combine data so it cannot reasonably identify a client, creator, individual, or account or reveal confidential client metrics, and we do not attempt to re-identify it. This does not authorize training third-party providers&apos; models on your identifiable information.</li>
               <li>To develop new features, products, and services</li>
             </ul>
 
@@ -144,7 +149,7 @@ export default function PrivacyPolicyPage() {
             <h2 id="sharing">6. How We Share Your Information</h2>
             <p>We do not sell your Personal Information. We may share your information in the following circumstances:</p>
             <p>
-              <strong>6.1 Service Providers.</strong> We may share information with third-party service providers who perform services on our behalf, including payment processing (Stripe), email marketing, analytics, hosting, artificial intelligence services, and customer support. These providers are contractually obligated to use your information only as necessary to provide services to us and in accordance with this Policy.
+              <strong>6.1 Service Providers.</strong> We may share information with third-party service providers who perform services on our behalf, including payment processing (Stripe), email delivery and contact management (Resend), client relationship management (Attio), internal form-submission notifications (Slack, when enabled), hosting (Vercel), database, storage, and authentication (Google Firebase), form security (Cloudflare Turnstile), analytics (Google Analytics and Contentsquare), artificial intelligence services (including Anthropic), and customer support. The providers used depend on the Site features and Services you use. These providers are contractually obligated to use your information only as necessary to provide services to us and in accordance with this Policy.
             </p>
             <p>
               <strong>6.2 Analytics and Advertising Partners.</strong> We share data collected through Tracking Technologies with analytics providers (such as Google and Contentsquare) and advertising platforms (such as Google Ads and Meta/Facebook) to measure advertising effectiveness and deliver targeted ads. This data may include device identifiers, browsing behavior, interaction data, and, for a consented form submission, hashed contact identifiers used to match the conversion. We do not send your raw name or email address to Google Ads or Meta through this conversion signal.
@@ -167,7 +172,7 @@ export default function PrivacyPolicyPage() {
               <strong>7.1</strong> We take reasonable precautions to protect your information from unauthorized access, alteration, disclosure, or destruction. These measures include encryption of data in transit, secure access controls, and regular security assessments.
             </p>
             <p>
-              <strong>7.2</strong> However, no method of transmission over the Internet or method of electronic storage is 100% secure. While we strive to protect your information, we cannot guarantee its absolute security. We are not responsible for any breach of security caused by third parties or circumstances beyond our reasonable control.
+              <strong>7.2</strong> However, no method of transmission over the Internet or method of electronic storage is 100% secure. While we strive to protect your information, we cannot guarantee its absolute security. If we become aware of a security incident affecting your Personal Information in our custody, we will take reasonable steps to contain and address it and notify affected individuals and authorities as required by applicable law. Our obligations to clients also include the incident notice described in Section 9.6 of our Terms of Service.
             </p>
             <p>
               <strong>7.3</strong> You are responsible for maintaining the confidentiality of any account credentials, passwords, or access tokens you use with our Services. If you believe your account has been compromised, please contact us immediately at info@studiotak.co.
@@ -180,7 +185,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <h3>8.2 Access, Correction, and Deletion</h3>
             <p>
-              You have the right to request access to the Personal Information we hold about you, to request corrections to inaccurate information, and to request deletion of your information, subject to legal and contractual obligations. To make such a request, please contact us at info@studiotak.co. We will respond to your request within a reasonable timeframe and in accordance with applicable law.
+              You have the right to request access to the Personal Information we hold about you, to request corrections to inaccurate information, and to request deletion of your information, subject to legal and contractual obligations. To make such a request, please contact us at info@studiotak.co. We will respond to your request within a reasonable timeframe and in accordance with applicable law. You may also revoke our advertising-account permissions through the relevant platform at any time and ask us to delete information previously received from that account by emailing info@studiotak.co with the subject line &quot;Platform Data Deletion.&quot; Revoking access stops future access but does not automatically delete records already held; we will process deletion requests subject to applicable legal retention requirements and platform terms.
             </p>
             <h3>8.3 Data Portability</h3>
             <p>
@@ -202,7 +207,7 @@ export default function PrivacyPolicyPage() {
               <strong>9.3</strong> Marketing data (such as contact information collected for marketing communications) is retained until you opt out, after which we will retain only the minimum necessary to honor your opt-out preference.
             </p>
             <p>
-              <strong>9.4</strong> Aggregated or anonymized data that does not identify you personally may be retained and used indefinitely for analytics, research, and service improvement purposes.
+              <strong>9.4</strong> De-identified, aggregated data meeting the safeguards in Section 3.2 and Section 9.5 of our Terms of Service may be retained and used indefinitely for analytics, research, benchmarks, and service improvement, subject to applicable law and platform terms.
             </p>
 
             <h2 id="california">10. California Privacy Rights</h2>
@@ -261,6 +266,6 @@ export default function PrivacyPolicyPage() {
             <p>
               For privacy-specific inquiries, data access requests, or to exercise any of your rights described in this Policy, please email info@studiotak.co with the subject line &quot;Privacy Request.&quot;
             </p>
-    </StaticPage>
+    </GhostLegalPage>
   );
 }

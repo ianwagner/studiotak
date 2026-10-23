@@ -8,6 +8,9 @@ type HeaderNavigationProps = {
   items: NavigationItemRecord[];
 };
 
+const isCampfireLink = (item: NavigationItemRecord) =>
+  !item.parentId && (item.href === "/campfire" || item.label.trim().toLowerCase() === "campfire");
+
 export function HeaderNavigation({ items }: HeaderNavigationProps) {
   const headerItems = items.filter((item) => item.showInHeader !== false);
   const topLevel = headerItems.filter((item) => !item.parentId);
@@ -64,9 +67,10 @@ export function HeaderNavigation({ items }: HeaderNavigationProps) {
   }, [isOpen]);
 
   const renderNavLink = (item: NavigationItemRecord) => {
+    const isCampfire = isCampfireLink(item);
     const isExternal = item.isExternal || /^https?:\/\//i.test(item.href);
-    const rel = isExternal ? "noreferrer noopener" : undefined;
-    const target = isExternal ? "_blank" : undefined;
+    const rel = isExternal && !isCampfire ? "noreferrer noopener" : undefined;
+    const target = isExternal && !isCampfire ? "_blank" : undefined;
     const content = (
       <span className="nav-link-content">
         {item.icon ? <img className="nav-link-icon" src={item.icon} alt="" aria-hidden /> : null}
@@ -75,7 +79,7 @@ export function HeaderNavigation({ items }: HeaderNavigationProps) {
     );
 
     return (
-      <a key={item.id} className="nav-link-item" href={item.href} target={target} rel={rel}>
+      <a key={item.id} className="nav-link-item" href={isCampfire ? "https://campfireads.io" : item.href} target={target} rel={rel}>
         {content}
       </a>
     );
@@ -91,7 +95,7 @@ export function HeaderNavigation({ items }: HeaderNavigationProps) {
       <nav data-nav-links data-open={isOpen} aria-label="Primary navigation">
         {topLevel.map((item) => {
           const hasChildren = (childrenByParent[item.id] ?? []).length > 0;
-          if (!hasChildren) {
+          if (isCampfireLink(item) || !hasChildren) {
             return renderNavLink(item);
           }
 

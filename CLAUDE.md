@@ -248,3 +248,11 @@ After making a direct Firestore client-SDK update, verify the rendered route its
 - **Don't read seed files to understand page content** — use the inspect endpoint instead. Seed files may be stale.
 - **Only seeing 2 blocks in production?** BlocksRenderer lazy-loads blocks after the first 2 via IntersectionObserver. This is disabled in dev mode so preview tools see all blocks. In production, users must scroll to trigger loading.
 - **To verify rendered page content, check the route HTML/browser too** — the inspect endpoint returns a full block list regardless of lazy loading, but it can fall back to seed if the server Admin SDK cannot read Firestore.
+
+### Legal Pages in Ghost
+
+`/terms-of-service` and `/privacy-policy` read published Ghost **Pages** with matching slugs through `getGhostPageBySlug`. Create these as Pages, not Posts, so they stay out of Learn feeds. `GhostLegalPage` renders the page title and HTML in the existing legal layout and uses Ghost's `updated_at` for the displayed date. The routes retain their existing SEO metadata and 120-second ISR interval; edits appear after cache revalidation and do not require deployment.
+
+The original JSX content remains a migration/availability fallback when Ghost is unavailable, the page is unpublished, or its HTML is empty. Unpublishing therefore restores the fallback rather than removing the public policy. Keep fallback text in sync after substantive policy changes. Preserve heading anchors, especially `id="cookies"` in the privacy policy, which the cookie banner links to.
+
+Migration status: website integration prepared; creating/publishing the Ghost pages requires Ghost admin access. The local Vercel link points to `website`, but `studiotak` is the project serving `www.studiotak.co`. Neither checked project has a Ghost Admin API key. Do not deploy to the local linked project assuming it is production.

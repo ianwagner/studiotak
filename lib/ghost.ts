@@ -150,3 +150,12 @@ export async function getGhostPostBySlug(slug: string): Promise<GhostPost | null
   const data = await fetchGhost<GhostSingleResponse>("posts/", params);
   return data?.posts?.[0] ?? null;
 }
+
+/** Published standalone pages, kept separate from the Learn post feed. */
+export async function getGhostPageBySlug(slug: string): Promise<GhostPost | null> {
+  const data = await fetchGhost<{ pages: GhostPost[] }>(
+    `pages/slug/${encodeURIComponent(slug)}/`,
+    new URLSearchParams({ fields: "id,slug,title,html,published_at,updated_at,meta_title,meta_description" })
+  );
+  return data?.pages?.[0] ?? null;
+}
