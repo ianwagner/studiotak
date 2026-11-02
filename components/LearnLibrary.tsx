@@ -270,8 +270,8 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
                         ))}
                       </div>
                     ) : null}
-                    {group.key === "compare" ? (
-                      <div className="learn-article-card-grid" aria-label="Compare articles">
+                    {group.key === "compare" || group.key === "campfire-101" ? (
+                      <div className="learn-article-card-grid" aria-label={`${group.title} articles`}>
                         {group.topics.flatMap(({ posts }) => posts).map((post) => (
                           <LearnArticleCard key={post.id} post={post} />
                         ))}

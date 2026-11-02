@@ -223,8 +223,8 @@ export default async function LearnPostPage({ params }: PageParams) {
             >
               <div className="learn-article-topline">
                 <nav className="learn-breadcrumb" aria-label="Breadcrumb">
-                  <Link href={learnGroup === "compare" ? "/learn#compare" : "/learn"}>{learnGroupTitle}</Link>
-                  {learnGroup !== "compare" ? (
+                  <Link href={learnGroup === "compare" ? "/learn#compare" : learnGroup === "campfire-101" ? "/learn#campfire-101" : "/learn"}>{learnGroupTitle}</Link>
+                  {learnGroup !== "compare" && learnGroup !== "campfire-101" ? (
                     <>
                       <span aria-hidden="true">/</span>
                       <Link href={topicHref as any}>{learnTopic}</Link>

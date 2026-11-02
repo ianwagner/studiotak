@@ -122,9 +122,9 @@ export function LearnSidebar({
                 ))}
               </div>
             ) : null}
-            {group.key === "compare" ? (
+            {group.key === "compare" || group.key === "campfire-101" ? (
               <div className="learn-sidebar-topic-articles">
-                {postsByGroup.compare.map((post) => (
+                {postsByGroup[group.key].map((post) => (
                   <Link
                     key={post.id}
                     href={`/learn/${post.slug}`}
