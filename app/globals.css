@@ -4599,6 +4599,34 @@ footer[data-site-footer] .footer-shell {
   border-color: var(--border-strong);
 }
 
+.nav-link-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+[data-nav-links] a.nav-link-cta {
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--text-primary);
+  border-radius: var(--radius-md);
+  background: var(--text-primary);
+  color: var(--surface-card);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+[data-nav-links] a.nav-link-cta:hover {
+  background: var(--text-body);
+  border-color: var(--text-body);
+}
+
+[data-nav-links] a.nav-link-cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .nav-link-content {
   display: inline-flex;
   align-items: center;

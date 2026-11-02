@@ -68,6 +68,7 @@ export function HeaderNavigation({ items }: HeaderNavigationProps) {
 
   const renderNavLink = (item: NavigationItemRecord) => {
     const isCampfire = isCampfireLink(item);
+    const isPrimaryCta = !item.parentId && item.label.trim().toLowerCase() === "get a demo";
     const isExternal = item.isExternal || /^https?:\/\//i.test(item.href);
     const rel = isExternal && !isCampfire ? "noreferrer noopener" : undefined;
     const target = isExternal && !isCampfire ? "_blank" : undefined;
@@ -79,7 +80,7 @@ export function HeaderNavigation({ items }: HeaderNavigationProps) {
     );
 
     return (
-      <a key={item.id} className="nav-link-item" href={isCampfire ? "https://campfireads.io" : item.href} target={target} rel={rel}>
+      <a key={item.id} className={`nav-link-item${isPrimaryCta ? " nav-link-cta" : ""}`} href={isCampfire ? "https://campfireads.io" : item.href} target={target} rel={rel}>
         {content}
       </a>
     );
