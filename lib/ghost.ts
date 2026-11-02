@@ -26,6 +26,7 @@ export type GhostPost = {
   twitter_description?: string | null;
   reading_time?: number | null;
   tags?: GhostTag[];
+  authors?: Array<{ id: string; name: string; slug: string; website?: string | null }>;
 };
 
 export const getReadingTimeMinutes = (post: GhostPost): number | null => {
@@ -91,7 +92,7 @@ const normalizeGhostTag = (value?: string | null): string | null => {
 
 export async function getGhostPosts(tag?: string | null): Promise<GhostPost[]> {
   const params = new URLSearchParams({
-    include: "tags",
+    include: "tags,authors",
     limit: "all",
     order: "published_at desc",
     fields: [
@@ -123,7 +124,7 @@ export async function getGhostPosts(tag?: string | null): Promise<GhostPost[]> {
 
 export async function getGhostPostBySlug(slug: string): Promise<GhostPost | null> {
   const params = new URLSearchParams({
-    include: "tags",
+    include: "tags,authors",
     limit: "1",
     filter: `slug:${slug}`,
     fields: [

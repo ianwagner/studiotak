@@ -185,6 +185,13 @@ export default async function LearnPostPage({ params }: PageParams) {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
+    author: post.authors?.some((author) => author.name?.trim())
+      ? post.authors.filter((author) => author.name?.trim()).map((author) => ({
+          "@type": "Person",
+          name: author.name,
+          ...(author.slug === "ian" ? { url: new URL("/founder", siteBase).toString() } : {})
+        }))
+      : { "@type": "Person", name: "Ian Wagner", url: new URL("/founder", siteBase).toString() },
     url: new URL(`/learn/${post.slug}`, siteBase).toString(),
     ...(post.published_at ? { datePublished: post.published_at } : {}),
     ...(post.updated_at ? { dateModified: post.updated_at } : {}),
