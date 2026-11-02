@@ -88,7 +88,7 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
       const topic = params.get("topic");
 
       if (
-        (group === "learn" || group === "campfire" || group === "compare") &&
+        (group === "campfire-101" || group === "learn" || group === "campfire" || group === "compare") &&
         topic &&
         posts.some(
           (post) =>
@@ -253,7 +253,7 @@ export function LearnLibrary({ posts, initialGroup, initialTopic }: LearnLibrary
                 {topicsByGroup.map((group) => (
                   <section
                     className="learn-collection-overview-section"
-                    id={group.key === "learn" ? "learn" : group.key === "campfire" ? "references" : "compare"}
+                    id={group.key === "campfire" ? "references" : group.key}
                     key={group.key}
                     aria-labelledby={`learn-collection-${group.key}`}
                   >

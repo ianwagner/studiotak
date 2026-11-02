@@ -1,6 +1,6 @@
 import type { GhostPost } from "@/lib/ghost";
 
-export type LearnGroupKey = "learn" | "campfire" | "compare";
+export type LearnGroupKey = "campfire-101" | "learn" | "campfire" | "compare";
 
 export type LearnGroup = {
   key: LearnGroupKey;
@@ -10,8 +10,13 @@ export type LearnGroup = {
 
 export const LEARN_GROUPS: LearnGroup[] = [
   {
+    key: "campfire-101",
+    title: "Campfire 101",
+    description: ""
+  },
+  {
     key: "learn",
-    title: "Learn",
+    title: "Guides",
     description: ""
   },
   {
@@ -27,16 +32,16 @@ export const LEARN_GROUPS: LearnGroup[] = [
 ];
 
 const ACADEMY_TAGS = new Set(["academy", "studio-tak-academy", "tak-academy"]);
+const CAMPFIRE_HELP_TAGS = new Set(["campfire-help"]);
 const REFERENCE_TAGS = new Set([
   "reference",
   "references",
   "campfire-reference",
-  "campfire-references",
-  "campfire-help"
+  "campfire-references"
 ]);
 const CAMPFIRE_COMPARE_TAGS = new Set(["campfire-compare"]);
 
-const COLLECTION_TAGS = new Set(Array.from(ACADEMY_TAGS).concat(Array.from(REFERENCE_TAGS)));
+const COLLECTION_TAGS = new Set(Array.from(ACADEMY_TAGS).concat(Array.from(REFERENCE_TAGS), Array.from(CAMPFIRE_HELP_TAGS)));
 const NON_TOPIC_TAGS = new Set(["product-campfire"]);
 const TITLE_CASE_EXCEPTIONS: Record<string, string> = {
   ai: "AI",
@@ -68,6 +73,7 @@ export const getLearnGroupForPost = (post: GhostPost): LearnGroupKey => {
   const tags = post.tags ?? [];
   const tagSlugs = tags.map((tag) => normalizeCollectionSlug(tag.slug));
   if (tagSlugs.some((slug) => CAMPFIRE_COMPARE_TAGS.has(slug))) return "compare";
+  if (tagSlugs.some((slug) => CAMPFIRE_HELP_TAGS.has(slug))) return "campfire-101";
   if (tagSlugs.some((slug) => REFERENCE_TAGS.has(slug))) return "campfire";
   if (tagSlugs.some((slug) => ACADEMY_TAGS.has(slug))) return "learn";
   return "learn";
@@ -122,7 +128,7 @@ export const getLearnTopicForPost = (post: GhostPost, group: LearnGroupKey) => {
       return slug.startsWith("topic-") || /^topic\s*:/i.test(item.name);
     }) ?? candidateTags[0];
 
-  if (!tag) return group === "campfire" ? "Getting started" : "Studio Tak essentials";
+  if (!tag) return (group === "campfire" || group === "campfire-101") ? "Getting started" : "Studio Tak essentials";
   return formatTopicName(tag.name, tag.slug);
 };
 

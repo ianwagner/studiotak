@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, GitCompareArrows, GraduationCap, LibraryBig, Search } from "lucide-react";
+import { BookOpen, ChevronDown, GitCompareArrows, GraduationCap, LibraryBig, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { GhostPost } from "@/lib/ghost";
 import {
@@ -56,7 +56,7 @@ export function LearnSidebar({
           );
           return groups;
         },
-        { learn: [], campfire: [], compare: [] }
+        { "campfire-101": [], learn: [], campfire: [], compare: [] }
       ),
     [posts, normalizedQuery]
   );
@@ -70,7 +70,7 @@ export function LearnSidebar({
           );
           return groups;
         },
-        { learn: [], campfire: [], compare: [] }
+        { "campfire-101": [], learn: [], campfire: [], compare: [] }
       ),
     [postsByGroup]
   );
@@ -90,7 +90,7 @@ export function LearnSidebar({
       </label>
       <nav className="learn-collection-nav" aria-label="Learn collections">
         {visibleGroups.map((group) => {
-          const anchor = group.key === "learn" ? "learn" : group.key === "campfire" ? "references" : "compare";
+          const anchor = group.key === "campfire" ? "references" : group.key;
           return (
             <div className="learn-sidebar-collection" key={group.key}>
               <Link
@@ -102,6 +102,8 @@ export function LearnSidebar({
                   <LibraryBig aria-hidden="true" size={17} strokeWidth={1.8} />
                 ) : group.key === "compare" ? (
                   <GitCompareArrows aria-hidden="true" size={17} strokeWidth={1.8} />
+                ) : group.key === "learn" ? (
+                  <BookOpen aria-hidden="true" size={17} strokeWidth={1.8} />
                 ) : (
                   <GraduationCap aria-hidden="true" size={17} strokeWidth={1.8} />
                 )}
